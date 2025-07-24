@@ -1,0 +1,175 @@
+# MCP YaXUnit Runner Application Configuration
+# Основные настройки приложения для запуска тестов YaXUnit
+
+spring:
+  application:
+    name: mcp-yaxunit-runner
+  profiles:
+    active: default
+  main:
+    banner-mode: console
+    web-application-type: servlet
+
+# Настройки проекта
+project:
+  tests_path: "./tests"
+  build_timeout: 300000  # 5 минут в миллисекундах
+  test_timeout: 600000   # 10 минут в миллисекундах
+
+# Настройки платформы 1С
+platform:
+  version: null  # Автоматическое определение версии
+  auto_detect_version: true
+  search_paths:
+    - "/opt/1cv8"
+    - "/usr/local/1cv8"
+    - "C:\\Program Files\\1cv8"
+    - "C:\\Program Files (x86)\\1cv8"
+
+# Настройки информационной базы (опционально)
+information_base:
+  connection: null  # Строка подключения к ИБ
+  user: null        # Пользователь ИБ
+  password: null    # Пароль ИБ
+
+# Настройки сборки
+build:
+  incremental_enabled: true
+  hash_storage_size: 10000
+  parallel_build: true
+
+# Настройки логирования
+logging:
+  level: INFO
+  enable_file_logging: false
+  file_path: null  # Путь к файлу логов
+
+# Настройки сервера
+server:
+  port: 8080
+  enable_websocket: true
+  websocket_path: "/yaxunit"
+
+# Настройки MCP сервера
+mcp:
+  server:
+    name: "yaxunit-runner"
+    version: "1.0.0"
+    description: "MCP server for YaXUnit test execution"
+    capabilities:
+      - "yaxunit.run"
+      - "yaxunit.build"
+      - "yaxunit.list"
+  
+  # Spring AI MCP настройки
+  spring:
+    ai:
+      mcp:
+        server:
+          enabled: true
+          name: "yaxunit-runner"
+          version: "1.0.0"
+          description: "MCP server for YaXUnit test execution and project management"
+          stdio:
+            enabled: true
+            root-change-notification: true
+          http:
+            enabled: false
+            port: 8081
+          websocket:
+            enabled: false
+            port: 8082
+
+# Настройки CLI
+cli:
+  enable: true
+  commands:
+    run_all: true
+    run_list: true
+    run_module: true
+
+# Настройки WebSocket
+websocket:
+  enabled: true
+  path: "/yaxunit"
+  max_connections: 100
+  idle_timeout: 300000  # 5 минут
+
+# Настройки безопасности
+security:
+  enabled: false
+  cors:
+    allowed_origins: "*"
+    allowed_methods: "GET,POST,PUT,DELETE,OPTIONS"
+    allowed_headers: "*"
+
+# Настройки мониторинга
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# Настройки метрик
+metrics:
+  enabled: true
+  export:
+    prometheus:
+      enabled: false
+
+# Настройки кэширования
+cache:
+  enabled: true
+  type: mapdb
+  max_size: 10000
+  ttl: 3600000  # 1 час
+
+# Настройки уведомлений
+notifications:
+  enabled: false
+  webhook_url: null
+  email:
+    enabled: false
+    smtp_host: null
+    smtp_port: 587
+    username: null
+    password: null
+    from: null
+    to: []
+
+# Настройки отчетов
+reports:
+  enabled: true
+  format: json
+  output_dir: "./reports"
+  include_coverage: true
+  include_timing: true
+
+# Настройки параллельного выполнения
+parallel:
+  enabled: true
+  max_threads: 4
+  queue_size: 100
+
+# Настройки таймаутов
+timeouts:
+  connection: 30000      # 30 секунд
+  read: 60000           # 1 минута
+  write: 60000          # 1 минута
+  process: 300000       # 5 минут
+
+# Настройки резервного копирования
+backup:
+  enabled: false
+  directory: "./backup"
+  max_files: 10
+  retention_days: 30
+
+# Настройки разработки
+development:
+  debug: false
+  hot_reload: false
+  profile: false 

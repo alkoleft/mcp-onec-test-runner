@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.kotlin.spring)
+    alias(libs.plugins.kotlin.serialization)
     application
     alias(libs.plugins.git.versioning)
     alias(libs.plugins.gradle.git.properties)
@@ -9,7 +10,7 @@ plugins {
     alias(libs.plugins.spring.dependency.management)
     id("maven-publish")
     jacoco
-    alias(libs.plugins.ktlint)
+//    alias(libs.plugins.ktlint)
 }
 
 group = "io.github.alkoleft.mcp"
@@ -36,6 +37,10 @@ dependencies {
     // Kotlin Standard Library
     implementation(libs.bundles.kotlin)
 
+    // Kotlin Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.8.0")
+
     // Spring Boot
     implementation(libs.bundles.spring.boot)
 
@@ -47,6 +52,9 @@ dependencies {
 
     // Reactor Core для Spring AI MCP
     implementation(libs.reactor.core)
+
+    // MapDB for persistent storage
+    implementation("org.mapdb:mapdb:3.0.10")
 
     // Tests
     testImplementation(libs.spring.boot.starter.test)
@@ -63,10 +71,6 @@ dependencyManagement {
 }
 
 tasks.test {
-    if (project.properties["PLATFORM_PATH"] != null) {
-        systemProperty("platform.context.path", project.properties["PLATFORM_PATH"]!!)
-    }
-
     useJUnitPlatform()
 
     testLogging {
@@ -105,8 +109,8 @@ tasks.named("startScripts") {
 publishing {
     repositories {
         maven {
-            name = "mcp-bsl-context"
-            url = uri("https://maven.pkg.github.com/alkoleft/mcp-bsl-context")
+            name = "mcp-yaxunit-runner"
+            url = uri("https://maven.pkg.github.com/alkoleft/mcp-yaxunit-runner")
             credentials {
                 username = System.getenv("GITHUB_ACTOR")
                 password = System.getenv("GITHUB_TOKEN")
@@ -125,9 +129,9 @@ jacoco {
     toolVersion = libs.versions.jacoco.get()
 }
 
-ktlint {
-    version = libs.versions.ktlint.get()
-}
+//ktlint {
+//    version = libs.versions.ktlint.get()
+//}
 
 tasks.jacocoTestReport {
     dependsOn(tasks.test)

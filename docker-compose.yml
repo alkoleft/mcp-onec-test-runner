@@ -1,0 +1,136 @@
+version: '3.8'
+
+services:
+  # Основной сервис MCP YaXUnit Runner
+  mcp-yaxunit-runner:
+    image: mcp-yaxunit-runner:latest
+    container_name: mcp-yaxunit-runner
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - YAXUNIT_TESTS_PATH=/opt/yaxunit/tests
+      - YAXUNIT_BUILD_TIMEOUT=180000
+      - YAXUNIT_TEST_TIMEOUT=300000
+      - YAXUNIT_LOG_LEVEL=WARN
+      - YAXUNIT_FILE_LOGGING=true
+      - YAXUNIT_LOG_FILE=/var/log/yaxunit/app.log
+      - YAXUNIT_SERVER_PORT=8080
+      - YAXUNIT_WEBSOCKET_ENABLED=true
+      - YAXUNIT_WEBSOCKET_PATH=/yaxunit
+      - YAXUNIT_INCREMENTAL_BUILD=true
+      - YAXUNIT_HASH_STORAGE_SIZE=50000
+      - YAXUNIT_PARALLEL_BUILD=true
+    volumes:
+      - ./tests:/opt/yaxunit/tests:ro
+      - ./reports:/var/yaxunit/reports
+      - ./logs:/var/log/yaxunit
+      - ./backup:/var/yaxunit/backup
+      - /opt/1cv8:/opt/1cv8:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Сервис для разработки
+  mcp-yaxunit-runner-dev:
+    image: mcp-yaxunit-runner:dev
+    container_name: mcp-yaxunit-runner-dev
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - YAXUNIT_TESTS_PATH=/opt/yaxunit/tests-dev
+      - YAXUNIT_BUILD_TIMEOUT=600000
+      - YAXUNIT_TEST_TIMEOUT=1200000
+      - YAXUNIT_LOG_LEVEL=DEBUG
+      - YAXUNIT_FILE_LOGGING=true
+      - YAXUNIT_LOG_FILE=/var/log/yaxunit/dev.log
+      - YAXUNIT_SERVER_PORT=8081
+      - YAXUNIT_WEBSOCKET_ENABLED=true
+      - YAXUNIT_WEBSOCKET_PATH=/yaxunit-dev
+      - YAXUNIT_INCREMENTAL_BUILD=true
+      - YAXUNIT_HASH_STORAGE_SIZE=1000
+      - YAXUNIT_PARALLEL_BUILD=false
+    volumes:
+      - ./tests-dev:/opt/yaxunit/tests-dev:ro
+      - ./reports-dev:/var/yaxunit/reports-dev
+      - ./logs:/var/log/yaxunit
+      - ./backup-dev:/var/yaxunit/backup-dev
+      - ./1cv8-dev:/opt/1cv8-dev:ro
+    restart: unless-stopped
+    profiles:
+      - dev
+
+  # Сервис для тестирования
+  mcp-yaxunit-runner-test:
+    image: mcp-yaxunit-runner:test
+    container_name: mcp-yaxunit-runner-test
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=test
+      - YAXUNIT_TESTS_PATH=/opt/yaxunit/test-tests
+      - YAXUNIT_BUILD_TIMEOUT=120000
+      - YAXUNIT_TEST_TIMEOUT=300000
+      - YAXUNIT_LOG_LEVEL=INFO
+      - YAXUNIT_FILE_LOGGING=false
+      - YAXUNIT_SERVER_PORT=8082
+      - YAXUNIT_WEBSOCKET_ENABLED=false
+      - YAXUNIT_INCREMENTAL_BUILD=false
+      - YAXUNIT_HASH_STORAGE_SIZE=100
+      - YAXUNIT_PARALLEL_BUILD=false
+    volumes:
+      - ./test-tests:/opt/yaxunit/test-tests:ro
+      - ./test-reports:/var/yaxunit/test-reports
+      - ./test-1cv8:/opt/test-1cv8:ro
+    restart: "no"
+    profiles:
+      - test
+
+  # Prometheus для мониторинга (опционально)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  # Grafana для визуализации (опционально)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  default:
+    name: yaxunit-network 

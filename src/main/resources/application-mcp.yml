@@ -1,0 +1,118 @@
+# MCP Server Configuration для YaXUnit Runner
+# Профиль для работы как MCP сервер через STDIO
+
+spring:
+  application:
+    name: yaxunit-mcp-server
+  main:
+    web-application-type: none  # Отключаем веб-сервер для STDIO
+    banner-mode: off
+  profiles:
+    active: mcp
+
+# MCP Server настройки
+spring.ai.mcp.server:
+  name: yaxunit-runner
+  version: 1.0.0
+  description: "MCP server for YaXUnit test execution and project management"
+  stdio:
+    enabled: true
+    root-change-notification: true
+
+# Отключаем логирование в консоль для STDIO
+logging:
+  level:
+    root: WARN
+    io.github.alkoleft.mcp: INFO
+    org.springframework.ai: WARN
+  pattern:
+    console: ""
+
+# Настройки проекта для MCP
+project:
+  tests_path: "./tests"
+  build_timeout: 300000
+  test_timeout: 600000
+
+# Настройки платформы 1С
+platform:
+  version: null
+  auto_detect_version: true
+  search_paths:
+    - "/opt/1cv8"
+    - "/usr/local/1cv8"
+    - "C:\\Program Files\\1cv8"
+    - "C:\\Program Files (x86)\\1cv8"
+
+# Настройки сборки
+build:
+  incremental_enabled: true
+  hash_storage_size: 10000
+  parallel_build: true
+
+# Настройки логирования
+logging:
+  level: INFO
+  enable_file_logging: false
+  file_path: null
+
+# Отключаем сервер для MCP режима
+server:
+  port: 0
+  enable_websocket: false
+
+# Отключаем WebSocket для MCP режима
+websocket:
+  enabled: false
+
+# Отключаем мониторинг для MCP режима
+management:
+  endpoints:
+    web:
+      exposure:
+        include: none
+  endpoint:
+    health:
+      show-details: never
+
+# Отключаем метрики для MCP режима
+metrics:
+  enabled: false
+  export:
+    prometheus:
+      enabled: false
+
+# Отключаем кэширование для MCP режима
+cache:
+  enabled: false
+
+# Отключаем уведомления для MCP режима
+notifications:
+  enabled: false
+
+# Отключаем отчеты для MCP режима
+reports:
+  enabled: false
+
+# Отключаем параллельное выполнение для MCP режима
+parallel:
+  enabled: false
+  max_threads: 1
+  queue_size: 1
+
+# Настройки таймаутов для MCP
+timeouts:
+  connection: 30000
+  read: 60000
+  write: 60000
+  process: 300000
+
+# Отключаем резервное копирование для MCP режима
+backup:
+  enabled: false
+
+# Настройки разработки для MCP
+development:
+  debug: false
+  hot_reload: false
+  profile: false 
