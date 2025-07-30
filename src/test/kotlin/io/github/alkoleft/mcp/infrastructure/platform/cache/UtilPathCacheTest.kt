@@ -126,8 +126,8 @@ class UtilPathCacheTest {
     fun `should handle different utility types independently`() {
         // Arrange
         val cache = UtilPathCache()
-        val location1 = createTestLocation()
-        val location2 = createTestLocation()
+        val location1 = createTestLocation("/test/path/1cv8c")
+        val location2 = createTestLocation("/test/path/ibcmd")
 
         // Act
         cache.store(UtilityType.COMPILER_1CV8C, "8.3.24", location1)
@@ -146,8 +146,8 @@ class UtilPathCacheTest {
     fun `should handle different versions independently`() {
         // Arrange
         val cache = UtilPathCache()
-        val location1 = createTestLocation()
-        val location2 = createTestLocation()
+        val location1 = createTestLocation("/test/path/1cv8c", "8.3.24")
+        val location2 = createTestLocation("/test/path/1cv8c", "8.3.25")
 
         // Act
         cache.store(UtilityType.COMPILER_1CV8C, "8.3.24", location1)
@@ -163,9 +163,17 @@ class UtilPathCacheTest {
     }
 
     private fun createTestLocation(): UtilityLocation {
+        return createTestLocation("/test/path/1cv8c", "8.3.24")
+    }
+
+    private fun createTestLocation(path: String): UtilityLocation {
+        return createTestLocation(path, "8.3.24")
+    }
+
+    private fun createTestLocation(path: String, version: String): UtilityLocation {
         return UtilityLocation(
-            executablePath = Paths.get("/test/path/1cv8c"),
-            version = "8.3.24",
+            executablePath = Paths.get(path),
+            version = version,
             platformType = PlatformType.LINUX
         )
     }
