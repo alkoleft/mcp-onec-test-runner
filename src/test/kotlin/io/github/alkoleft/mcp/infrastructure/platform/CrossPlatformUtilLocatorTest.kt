@@ -2,14 +2,15 @@ package io.github.alkoleft.mcp.infrastructure.platform
 
 import io.github.alkoleft.mcp.core.modules.PlatformType
 import io.github.alkoleft.mcp.core.modules.TestExecutionError
+import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
+import kotlinx.coroutines.runBlocking
+import java.nio.file.Paths
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import kotlin.test.assertFalse
-import kotlinx.coroutines.runBlocking
 
 class CrossPlatformUtilLocatorTest {
 
@@ -69,11 +70,11 @@ class CrossPlatformUtilLocatorTest {
         // Act & Assert
         val exception = assertFailsWith<TestExecutionError.UtilNotFound> {
             runBlocking {
-                locator.locateUtility(UtilityType.COMPILER_1CV8C, "8.3.24")
+                locator.locateUtility(UtilityType.DESIGNER, "8.3.24")
             }
         }
 
-        assertTrue(exception.utility.contains(UtilityType.COMPILER_1CV8C.name), "Exception should contain correct utility type")
+        assertTrue(exception.utility.contains(UtilityType.DESIGNER.name), "Exception should contain correct utility type")
     }
 
     @Test
@@ -84,11 +85,11 @@ class CrossPlatformUtilLocatorTest {
         // Act & Assert
         val exception = assertFailsWith<TestExecutionError.UtilNotFound> {
             runBlocking {
-                locator.locateUtility(UtilityType.COMPILER_1CV8C, null)
+                locator.locateUtility(UtilityType.DESIGNER, null)
             }
         }
 
-        assertTrue(exception.utility.contains(UtilityType.COMPILER_1CV8C.name), "Exception should contain correct utility type")
+        assertTrue(exception.utility.contains(UtilityType.DESIGNER.name), "Exception should contain correct utility type")
     }
 
     @Test
@@ -110,8 +111,8 @@ class CrossPlatformUtilLocatorTest {
     fun `should validate utility location correctly`() {
         // Arrange
         val locator = CrossPlatformUtilLocator()
-        val testLocation = io.github.alkoleft.mcp.core.modules.UtilityLocation(
-            executablePath = java.nio.file.Paths.get("/non/existent/path"),
+        val testLocation = UtilityLocation(
+            executablePath = Paths.get("/non/existent/path"),
             version = "8.3.24",
             platformType = PlatformType.LINUX
         )
@@ -133,11 +134,11 @@ class CrossPlatformUtilLocatorTest {
         // Act & Assert
         val exception = assertFailsWith<TestExecutionError.UtilNotFound> {
             runBlocking {
-                locator.locateUtility(UtilityType.COMPILER_1CV8C, "")
+                locator.locateUtility(UtilityType.DESIGNER, "")
             }
         }
 
-        assertTrue(exception.utility.contains(UtilityType.COMPILER_1CV8C.name), "Exception should contain correct utility type")
+        assertTrue(exception.utility.contains(UtilityType.DESIGNER.name), "Exception should contain correct utility type")
     }
 
     @Test
@@ -148,10 +149,10 @@ class CrossPlatformUtilLocatorTest {
         // Act & Assert
         val exception = assertFailsWith<TestExecutionError.UtilNotFound> {
             runBlocking {
-                locator.locateUtility(UtilityType.COMPILER_1CV8C, "invalid-version")
+                locator.locateUtility(UtilityType.DESIGNER, "invalid-version")
             }
         }
 
-        assertTrue(exception.utility.contains(UtilityType.COMPILER_1CV8C.name), "Exception should contain correct utility type")
+        assertTrue(exception.utility.contains(UtilityType.DESIGNER.name), "Exception should contain correct utility type")
     }
 } 

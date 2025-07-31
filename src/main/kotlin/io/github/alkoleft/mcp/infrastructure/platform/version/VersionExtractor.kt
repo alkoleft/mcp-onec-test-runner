@@ -1,9 +1,9 @@
 package io.github.alkoleft.mcp.infrastructure.platform.version
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Path
 
 private val logger = KotlinLogging.logger { }
@@ -33,12 +33,12 @@ class VersionExtractor {
                     // Extract version using regex pattern
                     val versionPattern = Regex("""(\d+\.\d+\.\d+\.\d+)""")
                     val version = versionPattern.find(output)?.value
-                    
-                    logger.debug("Extracted version from $executablePath: $version")
+
+                    logger.debug { "Extracted version from $executablePath: $version" }
                     version
                 }
             } catch (e: Exception) {
-                logger.debug("Version extraction failed for $executablePath: ${e.message}")
+                logger.debug { "Version extraction failed for $executablePath: ${e.message}" }
                 null
             }
         }

@@ -40,7 +40,9 @@ build:
 
 # Настройки логирования
 logging:
-  level: INFO
+  level:
+    root: INFO
+    io.github.alkoleft.mcp: INFO
   enable_file_logging: false
   file_path: null  # Путь к файлу логов
 

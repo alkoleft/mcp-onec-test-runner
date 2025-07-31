@@ -1,39 +1,72 @@
 package io.github.alkoleft.mcp.infrastructure.platform.search
 
-import io.github.alkoleft.mcp.core.modules.UtilityType
-import java.nio.file.Path
+import io.github.alkoleft.mcp.core.modules.PlatformType
+import io.github.alkoleft.mcp.infrastructure.platform.detection.PlatformDetector
+import java.nio.file.Paths
+
+/**
+ * Factory for creating platform-specific search strategies
+ */
+class SearchStrategyFactory(private val platformDetector: PlatformDetector) {
+    /**
+     * Creates platform-specific search strategy
+     */
+    fun createSearchStrategy(): SearchStrategy =
+        when (platformDetector.current) {
+            PlatformType.WINDOWS -> WindowsSearchStrategy()
+            PlatformType.LINUX -> LinuxSearchStrategy()
+            PlatformType.MACOS -> MacSearchStrategy()
+        }
+}
 
 /**
  * Search strategy interface for different platforms
  */
 interface SearchStrategy {
-    val tier1Locations: List<SearchLocation>
-    val tier2Locations: List<SearchLocation>
-    val tier3Locations: List<SearchLocation>
+    val locations: List<SearchLocation>
 }
 
 /**
- * Search location interface for generating paths
+ * Windows-specific search strategy
  */
-interface SearchLocation {
-    fun generatePaths(
-        utility: UtilityType,
-        version: String?,
-    ): List<Path>
-}
+class WindowsSearchStrategy : SearchStrategy {
 
-/**
- * Base class for standard file system locations
- */
-abstract class BaseSearchLocation : SearchLocation {
-    
-    protected fun getExecutableName(utility: UtilityType): String {
-        val isWindows = System.getProperty("os.name").lowercase().contains("win")
-        val extension = if (isWindows) ".exe" else ""
-        
-        return when (utility) {
-            UtilityType.COMPILER_1CV8C -> "1cv8c$extension"
-            UtilityType.INFOBASE_MANAGER_IBCMD -> "ibcmd$extension"
+    override val locations = systemLocations() + userLocation()
+
+    fun systemLocations() =
+        listOf("PROGRAMFILES", "PROGRAMFILES(x86)")
+            .map { System.getenv(it) }
+            .filter { it.isNotBlank() }
+            .map { Paths.get(it, "1cv8").toString() }
+            .map { VersionLocation(it) }
+
+    fun userLocation() =
+        System.getenv("LOCALAPPDATA").let {
+            listOf(
+                VersionLocation(Paths.get(it, "Programs", "1cv8").toString()),
+                VersionLocation(Paths.get(it, "Programs", "1cv8_x86").toString()),
+                VersionLocation(Paths.get(it, "Programs", "1cv8_x64").toString()),
+            )
         }
-    }
-} 
+}
+
+/**
+ * Linux-specific search strategy
+ */
+class LinuxSearchStrategy : SearchStrategy {
+    override val locations = listOf(
+        VersionLocation("/opt/1cv8/x86_64"),
+        VersionLocation("/usr/local/1cv8"),
+        VersionLocation("/opt/1cv8/arm64"),
+        VersionLocation("/opt/1cv8/e2kv4"),
+        VersionLocation("/opt/1cv8/i386"),
+//        StandardLocation("/opt/1C/v8.3/x86_64"),
+//        StandardLocation("/opt/1C/v8.3/i386"),
+    )
+}
+
+class MacSearchStrategy : SearchStrategy {
+    override val locations = listOf(
+        VersionLocation("/opt/1cv8")
+    )
+}

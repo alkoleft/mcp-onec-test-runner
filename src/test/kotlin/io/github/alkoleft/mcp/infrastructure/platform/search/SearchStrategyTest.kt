@@ -5,7 +5,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import kotlin.test.assertFalse
 
 class SearchStrategyTest {
 
@@ -15,15 +14,12 @@ class SearchStrategyTest {
         val strategy = WindowsSearchStrategy()
 
         // Act
-        val tier1Paths = strategy.tier1Locations.flatMap { it.generatePaths(UtilityType.COMPILER_1CV8C, null) }
-        val tier2Paths = strategy.tier2Locations.flatMap { it.generatePaths(UtilityType.COMPILER_1CV8C, "8.3.24") }
+        val tier1Paths = strategy.locations.flatMap { it.generatePaths(UtilityType.DESIGNER, null) }
 
         // Assert
         assertNotNull(tier1Paths, "Tier 1 paths should not be null")
-        assertNotNull(tier2Paths, "Tier 2 paths should not be null")
         assertTrue(tier1Paths.isNotEmpty(), "Tier 1 paths should not be empty")
-        assertTrue(tier2Paths.isNotEmpty(), "Tier 2 paths should not be empty")
-        
+
         // Check that paths contain expected Windows paths
         assertTrue(
             tier1Paths.any { it.toString().contains("C:\\Program Files\\1cv8") },
@@ -45,8 +41,8 @@ class SearchStrategyTest {
         val strategy = LinuxSearchStrategy()
 
         // Act
-        val tier1Paths = strategy.tier1Locations.flatMap { it.generatePaths(UtilityType.COMPILER_1CV8C, null) }
-        val tier2Paths = strategy.tier2Locations.flatMap { it.generatePaths(UtilityType.COMPILER_1CV8C, "8.3.24") }
+        val tier1Paths = strategy.locations.flatMap { it.generatePaths(UtilityType.DESIGNER, null) }
+        val tier2Paths = strategy.locations.flatMap { it.generatePaths(UtilityType.DESIGNER, "8.3.24") }
 
         // Assert
         assertNotNull(tier1Paths, "Tier 1 paths should not be null")
@@ -76,7 +72,7 @@ class SearchStrategyTest {
         val version = "8.3.24"
 
         // Act
-        val paths = versionLocation.generatePaths(UtilityType.COMPILER_1CV8C, version)
+        val paths = versionLocation.generatePaths(UtilityType.DESIGNER, version)
 
         // Assert
         assertNotNull(paths, "Paths should not be null")
@@ -101,7 +97,7 @@ class SearchStrategyTest {
         val standardLocation = StandardLocation("/opt/1cv8")
 
         // Act
-        val compilerPaths = standardLocation.generatePaths(UtilityType.COMPILER_1CV8C, null)
+        val compilerPaths = standardLocation.generatePaths(UtilityType.DESIGNER, null)
         val ibcmdPaths = standardLocation.generatePaths(UtilityType.INFOBASE_MANAGER_IBCMD, null)
 
         // Assert
@@ -125,7 +121,7 @@ class SearchStrategyTest {
         val pathLocation = PathEnvironmentLocation()
 
         // Act
-        val paths = pathLocation.generatePaths(UtilityType.COMPILER_1CV8C, null)
+        val paths = pathLocation.generatePaths(UtilityType.DESIGNER, null)
 
         // Assert
         assertNotNull(paths, "PATH paths should not be null")
@@ -143,7 +139,7 @@ class SearchStrategyTest {
         val standardLocation = StandardLocation("/opt/1cv8")
 
         // Act
-        val paths = standardLocation.generatePaths(UtilityType.COMPILER_1CV8C, null)
+        val paths = standardLocation.generatePaths(UtilityType.DESIGNER, null)
 
         // Assert
         assertEquals(2, paths.size, "Standard location should generate exactly 2 paths")
@@ -164,7 +160,7 @@ class SearchStrategyTest {
         val version = "8.3.24"
 
         // Act
-        val paths = versionLocation.generatePaths(UtilityType.COMPILER_1CV8C, version)
+        val paths = versionLocation.generatePaths(UtilityType.DESIGNER, version)
 
         // Assert
         assertTrue(paths.size >= 3, "Version location should generate at least 3 paths")
@@ -184,7 +180,7 @@ class SearchStrategyTest {
         val versionLocation = VersionLocation("/opt/1cv8")
 
         // Act
-        val paths = versionLocation.generatePaths(UtilityType.COMPILER_1CV8C, null)
+        val paths = versionLocation.generatePaths(UtilityType.DESIGNER, null)
 
         // Assert
         assertEquals(2, paths.size, "Version location without version should generate exactly 2 paths")

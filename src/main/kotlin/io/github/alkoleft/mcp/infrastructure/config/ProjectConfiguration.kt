@@ -11,12 +11,12 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
+private val logger = KotlinLogging.logger { }
+
 /**
  * Project configuration management for MCP YaXUnit Runner.
  * Handles configuration loading from files, environment variables, and defaults.
  */
-private val logger = KotlinLogging.logger {  }
-
 @Component
 class ProjectConfigurationManager {
     private val jsonMapper = jacksonObjectMapper()
@@ -126,7 +126,7 @@ class ProjectConfigurationManager {
     private fun loadFileConfiguration(configPath: Path): ProjectConfiguration? {
         return try {
             if (!Files.exists(configPath)) {
-                logger.warn("Configuration file not found: $configPath")
+                logger.warn { "Configuration file not found: $configPath" }
                 return null
             }
 
@@ -138,10 +138,10 @@ class ProjectConfigurationManager {
                 }
 
             val config = mapper.readValue<ProjectConfiguration>(content)
-            logger.info("Loaded configuration from: $configPath")
+            logger.info { "Loaded configuration from: $configPath" }
             config
         } catch (e: Exception) {
-            logger.error("Failed to load configuration from file: $configPath", e)
+            logger.error(e) { "Failed to load configuration from file: $configPath" }
             null
         }
     }

@@ -5,14 +5,16 @@ import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
 import io.github.alkoleft.mcp.core.modules.TestExecutionResult
 import io.github.alkoleft.mcp.core.modules.TestStatus
 import io.github.alkoleft.mcp.interfaces.cli.commands.TestCommand
-import kotlinx.coroutines.runBlocking
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
 import picocli.CommandLine.ParentCommand
 import java.util.concurrent.Callable
+
+private val logger = KotlinLogging.logger { }
 
 /**
  * Run module tests command - executes tests for a specific module.
@@ -36,8 +38,6 @@ class RunModuleCommand : Callable<Int> {
 
     @Autowired
     private lateinit var testLauncher: TestLauncherService
-
-private val logger = KotlinLogging.logger {  }
 
     override fun call(): Int =
         runBlocking {

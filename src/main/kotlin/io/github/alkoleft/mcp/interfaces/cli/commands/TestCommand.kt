@@ -8,6 +8,8 @@ import picocli.CommandLine.Command
 import picocli.CommandLine.ParentCommand
 import java.util.concurrent.Callable
 
+private val logger = KotlinLogging.logger { }
+
 /**
  * Test command group with subcommands for different test execution modes.
  */
@@ -20,8 +22,6 @@ import java.util.concurrent.Callable
 class TestCommand : Callable<Int> {
     @ParentCommand
     private lateinit var parent: io.github.alkoleft.mcp.interfaces.cli.RunnerCli
-
-private val logger = KotlinLogging.logger {  }
 
     override fun call(): Int {
         logger.info("Use 'test run-all', 'test run-module', or 'test run-list' subcommands")

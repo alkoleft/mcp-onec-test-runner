@@ -88,13 +88,9 @@ class SearchStrategyFactoryTest {
         val strategy = factory.createSearchStrategy()
 
         // Assert
-        assertNotNull(strategy.tier1Locations, "Tier 1 locations should not be null")
-        assertNotNull(strategy.tier2Locations, "Tier 2 locations should not be null")
-        assertNotNull(strategy.tier3Locations, "Tier 3 locations should not be null")
-        
-        assertTrue(strategy.tier1Locations.isNotEmpty(), "Tier 1 locations should not be empty")
-        assertTrue(strategy.tier2Locations.isNotEmpty(), "Tier 2 locations should not be empty")
-        assertTrue(strategy.tier3Locations.isNotEmpty(), "Tier 3 locations should not be empty")
+        assertNotNull(strategy.locations, "Tier 1 locations should not be null")
+
+        assertTrue(strategy.locations.isNotEmpty(), "Tier 1 locations should not be empty")
     }
 
     @Test

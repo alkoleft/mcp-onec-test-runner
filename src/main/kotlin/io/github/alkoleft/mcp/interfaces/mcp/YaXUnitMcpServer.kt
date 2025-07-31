@@ -4,10 +4,9 @@ import io.github.alkoleft.mcp.application.services.TestLauncherService
 import io.github.alkoleft.mcp.core.modules.BuildService
 import io.github.alkoleft.mcp.infrastructure.config.ProjectConfiguration
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.runBlocking
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.ai.tool.annotation.ToolParam
-
-import kotlinx.coroutines.runBlocking
 import org.springframework.stereotype.Service
 import java.nio.file.Paths
 
@@ -33,7 +32,7 @@ class YaXUnitMcpServer(
         description = "Запускает все тесты YaXUnit в проекте. Возвращает подробный отчет о выполнении тестов."
     )
     fun runAllTests(): TestExecutionResult {
-        logger.info("Запуск всех тестов YaXUnit")
+        logger.info { "Запуск всех тестов YaXUnit" }
         
         return runBlocking {
             try {
@@ -51,7 +50,7 @@ class YaXUnitMcpServer(
                     )
                 )
             } catch (e: Exception) {
-                logger.error("Ошибка при запуске всех тестов", e)
+                logger.error(e) { "Ошибка при запуске всех тестов" }
                 TestExecutionResult(
                     success = false,
                     message = "Ошибка при выполнении тестов: ${e.message}",
@@ -77,7 +76,7 @@ class YaXUnitMcpServer(
     fun runModuleTests(
         @ToolParam(description = "Имя модуля для тестирования") moduleName: String
     ): TestExecutionResult {
-        logger.info("Запуск тестов модуля: $moduleName")
+        logger.info { "Запуск тестов модуля: $moduleName" }
         
         return runBlocking {
             try {
@@ -96,7 +95,7 @@ class YaXUnitMcpServer(
                     )
                 )
             } catch (e: Exception) {
-                logger.error("Ошибка при запуске тестов модуля: $moduleName", e)
+                logger.error(e) { "Ошибка при запуске тестов модуля: $moduleName" }
                 TestExecutionResult(
                     success = false,
                     message = "Ошибка при выполнении тестов модуля '$moduleName': ${e.message}",

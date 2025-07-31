@@ -2,10 +2,10 @@ package io.github.alkoleft.mcp.infrastructure.platform.cache
 
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
-import io.github.oshai.kotlinlogging.KotlinLogging
 
 private val logger = KotlinLogging.logger { }
 
@@ -37,10 +37,10 @@ class UtilPathCache {
         val entry = memoryCache[key]
 
         return if (entry?.isValid() == true) {
-            logger.debug("Cache hit for utility: $utility, version: $version")
+            logger.debug { "Cache hit for utility: $utility, version: $version" }
             entry.location
         } else {
-            logger.debug("Cache miss for utility: $utility, version: $version")
+            logger.debug { "Cache miss for utility: $utility, version: $version" }
             null
         }
     }

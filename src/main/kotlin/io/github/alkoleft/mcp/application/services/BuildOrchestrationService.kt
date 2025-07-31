@@ -9,10 +9,10 @@ import io.github.alkoleft.mcp.core.modules.ChangeType
 import io.github.alkoleft.mcp.core.modules.UtilLocator
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import java.nio.file.Files
 import java.nio.file.Path
@@ -38,13 +38,13 @@ class BuildOrchestrationService(
     private val skipThresholdMinutes = 5L // Skip builds if recent successful build
 
     override suspend fun ensureBuild(projectPath: Path): BuildResult {
-        logger.info("Ensuring build is up to date for project: $projectPath")
+        logger.info { "Ensuring build is up to date for project: $projectPath" }
 
         val buildDecision = determineBuildStrategy(projectPath)
 
         return when (buildDecision) {
             is BuildDecision.NO_BUILD_NEEDED -> {
-                logger.info("No build needed - project is up to date")
+                logger.info { "No build needed - project is up to date" }
                 BuildResult(
                     success = true,
                     duration = Duration.ZERO,
@@ -53,17 +53,17 @@ class BuildOrchestrationService(
             }
 
             is BuildDecision.FULL_BUILD -> {
-                logger.info("Performing full build")
+                logger.info { "Performing full build" }
                 performFullBuild(projectPath)
             }
 
             is BuildDecision.INCREMENTAL_BUILD -> {
-                logger.info("Performing incremental build for modules: ${buildDecision.changedModules}")
+                logger.info { "Performing incremental build for modules: ${buildDecision.changedModules}" }
                 performIncrementalBuild(projectPath, buildDecision.changedModules)
             }
 
             is BuildDecision.INCREMENTAL_TESTS -> {
-                logger.info("Only test files changed - minimal build required")
+                logger.info { "Only test files changed - minimal build required" }
                 performTestOnlyBuild(projectPath)
             }
         }
@@ -137,10 +137,10 @@ class BuildOrchestrationService(
         val startTime = Instant.now()
 
         return try {
-            logger.info("Starting full build for project: $projectPath")
+            logger.info { "Starting full build for project: $projectPath" }
 
             // Locate 1C compiler
-            val utilityLocation = utilLocator.locateUtility(UtilityType.COMPILER_1CV8C)
+            val utilityLocation = utilLocator.locateUtility(UtilityType.DESIGNER)
 
             // Execute full compilation
             val buildSuccess = executeBuild(projectPath, utilityLocation, BuildType.FULL)
@@ -153,7 +153,7 @@ class BuildOrchestrationService(
                 buildStateManager.setLastBuildTime(projectPath, System.currentTimeMillis())
 
                 val duration = Duration.between(startTime, Instant.now())
-                logger.info("Full build completed successfully in ${duration.toMillis()}ms")
+                logger.info { "Full build completed successfully in ${duration.toMillis()}ms" }
 
                 BuildResult(
                     success = true,
@@ -187,10 +187,10 @@ class BuildOrchestrationService(
         val startTime = Instant.now()
 
         return try {
-            logger.info("Starting incremental build for modules: $changedModules")
+            logger.info { "Starting incremental build for modules: $changedModules" }
 
             // Locate 1C compiler
-            val utilityLocation = utilLocator.locateUtility(UtilityType.COMPILER_1CV8C)
+            val utilityLocation = utilLocator.locateUtility(UtilityType.DESIGNER)
 
             // Execute incremental compilation
             val buildSuccess = executeBuild(projectPath, utilityLocation, BuildType.INCREMENTAL, changedModules)
@@ -203,7 +203,7 @@ class BuildOrchestrationService(
                 buildStateManager.setLastBuildTime(projectPath, System.currentTimeMillis())
 
                 val duration = Duration.between(startTime, Instant.now())
-                logger.info("Incremental build completed successfully in ${duration.toMillis()}ms")
+                logger.info { "Incremental build completed successfully in ${duration.toMillis()}ms" }
 
                 BuildResult(
                     success = true,
@@ -227,13 +227,13 @@ class BuildOrchestrationService(
         val startTime = Instant.now()
 
         return try {
-            logger.info("Performing test-only build")
+            logger.info { "Performing test-only build" }
 
             // For test-only changes, we might not need full compilation
             // Just ensure test environment is ready
 
             val duration = Duration.between(startTime, Instant.now())
-            logger.info("Test-only build completed in ${duration.toMillis()}ms")
+            logger.info { "Test-only build completed in ${duration.toMillis()}ms" }
 
             BuildResult(
                 success = true,
@@ -241,7 +241,7 @@ class BuildOrchestrationService(
                 buildType = BuildType.SKIP,
             )
         } catch (e: Exception) {
-            logger.error("Test-only build failed", e)
+            logger.error(e) { "Test-only build failed" }
             BuildResult(
                 success = false,
                 duration = Duration.between(startTime, Instant.now()),

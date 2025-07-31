@@ -19,12 +19,11 @@ import io.github.alkoleft.mcp.core.modules.YaXUnitConfigWriter
 import io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult
 import io.github.alkoleft.mcp.core.modules.YaXUnitRunner
 import io.github.alkoleft.mcp.infrastructure.config.ProjectConfiguration
-import kotlinx.coroutines.coroutineScope
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.coroutineScope
 import org.springframework.stereotype.Service
 import java.io.FileInputStream
 import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.Duration
 import java.time.Instant
@@ -165,7 +164,7 @@ class TestLauncherService(
                 logger.debug("Phase 1: Locating 1C utilities")
                 val utilityLocation =
                     utilLocator.locateUtility(
-                        UtilityType.COMPILER_1CV8C,
+                        UtilityType.DESIGNER,
                         request.platformVersion,
                     )
 

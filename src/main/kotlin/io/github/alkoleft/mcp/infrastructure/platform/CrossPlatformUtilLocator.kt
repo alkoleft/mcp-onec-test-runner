@@ -1,6 +1,5 @@
 package io.github.alkoleft.mcp.infrastructure.platform
 
-import io.github.alkoleft.mcp.core.modules.PlatformType
 import io.github.alkoleft.mcp.core.modules.TestExecutionError
 import io.github.alkoleft.mcp.core.modules.UtilLocator
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
@@ -12,11 +11,10 @@ import io.github.alkoleft.mcp.infrastructure.platform.search.SearchStrategy
 import io.github.alkoleft.mcp.infrastructure.platform.search.SearchStrategyFactory
 import io.github.alkoleft.mcp.infrastructure.platform.validation.UtilityValidator
 import io.github.alkoleft.mcp.infrastructure.platform.version.VersionExtractor
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import kotlin.io.path.exists
 import kotlin.io.path.isExecutable
@@ -39,12 +37,12 @@ class CrossPlatformUtilLocator : UtilLocator {
         utility: UtilityType,
         version: String?,
     ): UtilityLocation = coroutineScope {
-        logger.debug("Starting utility location for: $utility, version: $version")
+        logger.debug { "Starting utility location for: $utility, version: $version" }
 
         // Phase 1: Check cache first
         pathCache.getCachedLocation(utility, version)?.let { cached ->
             if (utilityValidator.validateUtility(cached)) {
-                logger.debug("Found cached utility location: ${cached.executablePath}")
+                logger.debug { "Found cached utility location: ${cached.executablePath}" }
                 return@coroutineScope cached
             } else {
                 pathCache.invalidate(utility, version)
@@ -78,20 +76,8 @@ class CrossPlatformUtilLocator : UtilLocator {
         version: String?,
     ): UtilityLocation = withContext(Dispatchers.IO) {
         // Search Tier 1 locations (most common)
-        logger.debug("Searching Tier 1 locations")
-        for (location in strategy.tier1Locations) {
-            searchInLocation(location, utility, version)?.let { return@withContext it }
-        }
-
-        // Search Tier 2 locations (version-specific)
-        logger.debug("Searching Tier 2 locations")
-        for (location in strategy.tier2Locations) {
-            searchInLocation(location, utility, version)?.let { return@withContext it }
-        }
-
-        // Search Tier 3 locations (PATH environment)
-        logger.debug("Searching Tier 3 locations")
-        for (location in strategy.tier3Locations) {
+        logger.debug { "Searching locations" }
+        for (location in strategy.locations) {
             searchInLocation(location, utility, version)?.let { return@withContext it }
         }
 
@@ -111,27 +97,20 @@ class CrossPlatformUtilLocator : UtilLocator {
 
             for (path in paths) {
                 if (path.exists() && path.isExecutable()) {
-                    val detectedVersion = versionExtractor.extractVersion(path)
-
-                    // Check version compatibility if specified
-                    if (version != null && !versionExtractor.isVersionCompatible(detectedVersion, version)) {
-                        continue
-                    }
-
                     val utilityLocation = UtilityLocation(
                         executablePath = path,
-                        version = detectedVersion,
+                        version = version,
                         platformType = platformDetector.current,
                     )
 
-                    logger.debug("Found utility at: $path, version: $detectedVersion")
+                    logger.debug { "Found utility at: $path, version: $version" }
                     return utilityLocation
                 }
             }
 
             return null
         } catch (e: Exception) {
-            logger.debug("Error searching in location ${location.javaClass.simpleName}: ${e.message}")
+            logger.debug { "Error searching in location ${location.javaClass.simpleName}: ${e.message}" }
             return null
         }
     }

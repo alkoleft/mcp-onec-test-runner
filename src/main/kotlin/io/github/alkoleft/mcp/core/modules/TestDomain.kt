@@ -157,9 +157,11 @@ enum class PlatformType {
     MACOS,
 }
 
-enum class UtilityType {
-    COMPILER_1CV8C,
-    INFOBASE_MANAGER_IBCMD,
+enum class UtilityType(val fileName: String) {
+    DESIGNER("1cv8"),
+    INFOBASE_MANAGER_IBCMD("ibcmd"),
+    IBSRV("ibsrv"),
+    THINK_CLIENT("1cv8c"),
 }
 
 // File change detection

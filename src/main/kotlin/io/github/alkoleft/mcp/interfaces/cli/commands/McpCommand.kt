@@ -7,6 +7,8 @@ import picocli.CommandLine.Command
 import picocli.CommandLine.ParentCommand
 import java.util.concurrent.Callable
 
+private val logger = KotlinLogging.logger { }
+
 /**
  * MCP server command - launches the Spring Boot application as MCP server.
  */
@@ -18,8 +20,6 @@ import java.util.concurrent.Callable
 class McpCommand : Callable<Int> {
     @ParentCommand
     private lateinit var parent: io.github.alkoleft.mcp.interfaces.cli.RunnerCli
-
-private val logger = KotlinLogging.logger {  }
 
     override fun call(): Int {
         return try {

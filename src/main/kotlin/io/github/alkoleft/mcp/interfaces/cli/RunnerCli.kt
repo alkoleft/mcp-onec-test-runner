@@ -10,6 +10,8 @@ import picocli.CommandLine.Command
 import picocli.CommandLine.Option
 import java.nio.file.Paths
 
+private val logger = KotlinLogging.logger { }
+
 /**
  * Main CLI entry point for MCP YaXUnit Runner.
  * Provides commands for running MCP server and executing tests.
@@ -90,8 +92,6 @@ class RunnerCli {
         )
 
     companion object {
-        private val logger = KotlinLogging.logger {  }
-        
         /**
          * Parse and execute CLI commands
          */

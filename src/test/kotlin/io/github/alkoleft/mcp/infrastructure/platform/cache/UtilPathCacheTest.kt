@@ -3,12 +3,12 @@ package io.github.alkoleft.mcp.infrastructure.platform.cache
 import io.github.alkoleft.mcp.core.modules.PlatformType
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
+import java.nio.file.Paths
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
-import kotlin.test.assertNotNull
 import kotlin.test.assertNotEquals
-import java.nio.file.Paths
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class UtilPathCacheTest {
 
@@ -16,7 +16,7 @@ class UtilPathCacheTest {
     fun `should store and retrieve cached location successfully`() {
         // Arrange
         val cache = UtilPathCache()
-        val utility = UtilityType.COMPILER_1CV8C
+        val utility = UtilityType.DESIGNER
         val version = "8.3.24"
         val expectedLocation = createTestLocation()
 
@@ -36,7 +36,7 @@ class UtilPathCacheTest {
     fun `should return null for non-existent cache entry`() {
         // Arrange
         val cache = UtilPathCache()
-        val utility = UtilityType.COMPILER_1CV8C
+        val utility = UtilityType.DESIGNER
         val version = "8.3.24"
 
         // Act
@@ -50,7 +50,7 @@ class UtilPathCacheTest {
     fun `should invalidate specific cache entry`() {
         // Arrange
         val cache = UtilPathCache()
-        val utility = UtilityType.COMPILER_1CV8C
+        val utility = UtilityType.DESIGNER
         val version = "8.3.24"
         val location = createTestLocation()
 
@@ -72,7 +72,7 @@ class UtilPathCacheTest {
         val location1 = createTestLocation()
         val location2 = createTestLocation()
 
-        cache.store(UtilityType.COMPILER_1CV8C, "8.3.24", location1)
+        cache.store(UtilityType.DESIGNER, "8.3.24", location1)
         cache.store(UtilityType.INFOBASE_MANAGER_IBCMD, "8.3.25", location2)
         
         assertEquals(2, cache.getCacheSize(), "Cache should contain 2 entries before clearing")
@@ -81,7 +81,7 @@ class UtilPathCacheTest {
         cache.clear()
 
         // Assert
-        val retrieved1 = cache.getCachedLocation(UtilityType.COMPILER_1CV8C, "8.3.24")
+        val retrieved1 = cache.getCachedLocation(UtilityType.DESIGNER, "8.3.24")
         val retrieved2 = cache.getCachedLocation(UtilityType.INFOBASE_MANAGER_IBCMD, "8.3.25")
         
         assertNull(retrieved1, "First cache entry should be cleared")
@@ -93,7 +93,7 @@ class UtilPathCacheTest {
     fun `should handle null version correctly`() {
         // Arrange
         val cache = UtilPathCache()
-        val utility = UtilityType.COMPILER_1CV8C
+        val utility = UtilityType.DESIGNER
         val location = createTestLocation()
 
         // Act
@@ -112,7 +112,7 @@ class UtilPathCacheTest {
         val location = createTestLocation()
 
         // Act
-        cache.store(UtilityType.COMPILER_1CV8C, "8.3.24", location)
+        cache.store(UtilityType.DESIGNER, "8.3.24", location)
         assertEquals(1, cache.getCacheSize(), "Cache should contain 1 entry after first store")
         
         cache.store(UtilityType.INFOBASE_MANAGER_IBCMD, "8.3.25", location)
@@ -130,11 +130,11 @@ class UtilPathCacheTest {
         val location2 = createTestLocation("/test/path/ibcmd")
 
         // Act
-        cache.store(UtilityType.COMPILER_1CV8C, "8.3.24", location1)
+        cache.store(UtilityType.DESIGNER, "8.3.24", location1)
         cache.store(UtilityType.INFOBASE_MANAGER_IBCMD, "8.3.24", location2)
 
         // Assert
-        val retrieved1 = cache.getCachedLocation(UtilityType.COMPILER_1CV8C, "8.3.24")
+        val retrieved1 = cache.getCachedLocation(UtilityType.DESIGNER, "8.3.24")
         val retrieved2 = cache.getCachedLocation(UtilityType.INFOBASE_MANAGER_IBCMD, "8.3.24")
         
         assertNotNull(retrieved1, "First utility should be cached")
@@ -150,12 +150,12 @@ class UtilPathCacheTest {
         val location2 = createTestLocation("/test/path/1cv8c", "8.3.25")
 
         // Act
-        cache.store(UtilityType.COMPILER_1CV8C, "8.3.24", location1)
-        cache.store(UtilityType.COMPILER_1CV8C, "8.3.25", location2)
+        cache.store(UtilityType.DESIGNER, "8.3.24", location1)
+        cache.store(UtilityType.DESIGNER, "8.3.25", location2)
 
         // Assert
-        val retrieved1 = cache.getCachedLocation(UtilityType.COMPILER_1CV8C, "8.3.24")
-        val retrieved2 = cache.getCachedLocation(UtilityType.COMPILER_1CV8C, "8.3.25")
+        val retrieved1 = cache.getCachedLocation(UtilityType.DESIGNER, "8.3.24")
+        val retrieved2 = cache.getCachedLocation(UtilityType.DESIGNER, "8.3.25")
         
         assertNotNull(retrieved1, "First version should be cached")
         assertNotNull(retrieved2, "Second version should be cached")
