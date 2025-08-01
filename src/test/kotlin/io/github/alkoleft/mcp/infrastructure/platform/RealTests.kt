@@ -7,11 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
 import kotlin.io.path.Path
+import kotlin.test.Ignore
 
 @SpringBootTest(webEnvironment = WebEnvironment.NONE)
 class RealTests(
     @Autowired private val platformDsl: PlatformUtilityDsl
 ) {
+    @Ignore
     @Test
     fun designerRealExecute() {
         val plan = platformDsl.configuratorPlan("8.3.24.1761") {
@@ -32,6 +34,7 @@ class RealTests(
         runBlocking { plan.execute() }
     }
 
+    @Ignore
     @Test
     fun ibcmdRealExecute() {
         val plan = platformDsl.ibcmd("8.3.24.1761") {

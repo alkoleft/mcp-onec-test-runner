@@ -43,7 +43,7 @@ class RunListCommand : Callable<Int> {
     override fun call(): Int =
         runBlocking {
             return@runBlocking try {
-                logger.info("Running specific tests: ${testNames.joinToString(", ")}")
+                logger.info { "Running specific tests: ${testNames.joinToString(", ")}" }
 
                 // Get configuration from parent commands
                 val parentCli =
@@ -71,11 +71,11 @@ class RunListCommand : Callable<Int> {
                         testNames = testNames.toList(),
                     )
 
-                logger.info("Executing test list with configuration:")
-                logger.info("  Project: ${config.projectPath}")
-                logger.info("  Tests: ${config.testsPath}")
-                logger.info("  Test Names: ${testNames.joinToString(", ")}")
-                logger.info("  Platform: ${config.platformVersion ?: "auto-detect"}")
+                logger.info { "Executing test list with configuration:" }
+                logger.info { "  Project: ${config.projectPath}" }
+                logger.info { "  Tests: ${config.testsPath}" }
+                logger.info { "  Test Names: ${testNames.joinToString(", ")}" }
+                logger.info { "  Platform: ${config.platformVersion ?: "auto-detect"}" }
 
                 val result = testLauncher.runList(request)
 
@@ -83,14 +83,14 @@ class RunListCommand : Callable<Int> {
                 printTestResults(result, testNames.toList())
 
                 if (result.success) {
-                    logger.info("Test list completed successfully")
+                    logger.info { "Test list completed successfully" }
                     0
                 } else {
                     logger.error("Test list failed: ${result.error?.message ?: "Unknown error"}")
                     1
                 }
             } catch (e: Exception) {
-                logger.error("Failed to run test list", e)
+                logger.error(e) { "${"Failed to run test list"}" }
                 1
             }
         }

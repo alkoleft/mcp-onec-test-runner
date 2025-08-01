@@ -45,7 +45,7 @@ class TestLauncherService(
 ) : TestLauncher {
 
     override suspend fun runAll(request: RunAllTestsRequest): TestExecutionResult {
-        logger.info("Starting full test execution for project: ${request.projectPath}")
+        logger.info { "Starting full test execution for project: ${request.projectPath}" }
 
         return executeTestWorkflow(request) { utilityLocation, configPath ->
             yaXUnitRunner.executeTests(utilityLocation, configPath, request)
@@ -53,7 +53,7 @@ class TestLauncherService(
     }
 
     override suspend fun runModule(request: RunModuleTestsRequest): TestExecutionResult {
-        logger.info("Starting module test execution for: ${request.moduleName} in project: ${request.projectPath}")
+        logger.info { "Starting module test execution for: ${request.moduleName} in project: ${request.projectPath}" }
 
         return executeTestWorkflow(request) { utilityLocation, configPath ->
             yaXUnitRunner.executeTests(utilityLocation, configPath, request)
@@ -61,7 +61,7 @@ class TestLauncherService(
     }
 
     override suspend fun runList(request: RunListTestsRequest): TestExecutionResult {
-        logger.info("Starting specific tests execution for: ${request.testNames} in project: ${request.projectPath}")
+        logger.info { "Starting specific tests execution for: ${request.testNames} in project: ${request.projectPath}" }
 
         return executeTestWorkflow(request) { utilityLocation, configPath ->
             yaXUnitRunner.executeTests(utilityLocation, configPath, request)
@@ -78,7 +78,7 @@ class TestLauncherService(
         val ibConnection = projectConfiguration.informationBase?.connection ?: ""
         val platformVersion = projectConfiguration.platform.version
 
-        logger.info("Starting full test execution using project configuration")
+        logger.info { "Starting full test execution using project configuration" }
 
         val request = RunAllTestsRequest(
             projectPath = projectPath,
@@ -103,7 +103,7 @@ class TestLauncherService(
         val ibConnection = projectConfiguration.informationBase?.connection ?: ""
         val platformVersion = projectConfiguration.platform.version
 
-        logger.info("Starting module test execution for: $moduleName using project configuration")
+        logger.info { "Starting module test execution for: $moduleName using project configuration" }
 
         val request = RunModuleTestsRequest(
             projectPath = projectPath,
@@ -129,7 +129,7 @@ class TestLauncherService(
         val ibConnection = projectConfiguration.informationBase?.connection ?: ""
         val platformVersion = projectConfiguration.platform.version
 
-        logger.info("Starting specific tests execution for: $testNames using project configuration")
+        logger.info { "Starting specific tests execution for: $testNames using project configuration" }
 
         val request = RunListTestsRequest(
             projectPath = projectPath,
@@ -161,7 +161,7 @@ class TestLauncherService(
 
             try {
                 // Phase 1: Locate 1C utilities
-                logger.debug("Phase 1: Locating 1C utilities")
+                logger.debug { "Phase 1: Locating 1C utilities" }
                 val utilityLocation =
                     utilLocator.locateUtility(
                         UtilityType.DESIGNER,
@@ -178,7 +178,7 @@ class TestLauncherService(
                 }
 
                 // Phase 2: Ensure build is up to date
-                logger.debug("Phase 2: Ensuring build is up to date")
+                logger.debug { "Phase 2: Ensuring build is up to date" }
                 val buildResult = buildService.ensureBuild(request.projectPath)
 
                 if (!buildResult.success) {
@@ -191,12 +191,12 @@ class TestLauncherService(
                 }
 
                 // Phase 3: Create YAXUnit configuration
-                logger.debug("Phase 3: Creating YAXUnit configuration")
+                logger.debug { "Phase 3: Creating YAXUnit configuration" }
                 val configPath = yaXUnitConfigWriter.createTempConfig(request)
 
                 try {
                     // Phase 4: Execute tests
-                    logger.debug("Phase 4: Executing tests with YAXUnit")
+                    logger.debug { "Phase 4: Executing tests with YAXUnit" }
                     val executionResult = testExecution(utilityLocation, configPath)
 
                     if (!executionResult.success) {
@@ -212,11 +212,11 @@ class TestLauncherService(
                     }
 
                     // Phase 5: Parse test results
-                    logger.debug("Phase 5: Parsing test results")
+                    logger.debug { "Phase 5: Parsing test results" }
                     val report = parseTestReport(executionResult.reportPath)
 
                     val totalDuration = Duration.between(startTime, Instant.now())
-                    logger.info("Test execution completed successfully in ${totalDuration.toMillis()}ms")
+                    logger.info { "Test execution completed successfully in ${totalDuration.toMillis()}ms" }
 
                     TestExecutionResult(
                         success = true,
@@ -228,7 +228,7 @@ class TestLauncherService(
                     cleanupTempFiles(configPath)
                 }
             } catch (e: Exception) {
-                logger.error("Test execution failed with exception", e)
+                logger.error(e) { "${"Test execution failed with exception"}" }
 
                 TestExecutionResult(
                     success = false,
@@ -259,7 +259,7 @@ class TestLauncherService(
                 }
             }
         } catch (e: Exception) {
-            logger.error("Failed to parse test report from: $reportPath", e)
+            logger.error(e) { "${"Failed to parse test report from: $reportPath"}" }
             throw TestExecutionError.ReportParsingFailed("Report parsing failed: ${e.message}")
         }
     }
@@ -290,7 +290,7 @@ class TestLauncherService(
         try {
             if (Files.exists(configPath)) {
                 Files.delete(configPath)
-                logger.debug("Cleaned up temporary config file: $configPath")
+                logger.debug { "Cleaned up temporary config file: $configPath" }
             }
         } catch (e: Exception) {
             logger.warn("Failed to cleanup temporary file: $configPath", e)

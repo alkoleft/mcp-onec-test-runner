@@ -107,7 +107,7 @@ class RunnerCli {
             return try {
                 commandLine.execute(*args)
             } catch (e: Exception) {
-                logger.error("CLI execution failed", e)
+                logger.error(e) { "${"CLI execution failed"}" }
                 1
             }
         }

@@ -34,15 +34,15 @@ class YaXUnitWebSocketHandler(
     private val objectMapper = jacksonObjectMapper()
 
     override fun handle(session: WebSocketSession): Mono<Void> {
-        logger.info("WebSocket connection established: ${session.id}")
+        logger.info { "WebSocket connection established: ${session.id}" }
 
         return session
             .receive()
             .map { message -> message.payloadAsText }
-            .doOnNext { payload -> logger.debug("Received WebSocket message: $payload") }
+            .doOnNext { payload -> logger.debug { "Received WebSocket message: $payload" } }
             .flatMap { payload -> processTestRequest(session, payload) }
-            .doOnError { error -> logger.error("WebSocket error for session ${session.id}", error) }
-            .doFinally { logger.info("WebSocket connection closed: ${session.id}") }
+            .doOnError { error -> logger.error(error) { "${"WebSocket error for session ${session.id}"}" } }
+            .doFinally { logger.info { "WebSocket connection closed: ${session.id}" } }
             .then()
     }
 
@@ -53,7 +53,7 @@ class YaXUnitWebSocketHandler(
         mono {
             try {
                 val request = objectMapper.readValue(payload, WebSocketTestRequest::class.java)
-                logger.info("Processing WebSocket test request for session ${session.id}")
+                logger.info { "Processing WebSocket test request for session ${session.id}" }
 
                 // Send acknowledgment
                 WebSocketTestResponse(
@@ -66,7 +66,7 @@ class YaXUnitWebSocketHandler(
                 // Execute tests and stream results
                 executeTestsWithStreaming(session, request)
             } catch (e: Exception) {
-                logger.error("Failed to process WebSocket test request", e)
+                logger.error(e) { "${"Failed to process WebSocket test request"}" }
 
                 val errorMessage =
                     WebSocketTestResponse(
@@ -173,7 +173,7 @@ class YaXUnitWebSocketHandler(
                 )
             messages.add(session.textMessage(objectMapper.writeValueAsString(completionMessage)))
         } catch (e: Exception) {
-            logger.error("WebSocket test execution failed", e)
+            logger.error(e) { "${"WebSocket test execution failed"}" }
 
             val errorMessage =
                 WebSocketTestResponse(

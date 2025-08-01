@@ -42,7 +42,7 @@ class RunModuleCommand : Callable<Int> {
     override fun call(): Int =
         runBlocking {
             return@runBlocking try {
-                logger.info("Running tests for module: $moduleName")
+                logger.info { "Running tests for module: $moduleName" }
 
                 // Get configuration from parent commands
                 val parentCli =
@@ -70,11 +70,11 @@ class RunModuleCommand : Callable<Int> {
                         moduleName = moduleName,
                     )
 
-                logger.info("Executing module tests with configuration:")
-                logger.info("  Project: ${config.projectPath}")
-                logger.info("  Tests: ${config.testsPath}")
-                logger.info("  Module: $moduleName")
-                logger.info("  Platform: ${config.platformVersion ?: "auto-detect"}")
+                logger.info { "Executing module tests with configuration:" }
+                logger.info { "  Project: ${config.projectPath}" }
+                logger.info { "  Tests: ${config.testsPath}" }
+                logger.info { "  Module: $moduleName" }
+                logger.info { "  Platform: ${config.platformVersion ?: "auto-detect"}" }
 
                 val result = testLauncher.runModule(request)
 
@@ -82,14 +82,14 @@ class RunModuleCommand : Callable<Int> {
                 printTestResults(result, moduleName)
 
                 if (result.success) {
-                    logger.info("Module tests completed successfully")
+                    logger.info { "Module tests completed successfully" }
                     0
                 } else {
                     logger.error("Module tests failed: ${result.error?.message ?: "Unknown error"}")
                     1
                 }
             } catch (e: Exception) {
-                logger.error("Failed to run module tests", e)
+                logger.error(e) { "${"Failed to run module tests"}" }
                 1
             }
         }

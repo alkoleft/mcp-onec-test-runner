@@ -24,7 +24,7 @@ class TestCommand : Callable<Int> {
     private lateinit var parent: io.github.alkoleft.mcp.interfaces.cli.RunnerCli
 
     override fun call(): Int {
-        logger.info("Use 'test run-all', 'test run-module', or 'test run-list' subcommands")
+        logger.info { "Use 'test run-all', 'test run-module', or 'test run-list' subcommands" }
         return 0
     }
 }

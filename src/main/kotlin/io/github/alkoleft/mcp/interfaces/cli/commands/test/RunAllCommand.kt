@@ -34,7 +34,7 @@ class RunAllCommand : Callable<Int> {
     override fun call(): Int =
         runBlocking {
             return@runBlocking try {
-                logger.info("Running all tests...")
+                logger.info { "Running all tests..." }
 
                 // Get configuration from parent commands
                 val parentCli =
@@ -61,10 +61,10 @@ class RunAllCommand : Callable<Int> {
                         platformVersion = config.platformVersion,
                     )
 
-                logger.info("Executing all tests with configuration:")
-                logger.info("  Project: ${config.projectPath}")
-                logger.info("  Tests: ${config.testsPath}")
-                logger.info("  Platform: ${config.platformVersion ?: "auto-detect"}")
+                logger.info { "Executing all tests with configuration:" }
+                logger.info { "  Project: ${config.projectPath}" }
+                logger.info { "  Tests: ${config.testsPath}" }
+                logger.info { "  Platform: ${config.platformVersion ?: "auto-detect"}" }
 
                 val result = testLauncher.runAll(request)
 
@@ -72,14 +72,14 @@ class RunAllCommand : Callable<Int> {
                 printTestResults(result)
 
                 if (result.success) {
-                    logger.info("All tests completed successfully")
+                    logger.info { "All tests completed successfully" }
                     0
                 } else {
                     logger.error("Tests failed: ${result.error?.message ?: "Unknown error"}")
                     1
                 }
             } catch (e: Exception) {
-                logger.error("Failed to run tests", e)
+                logger.error(e) { "${"Failed to run tests"}" }
                 1
             }
         }

@@ -31,7 +31,7 @@ class YaxUnitMcpServer(
         platformVersion: String? = null,
     ): McpTestResult =
         runBlocking {
-            logger.info("MCP runAll command received - projectPath: $projectPath, ibConnection: $ibConnection")
+            logger.info { "MCP runAll command received - projectPath: $projectPath, ibConnection: $ibConnection" }
 
             try {
                 val request =
@@ -71,7 +71,7 @@ class YaxUnitMcpServer(
                     error = result.error?.message,
                 )
             } catch (e: Exception) {
-                logger.error("MCP runAll command failed", e)
+                logger.error(e) { "${"MCP runAll command failed"}" }
 
                 McpTestResult(
                     success = false,
@@ -94,7 +94,7 @@ class YaxUnitMcpServer(
         platformVersion: String? = null,
     ): McpTestResult =
         runBlocking {
-            logger.info("MCP runModule command received - projectPath: $projectPath, module: $moduleName")
+            logger.info { "MCP runModule command received - projectPath: $projectPath, module: $moduleName" }
 
             try {
                 val request =
@@ -135,7 +135,7 @@ class YaxUnitMcpServer(
                     error = result.error?.message,
                 )
             } catch (e: Exception) {
-                logger.error("MCP runModule command failed", e)
+                logger.error(e) { "${"MCP runModule command failed"}" }
 
                 McpTestResult(
                     success = false,
@@ -158,7 +158,7 @@ class YaxUnitMcpServer(
         platformVersion: String? = null,
     ): McpTestResult =
         runBlocking {
-            logger.info("MCP runList command received - projectPath: $projectPath, tests: ${testNames.size}")
+            logger.info { "MCP runList command received - projectPath: $projectPath, tests: ${testNames.size}" }
 
             try {
                 val request =
@@ -199,7 +199,7 @@ class YaxUnitMcpServer(
                     error = result.error?.message,
                 )
             } catch (e: Exception) {
-                logger.error("MCP runList command failed", e)
+                logger.error(e) { "${"MCP runList command failed"}" }
 
                 McpTestResult(
                     success = false,
@@ -216,7 +216,7 @@ class YaxUnitMcpServer(
      */
     fun getProjectInfo(projectPath: String): McpProjectInfo =
         runBlocking {
-            logger.info("MCP getProjectInfo command received - projectPath: $projectPath")
+            logger.info { "MCP getProjectInfo command received - projectPath: $projectPath" }
 
             try {
                 val path = Paths.get(projectPath)
@@ -238,7 +238,7 @@ class YaxUnitMcpServer(
                         ),
                 )
             } catch (e: Exception) {
-                logger.error("MCP getProjectInfo command failed", e)
+                logger.error(e) { "${"MCP getProjectInfo command failed"}" }
 
                 McpProjectInfo(
                     projectPath = projectPath,

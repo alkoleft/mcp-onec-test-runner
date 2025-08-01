@@ -38,7 +38,7 @@ class JsonYaXUnitConfigWriter : YaXUnitConfigWriter {
         outputPath: Path,
     ): Path =
         withContext(Dispatchers.IO) {
-            logger.debug("Writing YAXUnit configuration to: $outputPath")
+            logger.debug { "Writing YAXUnit configuration to: $outputPath" }
 
             try {
                 // Ensure output directory exists
@@ -56,10 +56,10 @@ class JsonYaXUnitConfigWriter : YaXUnitConfigWriter {
                     StandardOpenOption.TRUNCATE_EXISTING,
                 )
 
-                logger.info("YAXUnit configuration written successfully: $outputPath")
+                logger.info { "YAXUnit configuration written successfully: $outputPath" }
                 return@withContext outputPath
             } catch (e: Exception) {
-                logger.error("Failed to write YAXUnit configuration", e)
+                logger.error(e) { "Failed to write YAXUnit configuration" }
                 throw TestExecutionError.TestRunFailed("Configuration write failed: ${e.message}")
             }
         }
@@ -291,7 +291,7 @@ class JsonYaXUnitConfigWriter : YaXUnitConfigWriter {
     private suspend fun discoverTestModules(testsPath: Path): List<DiscoveredTestModule> =
         withContext(Dispatchers.IO) {
             if (!Files.exists(testsPath)) {
-                logger.warn("Tests directory does not exist: $testsPath")
+                logger.warn { "Tests directory does not exist: $testsPath" }
                 return@withContext emptyList()
             }
 
@@ -321,10 +321,10 @@ class JsonYaXUnitConfigWriter : YaXUnitConfigWriter {
                     }
                 }
             } catch (e: Exception) {
-                logger.error("Failed to discover test modules in: $testsPath", e)
+                logger.error(e) { "Failed to discover test modules in: $testsPath" }
             }
 
-            logger.debug("Discovered ${modules.size} test modules in: $testsPath")
+            logger.debug { "Discovered ${modules.size} test modules in: $testsPath" }
             modules
         }
 
@@ -373,7 +373,7 @@ class JsonYaXUnitConfigWriter : YaXUnitConfigWriter {
 
                 testMethods
             } catch (e: Exception) {
-                logger.debug("Failed to extract test methods from: $testFile", e)
+                logger.debug(e) { "Failed to extract test methods from: $testFile" }
                 emptyList()
             }
         }

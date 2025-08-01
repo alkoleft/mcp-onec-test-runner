@@ -23,7 +23,7 @@ class McpCommand : Callable<Int> {
 
     override fun call(): Int {
         return try {
-            logger.info("Starting MCP YaXUnit Runner server...")
+            logger.info { "Starting MCP YaXUnit Runner server..." }
 
             val config = parent.createConfiguration()
             val errors = config.validate()
@@ -34,7 +34,7 @@ class McpCommand : Callable<Int> {
                 return 1
             }
 
-            logger.info("Configuration:\n${config.summary()}")
+            logger.info { "Configuration:\n${config.summary()}" }
 
             // Set system properties for Spring Boot application
             System.setProperty("app.project.path", config.projectPath.toString())
@@ -53,15 +53,15 @@ class McpCommand : Callable<Int> {
                 System.setProperty("logging.file.name", logFile.toString())
             }
 
-            logger.info("MCP server starting on stdio transport...")
+            logger.info { "MCP server starting on stdio transport..." }
             val context = app.run()
 
-            logger.info("MCP server started successfully. Waiting for MCP protocol messages...")
+            logger.info { "MCP server started successfully. Waiting for MCP protocol messages..." }
 
             // Keep the application running
             val shutdownHook =
                 Thread {
-                    logger.info("Shutting down MCP server...")
+                    logger.info { "Shutting down MCP server..." }
                     context.close()
                 }
             Runtime.getRuntime().addShutdownHook(shutdownHook)
@@ -71,7 +71,7 @@ class McpCommand : Callable<Int> {
 
             0
         } catch (e: Exception) {
-            logger.error("Failed to start MCP server", e)
+            logger.error(e) { "${"Failed to start MCP server"}" }
             1
         }
     }

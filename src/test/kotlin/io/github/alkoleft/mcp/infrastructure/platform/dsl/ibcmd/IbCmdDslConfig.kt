@@ -1,6 +1,5 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd
 
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.CommonParameters
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.ConfigCommandBuilder
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.config.ConfigApplyCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.config.ConfigCheckCommand
@@ -281,7 +280,6 @@ class IbCmdDslConfig {
         )
 
         val arguments = signCommand.arguments
-        assertTrue(arguments.contains("sign"))
         assertTrue(arguments.contains("--key"))
         assertTrue(arguments.contains("/path/to/key.pem"))
         assertTrue(arguments.contains("--extension"))

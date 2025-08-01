@@ -37,15 +37,15 @@ class FileBuildStateManager(
     override suspend fun checkChanges(projectPath: Path): Map<Path, ChangeType> =
         coroutineScope {
             val startTime = Instant.now()
-            logger.debug("Starting Enhanced Hybrid Hash Detection for project: $projectPath")
+            logger.debug { "Starting Enhanced Hybrid Hash Detection for project: $projectPath" }
 
             try {
                 // Phase 1: Fast timestamp pre-scan
                 val candidateFiles = scanForPotentialChanges(projectPath)
-                logger.debug("Phase 1: Found ${candidateFiles.size} potential changes after timestamp scan")
+                logger.debug { "Phase 1: Found ${candidateFiles.size} potential changes after timestamp scan" }
 
                 if (candidateFiles.isEmpty()) {
-                    logger.debug("No potential changes detected - skipping hash verification")
+                    logger.debug { "No potential changes detected - skipping hash verification" }
                     return@coroutineScope emptyMap()
                 }
 
@@ -53,13 +53,11 @@ class FileBuildStateManager(
                 val actualChanges = verifyChangesWithHashes(candidateFiles)
 
                 val duration = java.time.Duration.between(startTime, Instant.now())
-                logger.info(
-                    "Change detection completed in ${duration.toMillis()}ms: ${actualChanges.size} actual changes from ${candidateFiles.size} candidates",
-                )
+                logger.info { "Change detection completed in ${duration.toMillis()}ms: ${actualChanges.size} actual changes from ${candidateFiles.size} candidates" }
 
                 actualChanges
             } catch (e: Exception) {
-                logger.error("Error during change detection", e)
+                logger.error(e) { "Error during change detection" }
                 // Fallback: treat all source files as changed
                 getAllSourceFiles(projectPath).associateWith { ChangeType.MODIFIED }
             }
@@ -69,13 +67,13 @@ class FileBuildStateManager(
         projectPath: Path,
         files: Map<Path, String>,
     ) {
-        logger.debug("Updating hashes for ${files.size} files")
+        logger.debug { "Updating hashes for ${files.size} files" }
 
         try {
             hashStorage.batchUpdate(files)
-            logger.debug("Successfully updated ${files.size} file hashes")
+            logger.debug { "Successfully updated ${files.size} file hashes" }
         } catch (e: Exception) {
-            logger.error("Failed to update file hashes", e)
+            logger.error(e) { "Failed to update file hashes" }
             throw e
         }
     }
@@ -89,7 +87,7 @@ class FileBuildStateManager(
                 null
             }
         } catch (e: Exception) {
-            logger.debug("Failed to get last build time for $projectPath", e)
+            logger.debug(e) { "Failed to get last build time for $projectPath" }
             null
         }
 
@@ -102,9 +100,9 @@ class FileBuildStateManager(
                 val buildMarkerFile = projectPath.resolve(".yaxunit/last-build-time")
                 Files.createDirectories(buildMarkerFile.parent)
                 Files.writeString(buildMarkerFile, timestamp.toString())
-                logger.debug("Updated last build time to $timestamp for project: $projectPath")
+                logger.debug { "Updated last build time to $timestamp for project: $projectPath" }
             } catch (e: Exception) {
-                logger.error("Failed to set last build time for $projectPath", e)
+                logger.error(e) { "Failed to set last build time for $projectPath" }
                 throw e
             }
         }
@@ -115,7 +113,7 @@ class FileBuildStateManager(
      */
     private suspend fun scanForPotentialChanges(projectPath: Path): Set<Path> =
         withContext(Dispatchers.IO) {
-            logger.debug("Scanning for timestamp changes in: $projectPath")
+            logger.debug { "Scanning for timestamp changes in: $projectPath" }
 
             val potentialChanges = mutableSetOf<Path>()
             val sourceFiles = getAllSourceFiles(projectPath)
@@ -129,17 +127,17 @@ class FileBuildStateManager(
                         storedTimestamp == null -> {
                             // New file
                             potentialChanges.add(file)
-                            logger.trace("New file detected: $file")
+                            logger.trace { "New file detected: $file" }
                         }
 
                         currentTimestamp > storedTimestamp -> {
                             // Potentially modified file
                             potentialChanges.add(file)
-                            logger.trace("Potentially modified file: $file (current: $currentTimestamp, stored: $storedTimestamp)")
+                            logger.trace { "Potentially modified file: $file (current: $currentTimestamp, stored: $storedTimestamp)" }
                         }
                     }
                 } catch (e: Exception) {
-                    logger.debug("Error checking timestamp for file: $file", e)
+                    logger.debug(e) { "Error checking timestamp for file: $file" }
                     potentialChanges.add(file) // Include in potential changes if we can't verify
                 }
             }
@@ -152,7 +150,7 @@ class FileBuildStateManager(
      */
     private suspend fun verifyChangesWithHashes(candidates: Set<Path>): Map<Path, ChangeType> =
         coroutineScope {
-            logger.debug("Verifying ${candidates.size} potential changes with hash calculation")
+            logger.debug { "Verifying ${candidates.size} potential changes with hash calculation" }
 
             // Process files in batches to avoid overwhelming the system
             val batchSize = maxConcurrentHashCalculations
@@ -175,7 +173,7 @@ class FileBuildStateManager(
                 }
             }
 
-            logger.debug("Hash verification completed: ${results.size} actual changes detected")
+            logger.debug { "Hash verification completed: ${results.size} actual changes detected" }
             results
         }
 
@@ -190,22 +188,22 @@ class FileBuildStateManager(
 
                 when {
                     storedHash == null -> {
-                        logger.trace("New file confirmed: $file")
+                        logger.trace { "New file confirmed: $file" }
                         ChangeType.NEW
                     }
 
                     currentHash != storedHash -> {
-                        logger.trace("Modified file confirmed: $file")
+                        logger.trace { "Modified file confirmed: $file" }
                         ChangeType.MODIFIED
                     }
 
                     else -> {
-                        logger.trace("File unchanged: $file")
+                        logger.trace { "File unchanged: $file" }
                         ChangeType.UNCHANGED
                     }
                 }
             } catch (e: Exception) {
-                logger.debug("Error verifying file change: $file", e)
+                logger.debug(e) { "Error verifying file change: $file" }
                 ChangeType.MODIFIED // Assume modified if we can't verify
             }
         }
@@ -228,7 +226,7 @@ class FileBuildStateManager(
 
                 digest.digest().joinToString("") { "%02x".format(it) }
             } catch (e: Exception) {
-                logger.debug("Failed to calculate hash for file: $file", e)
+                logger.debug(e) { "Failed to calculate hash for file: $file" }
                 throw e
             }
         }
@@ -240,7 +238,7 @@ class FileBuildStateManager(
         withContext(Dispatchers.IO) {
             try {
                 if (!Files.exists(projectPath)) {
-                    logger.warn("Project path does not exist: $projectPath")
+                    logger.warn { "Project path does not exist: $projectPath" }
                     return@withContext emptyList()
                 }
 
@@ -251,7 +249,7 @@ class FileBuildStateManager(
                     .filter { !isIgnoredPath(it, projectPath) }
                     .toList()
             } catch (e: Exception) {
-                logger.error("Error scanning source files in: $projectPath", e)
+                logger.error(e) { "Error scanning source files in: $projectPath" }
                 emptyList()
             }
         }
@@ -306,7 +304,7 @@ class FileBuildStateManager(
                     unchangedFiles = allFiles.size - changes.size,
                 )
             } catch (e: Exception) {
-                logger.error("Error calculating change statistics", e)
+                logger.error(e) { "Error calculating change statistics" }
                 ChangeStatistics(0, 0, 0, 0, 0)
             }
         }

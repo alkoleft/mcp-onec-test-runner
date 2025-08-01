@@ -38,18 +38,18 @@ class ProcessYaXUnitRunner : YaXUnitRunner {
     ): YaXUnitExecutionResult =
         withContext(Dispatchers.IO) {
             val startTime = Instant.now()
-            logger.info("Starting YAXUnit test execution with utility: ${utilityLocation.executablePath}")
+            logger.info { "Starting YAXUnit test execution with utility: ${utilityLocation.executablePath}" }
 
             try {
                 // Prepare execution parameters
                 val executionParams = prepareExecutionParameters(utilityLocation, configPath, request)
-                logger.debug("Execution command: ${executionParams.command.joinToString(" ")}")
+                logger.debug { "Execution command: ${executionParams.command.joinToString(" ")}" }
 
                 // Execute the 1C process
                 val processResult = executeProcess(executionParams)
 
                 val duration = Duration.between(startTime, Instant.now())
-                logger.info("YAXUnit execution completed in ${duration.toMillis()}ms with exit code: ${processResult.exitCode}")
+                logger.info { "YAXUnit execution completed in ${duration.toMillis()}ms with exit code: ${processResult.exitCode}" }
 
                 // Determine report path
                 val reportPath = findGeneratedReport(request.projectPath, request.testsPath)
@@ -63,7 +63,7 @@ class ProcessYaXUnitRunner : YaXUnitRunner {
                     duration = duration,
                 )
             } catch (e: Exception) {
-                logger.error("YAXUnit execution failed", e)
+                logger.error(e) { "YAXUnit execution failed" }
 
                 val duration = Duration.between(startTime, Instant.now())
                 YaXUnitExecutionResult(
@@ -194,8 +194,8 @@ class ProcessYaXUnitRunner : YaXUnitRunner {
      */
     private suspend fun executeProcess(params: ExecutionParameters): ProcessExecutionResult =
         withContext(Dispatchers.IO) {
-            logger.debug("Executing process in directory: ${params.workingDirectory}")
-            logger.debug("Process timeout: ${params.timeout.toMinutes()} minutes")
+            logger.debug { "Executing process in directory: ${params.workingDirectory}" }
+            logger.debug { "Process timeout: ${params.timeout.toMinutes()} minutes" }
 
             val processBuilder =
                 ProcessBuilder(params.command)
@@ -209,7 +209,7 @@ class ProcessYaXUnitRunner : YaXUnitRunner {
                 try {
                     processBuilder.start()
                 } catch (e: Exception) {
-                    logger.error("Failed to start 1C process", e)
+                    logger.error(e) { "Failed to start 1C process" }
                     throw TestExecutionError.TestRunFailed("Process start failed: ${e.message}")
                 }
 
@@ -220,7 +220,7 @@ class ProcessYaXUnitRunner : YaXUnitRunner {
                 } ?: false
 
             if (!processCompleted) {
-                logger.warn("Process execution timed out after ${params.timeout.toMinutes()} minutes")
+                logger.warn { "Process execution timed out after ${params.timeout.toMinutes()} minutes" }
                 process.destroyForcibly()
 
                 return@withContext ProcessExecutionResult(
@@ -238,7 +238,7 @@ class ProcessYaXUnitRunner : YaXUnitRunner {
                         .readText()
                         .trim()
                 } catch (e: Exception) {
-                    logger.debug("Failed to read standard output", e)
+                    logger.debug(e) { "Failed to read standard output" }
                     ""
                 }
 
@@ -249,18 +249,18 @@ class ProcessYaXUnitRunner : YaXUnitRunner {
                         .readText()
                         .trim()
                 } catch (e: Exception) {
-                    logger.debug("Failed to read error output", e)
+                    logger.debug(e) { "Failed to read error output" }
                     ""
                 }
 
             val exitCode = process.exitValue()
 
-            logger.debug("Process completed with exit code: $exitCode")
+            logger.debug { "Process completed with exit code: $exitCode" }
             if (standardOutput.isNotBlank()) {
-                logger.debug("Standard output: $standardOutput")
+                logger.debug { "Standard output: $standardOutput" }
             }
             if (errorOutput.isNotBlank()) {
-                logger.debug("Error output: $errorOutput")
+                logger.debug { "Error output: $errorOutput" }
             }
 
             ProcessExecutionResult(
@@ -290,12 +290,12 @@ class ProcessYaXUnitRunner : YaXUnitRunner {
 
             for (reportPath in possibleReportPaths) {
                 if (Files.exists(reportPath) && Files.size(reportPath) > 0) {
-                    logger.debug("Found test report at: $reportPath")
+                    logger.debug { "Found test report at: $reportPath" }
                     return@withContext reportPath
                 }
             }
 
-            logger.warn("No test report found in expected locations")
+            logger.warn { "No test report found in expected locations" }
             return@withContext null
         }
 
@@ -316,17 +316,17 @@ class ProcessYaXUnitRunner : YaXUnitRunner {
 
                 if (!completed) {
                     process.destroyForcibly()
-                    logger.debug("Utility validation timed out")
+                    logger.debug { "Utility validation timed out" }
                     return@withContext false
                 }
 
                 val exitCode = process.exitValue()
-                logger.debug("Utility validation completed with exit code: $exitCode")
+                logger.debug { "Utility validation completed with exit code: $exitCode" }
 
                 // For 1C utilities, exit codes 0, 1, or 2 are typically acceptable for help command
                 exitCode in 0..2
             } catch (e: Exception) {
-                logger.debug("Utility validation failed", e)
+                logger.debug(e) { "Utility validation failed" }
                 false
             }
         }
@@ -364,7 +364,7 @@ class ProcessYaXUnitRunner : YaXUnitRunner {
                     rawOutput = output,
                 )
             } catch (e: Exception) {
-                logger.debug("Failed to get platform info", e)
+                logger.debug(e) { "Failed to get platform info" }
                 null
             }
         }

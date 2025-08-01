@@ -36,18 +36,18 @@ class WindowsSearchStrategy : SearchStrategy {
     fun systemLocations() =
         listOf("PROGRAMFILES", "PROGRAMFILES(x86)")
             .map { System.getenv(it) }
-            .filter { it.isNotBlank() }
+            .filter { it != null && it.isNotBlank() }
             .map { Paths.get(it, "1cv8").toString() }
             .map { VersionLocation(it) }
 
     fun userLocation() =
-        System.getenv("LOCALAPPDATA").let {
+        System.getenv("LOCALAPPDATA")?.let {
             listOf(
                 VersionLocation(Paths.get(it, "Programs", "1cv8").toString()),
                 VersionLocation(Paths.get(it, "Programs", "1cv8_x86").toString()),
                 VersionLocation(Paths.get(it, "Programs", "1cv8_x64").toString()),
             )
-        }
+        } ?: emptyList()
 }
 
 /**

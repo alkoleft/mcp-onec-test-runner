@@ -36,7 +36,7 @@ class MapDbHashStorage : HashStorage {
 
     @PostConstruct
     private fun initialize() {
-        logger.info("Initializing MapDB hash storage at: $dbPath")
+        logger.info { "Initializing MapDB hash storage at: $dbPath" }
 
         try {
             // Ensure directory exists
@@ -67,9 +67,9 @@ class MapDbHashStorage : HashStorage {
                     .valueSerializer(Serializer.LONG)
                     .createOrOpen()
 
-            logger.info("MapDB hash storage initialized with ${hashMap.size} existing file hashes")
+            logger.info { "MapDB hash storage initialized with ${hashMap.size} existing file hashes" }
         } catch (e: Exception) {
-            logger.error("Failed to initialize MapDB hash storage", e)
+            logger.error(e) { "Failed to initialize MapDB hash storage" }
             throw RuntimeException("Hash storage initialization failed", e)
         }
     }
@@ -81,7 +81,7 @@ class MapDbHashStorage : HashStorage {
                     val key = normalizeKey(file)
                     hashMap[key]
                 } catch (e: Exception) {
-                    logger.debug("Failed to get hash for file: $file", e)
+                    logger.debug(e) { "Failed to get hash for file: $file" }
                     null
                 }
             }
@@ -101,9 +101,9 @@ class MapDbHashStorage : HashStorage {
 
                 db.commit()
 
-                logger.debug("Stored hash for file: $file")
+                logger.debug { "Stored hash for file: $file" }
             } catch (e: Exception) {
-                logger.error("Failed to store hash for file: $file", e)
+                logger.error(e) { "Failed to store hash for file: $file" }
                 db.rollback()
                 throw e
             }
@@ -116,7 +116,7 @@ class MapDbHashStorage : HashStorage {
 
             mutex.withLock {
                 try {
-                    logger.debug("Starting batch update for ${updates.size} files")
+                    logger.debug { "Starting batch update for ${updates.size} files" }
 
                     for ((file, hash) in updates) {
                         val key = normalizeKey(file)
@@ -133,9 +133,9 @@ class MapDbHashStorage : HashStorage {
 
                     db.commit()
 
-                    logger.info("Batch updated ${updates.size} file hashes")
+                    logger.info { "Batch updated ${updates.size} file hashes" }
                 } catch (e: Exception) {
-                    logger.error("Failed to batch update file hashes", e)
+                    logger.error(e) { "Failed to batch update file hashes" }
                     db.rollback()
                     throw e
                 }
@@ -153,9 +153,9 @@ class MapDbHashStorage : HashStorage {
 
                     db.commit()
 
-                    logger.debug("Removed hash for file: $file")
+                    logger.debug { "Removed hash for file: $file" }
                 } catch (e: Exception) {
-                    logger.error("Failed to remove hash for file: $file", e)
+                    logger.error(e) { "Failed to remove hash for file: $file" }
                     db.rollback()
                     throw e
                 }
@@ -168,7 +168,7 @@ class MapDbHashStorage : HashStorage {
                 try {
                     HashMap(hashMap)
                 } catch (e: Exception) {
-                    logger.error("Failed to get all hashes", e)
+                    logger.error(e) { "Failed to get all hashes" }
                     emptyMap()
                 }
             }
@@ -184,7 +184,7 @@ class MapDbHashStorage : HashStorage {
                     val key = normalizeKey(file)
                     timestampMap[key]
                 } catch (e: Exception) {
-                    logger.debug("Failed to get timestamp for file: $file", e)
+                    logger.debug(e) { "Failed to get timestamp for file: $file" }
                     null
                 }
             }
@@ -203,9 +203,9 @@ class MapDbHashStorage : HashStorage {
                 timestampMap[key] = timestamp
                 db.commit()
 
-                logger.debug("Stored timestamp for file: $file")
+                logger.debug { "Stored timestamp for file: $file" }
             } catch (e: Exception) {
-                logger.error("Failed to store timestamp for file: $file", e)
+                logger.error(e) { "Failed to store timestamp for file: $file" }
                 db.rollback()
                 throw e
             }
@@ -226,7 +226,7 @@ class MapDbHashStorage : HashStorage {
                         newestTimestamp = timestampMap.values.maxOrNull(),
                     )
                 } catch (e: Exception) {
-                    logger.error("Failed to get storage stats", e)
+                    logger.error(e) { "Failed to get storage stats" }
                     HashStorageStats(0, 0, null, null)
                 }
             }
@@ -255,9 +255,9 @@ class MapDbHashStorage : HashStorage {
 
                     db.commit()
 
-                    logger.info("Cleaned up ${keysToRemove.size} old hash entries (retention: $retentionDays days)")
+                    logger.info { "Cleaned up ${keysToRemove.size} old hash entries (retention: $retentionDays days)" }
                 } catch (e: Exception) {
-                    logger.error("Failed to cleanup old hash entries", e)
+                    logger.error(e) { "Failed to cleanup old hash entries" }
                     db.rollback()
                 }
             }
@@ -272,16 +272,16 @@ class MapDbHashStorage : HashStorage {
         withContext(Dispatchers.IO) {
             mutex.withLock {
                 try {
-                    logger.info("Closing MapDB hash storage")
+                    logger.info { "Closing MapDB hash storage" }
 
                     if (::db.isInitialized && !db.isClosed()) {
                         db.commit()
                         db.close()
                     }
 
-                    logger.info("MapDB hash storage closed successfully")
+                    logger.info { "MapDB hash storage closed successfully" }
                 } catch (e: Exception) {
-                    logger.error("Error closing MapDB hash storage", e)
+                    logger.error(e) { "Error closing MapDB hash storage" }
                 }
             }
         }

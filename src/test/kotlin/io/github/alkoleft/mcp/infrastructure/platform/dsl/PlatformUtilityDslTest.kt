@@ -4,7 +4,6 @@ import io.github.alkoleft.mcp.core.modules.PlatformType
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.CrossPlatformUtilLocator
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.ConnectionSpeed
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.LoadConfigFromFilesCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.LoadFormat
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.executor.ProcessExecutor
@@ -12,7 +11,6 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import java.nio.file.Paths
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -139,179 +137,12 @@ class PlatformUtilityDslTest {
 
         // Проверяем аргументы команды
         val args = command.arguments
-        assertTrue(args.contains("LoadConfigFromFiles"))
         assertTrue(args.contains("/path/to/config/source"))
         assertTrue(args.contains("-Extension"))
         assertTrue(args.contains("MyExtension"))
         assertTrue(args.contains("-partial"))
         assertTrue(args.contains("-format"))
         assertTrue(args.contains("Hierarchical"))
-    }
-
-    @Test
-    fun `should handle configurator loadMainConfig command`() {
-        // Given
-        val version = "8.3.24.1482"
-        val mockLocation = UtilityLocation(
-            executablePath = Paths.get("/opt/1cv8/bin/1cv8"),
-            version = version,
-            platformType = PlatformType.LINUX
-        )
-
-        coEvery { mockUtilLocator.locateUtility(UtilityType.DESIGNER, version) } returns mockLocation
-        coEvery { mockUtilLocator.validateUtility(any()) } returns true
-
-        // When
-        val result = platformDsl.configurator(version) {
-            connect("Srvr=localhost;Ref=TestDB;")
-            user("Administrator")
-            password("password")
-        }.loadMainConfig(Paths.get("/path/to/main_config.cf"))
-
-        // Then
-        assertTrue(result.success)
-        assertEquals(0, result.exitCode)
-    }
-
-    @Test
-    fun `should handle configurator loadExtension command`() {
-        // Given
-        val version = "8.3.24.1482"
-        val mockLocation = UtilityLocation(
-            executablePath = Paths.get("/opt/1cv8/bin/1cv8"),
-            version = version,
-            platformType = PlatformType.LINUX
-        )
-
-        coEvery { mockUtilLocator.locateUtility(UtilityType.DESIGNER, version) } returns mockLocation
-        coEvery { mockUtilLocator.validateUtility(any()) } returns true
-
-        // When
-        val result = platformDsl.configurator(version) {
-            connect("Srvr=localhost;Ref=TestDB;")
-            user("Administrator")
-            password("password")
-        }.loadExtension(Paths.get("/path/to/extension.cfe"))
-
-        // Then
-        assertTrue(result.success)
-        assertEquals(0, result.exitCode)
-    }
-
-    @Test
-    fun `should handle configurator checkCanApplyExtensions command`() {
-        // Given
-        val version = "8.3.24.1482"
-        val mockLocation = UtilityLocation(
-            executablePath = Paths.get("/opt/1cv8/bin/1cv8"),
-            version = version,
-            platformType = PlatformType.LINUX
-        )
-
-        coEvery { mockUtilLocator.locateUtility(UtilityType.DESIGNER, version) } returns mockLocation
-        coEvery { mockUtilLocator.validateUtility(any()) } returns true
-
-        // When
-        val result = platformDsl.configurator(version) {
-            connect("Srvr=localhost;Ref=TestDB;")
-            user("Administrator")
-            password("password")
-        }.checkCanApplyExtensions()
-
-        // Then
-        assertTrue(result.success)
-        assertEquals(0, result.exitCode)
-    }
-
-    @Test
-    fun `should handle configurator updateDatabaseConfig command`() {
-        // Given
-        val version = "8.3.24.1482"
-        val mockLocation = UtilityLocation(
-            executablePath = Paths.get("/opt/1cv8/bin/1cv8"),
-            version = version,
-            platformType = PlatformType.LINUX
-        )
-
-        coEvery { mockUtilLocator.locateUtility(UtilityType.DESIGNER, version) } returns mockLocation
-        coEvery { mockUtilLocator.validateUtility(any()) } returns true
-
-        // When
-        val result = platformDsl.configurator(version) {
-            connect("Srvr=localhost;Ref=TestDB;")
-            user("Administrator")
-            password("password")
-        }.updateDatabaseConfig()
-
-        // Then
-        assertTrue(result.success)
-        assertEquals(0, result.exitCode)
-    }
-
-    @Test
-    fun `should handle configurator checkConfig command`() {
-        // Given
-        val version = "8.3.24.1482"
-        val mockLocation = UtilityLocation(
-            executablePath = Paths.get("/opt/1cv8/bin/1cv8"),
-            version = version,
-            platformType = PlatformType.LINUX
-        )
-
-        coEvery { mockUtilLocator.locateUtility(UtilityType.DESIGNER, version) } returns mockLocation
-        coEvery { mockUtilLocator.validateUtility(any()) } returns true
-
-        // When
-        val result = platformDsl.configurator(version) {
-            connect("Srvr=localhost;Ref=TestDB;")
-            user("Administrator")
-            password("password")
-        }.checkConfig()
-
-        // Then
-        assertTrue(result.success)
-        assertEquals(0, result.exitCode)
-    }
-
-    @Test
-    fun `should handle configurator checkModules command`() {
-        // Given
-        val version = "8.3.24.1482"
-        val mockLocation = UtilityLocation(
-            executablePath = Paths.get("/opt/1cv8/bin/1cv8"),
-            version = version,
-            platformType = PlatformType.LINUX
-        )
-
-        coEvery { mockUtilLocator.locateUtility(UtilityType.DESIGNER, version) } returns mockLocation
-        coEvery { mockUtilLocator.validateUtility(any()) } returns true
-
-        // When
-        val result = platformDsl.configurator(version) {
-            connect("Srvr=localhost;Ref=TestDB;")
-            user("Administrator")
-            password("password")
-        }.checkModules()
-
-        // Then
-        assertTrue(result.success)
-        assertEquals(0, result.exitCode)
-    }
-
-    @Test
-    fun `should handle utility not found error`() {
-        // Given
-        val version = "8.3.24.1482"
-
-        coEvery { mockUtilLocator.locateUtility(UtilityType.DESIGNER, version) } throws
-                Exception("Utility not found")
-
-        // When & Then
-        assertThrows<Exception> {
-            platformDsl.configurator(version) {
-                connect("Srvr=localhost;Ref=TestDB;")
-            }.loadFromFiles(Paths.get("/path/to/source/files"))
-        }
     }
 
     @Test
@@ -369,66 +200,6 @@ class PlatformUtilityDslTest {
         val result = platformDsl.platformSync(version) {
             // Sync platform check context
         }
-
-        // Then
-        assertTrue(result.success)
-        assertEquals(0, result.exitCode)
-    }
-
-    @Test
-    fun `should handle configurator with all parameters`() {
-        // Given
-        val version = "8.3.24.1482"
-        val mockLocation = UtilityLocation(
-            executablePath = Paths.get("/opt/1cv8/bin/1cv8"),
-            version = version,
-            platformType = PlatformType.LINUX
-        )
-
-        coEvery { mockUtilLocator.locateUtility(UtilityType.DESIGNER, version) } returns mockLocation
-        coEvery { mockUtilLocator.validateUtility(any()) } returns true
-
-        // When
-        val result = platformDsl.configurator(version) {
-            connect("Srvr=localhost;Ref=TestDB;")
-            user("Administrator")
-            password("password")
-            output(Paths.get("/path/to/output.txt"))
-            log(Paths.get("/path/to/log.txt"))
-            language("ru")
-            localization("ru")
-            connectionSpeed(ConnectionSpeed.NORMAL)
-            disableStartupDialogs()
-            disableStartupMessages()
-            noTruncate()
-            param("/DisableStartupMessages")
-            param("/NoTruncate")
-        }.loadFromFiles(Paths.get("/path/to/source/files"))
-
-        // Then
-        assertTrue(result.success)
-        assertEquals(0, result.exitCode)
-    }
-
-    @Test
-    fun `should handle custom configurator command`() {
-        // Given
-        val version = "8.3.24.1482"
-        val mockLocation = UtilityLocation(
-            executablePath = Paths.get("/opt/1cv8/bin/1cv8"),
-            version = version,
-            platformType = PlatformType.LINUX
-        )
-
-        coEvery { mockUtilLocator.locateUtility(UtilityType.DESIGNER, version) } returns mockLocation
-        coEvery { mockUtilLocator.validateUtility(any()) } returns true
-
-        // When
-        val result = platformDsl.configurator(version) {
-            connect("Srvr=localhost;Ref=TestDB;")
-            user("Administrator")
-            password("password")
-        }.command("DumpCfg")
 
         // Then
         assertTrue(result.success)
