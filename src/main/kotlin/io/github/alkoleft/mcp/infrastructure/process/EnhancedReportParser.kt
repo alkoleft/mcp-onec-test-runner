@@ -12,9 +12,9 @@ import io.github.alkoleft.mcp.core.modules.TestExecutionError
 import io.github.alkoleft.mcp.core.modules.TestMetadata
 import io.github.alkoleft.mcp.core.modules.TestStatus
 import io.github.alkoleft.mcp.core.modules.TestSummary
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import org.w3c.dom.Document
 import org.w3c.dom.Element
@@ -53,28 +53,26 @@ class EnhancedReportParser : ReportParser {
                     ?: throw TestExecutionError.ReportParsingFailed("No parser available for format: $format")
 
             try {
-                logger.debug("Parsing report with format: $format")
+                logger.debug { "Parsing report with format: $format" }
                 val rawReport = parser.parse(input)
                 val normalizedReport = normalizeToGeneric(rawReport)
 
-                logger.info(
-                    "Successfully parsed report: ${normalizedReport.summary.totalTests} tests, ${normalizedReport.testSuites.size} suites",
-                )
+                logger.info { "Successfully parsed report: ${normalizedReport.summary.totalTests} tests, ${normalizedReport.testSuites.size} suites" }
                 normalizedReport
             } catch (e: Exception) {
-                logger.error("Failed to parse report with format $format", e)
+                logger.error(e) { "Failed to parse report with format $format" }
                 throw TestExecutionError.ReportParsingFailed("Report parsing failed: ${e.message}")
             }
         }
 
     override suspend fun detectFormat(input: InputStream): ReportFormat =
         withContext(Dispatchers.IO) {
-            val bufferedInput = if (input is BufferedInputStream) input else BufferedInputStream(input)
+            val bufferedInput = input as? BufferedInputStream ?: BufferedInputStream(input)
 
             try {
                 formatDetector.detectFormat(bufferedInput)
             } catch (e: Exception) {
-                logger.error("Failed to detect report format", e)
+                logger.error(e) { "Failed to detect report format" }
                 throw TestExecutionError.ReportParsingFailed("Format detection failed: ${e.message}")
             }
         }
@@ -165,10 +163,10 @@ class FormatDetector {
                 detectionResults.firstOrNull { it.confidence > 0.7 }
                     ?: throw RuntimeException("Cannot determine report format with sufficient confidence")
 
-            logger.debug("Detected format: ${bestMatch.format} (confidence: ${bestMatch.confidence})")
+            logger.debug { "Detected format: ${bestMatch.format} (confidence: ${bestMatch.confidence})" }
             return bestMatch.format
         } catch (e: Exception) {
-            logger.error("Format detection failed", e)
+            logger.error(e) { "Format detection failed" }
             throw e
         }
     }
@@ -286,7 +284,7 @@ class JUnitXmlParser : ReportFormatParser {
                 val document = documentBuilder.parse(input)
                 parseJUnitDocument(document)
             } catch (e: SAXException) {
-                logger.error("Failed to parse JUnit XML", e)
+                logger.error(e) { "Failed to parse JUnit XML" }
                 throw TestExecutionError.ReportParsingFailed("Invalid XML format: ${e.message}")
             }
         }
@@ -320,7 +318,7 @@ class JUnitXmlParser : ReportFormatParser {
 
     private fun parseTestSuite(element: Element): RawTestSuite {
         val name = element.getAttribute("name") ?: "Unknown Suite"
-        val time = element.getAttribute("time")?.toDoubleOrNull() ?: 0.0
+        val time = element.getAttribute("time").toDoubleOrNull() ?: 0.0
 
         val testCaseNodes = element.getElementsByTagName("testcase")
         val testCases =
@@ -338,7 +336,7 @@ class JUnitXmlParser : ReportFormatParser {
     private fun parseTestCase(element: Element): RawTestCase {
         val name = element.getAttribute("name") ?: "Unknown Test"
         val className = element.getAttribute("classname")
-        val time = element.getAttribute("time")?.toDoubleOrNull() ?: 0.0
+        val time = element.getAttribute("time").toDoubleOrNull() ?: 0.0
 
         // Determine status based on child elements
         val status =

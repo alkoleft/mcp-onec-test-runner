@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Service
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Duration
@@ -81,7 +82,7 @@ class BuildOrchestrationService(
                 if (lastBuildTime != null &&
                     (currentTime - lastBuildTime) < Duration.ofMinutes(skipThresholdMinutes).toMillis()
                 ) {
-                    logger.debug("Recent build found, checking for changes since then")
+                    logger.debug { "Recent build found, checking for changes since then" }
                 }
 
                 // Phase 2: Enhanced Hybrid Algorithm - Fast timestamp pre-scan + hash verification
@@ -98,37 +99,37 @@ class BuildOrchestrationService(
                 val decision =
                     when {
                         changeAnalysis.coreFilesChanged -> {
-                            logger.debug("Core files changed - full build required")
+                            logger.debug { "Core files changed - full build required" }
                             BuildDecision.FULL_BUILD
                         }
 
                         changeAnalysis.configurationChanged -> {
-                            logger.debug("Configuration files changed - full build required")
+                            logger.debug { "Configuration files changed - full build required" }
                             BuildDecision.FULL_BUILD
                         }
 
                         changeAnalysis.testOnlyChanges -> {
-                            logger.debug("Only test files changed - incremental test build")
+                            logger.debug { "Only test files changed - incremental test build" }
                             BuildDecision.INCREMENTAL_TESTS
                         }
 
                         changeAnalysis.changedModules.size > incrementalThreshold -> {
-                            logger.debug("Too many modules changed (${changeAnalysis.changedModules.size}) - full build")
+                            logger.debug { "Too many modules changed (${changeAnalysis.changedModules.size}) - full build" }
                             BuildDecision.FULL_BUILD
                         }
 
                         else -> {
-                            logger.debug("Incremental build for ${changeAnalysis.changedModules.size} modules")
+                            logger.debug { "Incremental build for ${changeAnalysis.changedModules.size} modules" }
                             BuildDecision.INCREMENTAL_BUILD(changeAnalysis.changedModules)
                         }
                     }
 
                 val analysisTime = Duration.between(startTime, Instant.now())
-                logger.debug("Build strategy determined in ${analysisTime.toMillis()}ms: $decision")
+                logger.debug { "Build strategy determined in ${analysisTime.toMillis()}ms: $decision" }
 
                 decision
             } catch (e: Exception) {
-                logger.warn("Error determining build strategy, falling back to full build", e)
+                logger.warn(e) { "Error determining build strategy, falling back to full build" }
                 BuildDecision.FULL_BUILD
             }
         }
@@ -170,7 +171,7 @@ class BuildOrchestrationService(
                 )
             }
         } catch (e: Exception) {
-            logger.error("Full build failed with exception", e)
+            logger.error(e) { "Full build failed with exception" }
             BuildResult(
                 success = false,
                 duration = Duration.between(startTime, Instant.now()),
@@ -211,11 +212,11 @@ class BuildOrchestrationService(
                     buildType = BuildType.INCREMENTAL,
                 )
             } else {
-                logger.warn("Incremental build failed, falling back to full build")
+                logger.warn { "Incremental build failed, falling back to full build" }
                 performFullBuild(projectPath)
             }
         } catch (e: Exception) {
-            logger.error("Incremental build failed, falling back to full build", e)
+            logger.error(e) { "Incremental build failed, falling back to full build" }
             performFullBuild(projectPath)
         }
     }
@@ -323,7 +324,7 @@ class BuildOrchestrationService(
             // 3. Monitor compilation process
             // 4. Return success/failure based on exit code
 
-            logger.debug("Executing $buildType build with utility: ${utilityLocation.executablePath}")
+            logger.debug { "Executing $buildType build with utility: ${utilityLocation.executablePath}" }
 
             // Simulate build time based on build type
             val buildTime =
@@ -352,12 +353,10 @@ class BuildOrchestrationService(
                     .toList()
 
             val hashes =
-                sourceFiles.associate { file ->
-                    file to calculateFileHash(file)
-                }
+                sourceFiles.associateWith { file -> calculateFileHash(file) }
 
             buildStateManager.updateHashes(projectPath, hashes)
-            logger.debug("Updated hashes for ${hashes.size} source files")
+            logger.debug { "Updated hashes for ${hashes.size} source files" }
         }
 
     /**
@@ -378,12 +377,10 @@ class BuildOrchestrationService(
                 }.toList()
 
         val hashes =
-            changedFiles.associate { file ->
-                file to calculateFileHash(file)
-            }
+            changedFiles.associateWith { file -> calculateFileHash(file) }
 
         buildStateManager.updateHashes(projectPath, hashes)
-        logger.debug("Updated hashes for ${hashes.size} files in changed modules")
+        logger.debug { "Updated hashes for ${hashes.size} files in changed modules" }
     }
 
     /**
@@ -402,7 +399,7 @@ class BuildOrchestrationService(
         filePath: Path,
     ): String? {
         val relativePath = projectPath.relativize(filePath)
-        val pathParts = relativePath.toString().split(System.getProperty("file.separator"))
+        val pathParts = relativePath.toString().split(FileSystems.getDefault().separator)
 
         // Return the first directory as module name
         return if (pathParts.size > 1) pathParts[0] else null

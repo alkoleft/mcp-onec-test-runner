@@ -60,7 +60,7 @@ class VersionExtractor {
         // Both versions should have at least 4 parts for full compatibility
         if (detectedParts.size >= 4 && requiredParts.size >= 4) {
             val isCompatible = detectedParts[0] == requiredParts[0] && detectedParts[1] == requiredParts[1]
-            logger.debug("Version compatibility check: $detectedVersion vs $requiredVersion = $isCompatible")
+            logger.debug { "Version compatibility check: $detectedVersion vs $requiredVersion = $isCompatible" }
             return isCompatible
         }
 

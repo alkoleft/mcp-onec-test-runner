@@ -57,7 +57,7 @@ class UtilPathCache {
             validationHash = location.executablePath.toString().hashCode().toString(),
         )
         memoryCache[key] = entry
-        logger.debug("Stored in cache: $utility, version: $version at ${location.executablePath}")
+        logger.debug { "Stored in cache: $utility, version: $version at ${location.executablePath}" }
     }
 
     fun invalidate(
@@ -66,12 +66,12 @@ class UtilPathCache {
     ) {
         val key = CacheKey(utility, version)
         memoryCache.remove(key)
-        logger.debug("Invalidated cache for: $utility, version: $version")
+        logger.debug { "Invalidated cache for: $utility, version: $version" }
     }
 
     fun clear() {
         memoryCache.clear()
-        logger.info("Utility location cache cleared")
+        logger.info { "Utility location cache cleared" }
     }
 
     fun getCacheSize(): Int = memoryCache.size

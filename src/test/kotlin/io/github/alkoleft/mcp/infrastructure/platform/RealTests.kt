@@ -13,7 +13,7 @@ class RealTests(
     @Autowired private val platformDsl: PlatformUtilityDsl
 ) {
     @Test
-    fun realExecute() {
+    fun designerRealExecute() {
         val plan = platformDsl.configuratorPlan("8.3.24.1761") {
             connectToFile("/home/alko/develop/onec_file_db/YaxUnit-dev")
             disableStartupDialogs()
@@ -28,6 +28,25 @@ class RealTests(
                 }
             }
         }.buildPlan()
+        plan.printPlan()
+        runBlocking { plan.execute() }
+    }
+
+    @Test
+    fun ibcmdRealExecute() {
+        val plan = platformDsl.ibcmd("8.3.24.1761") {
+            dbPath("/home/alko/develop/onec_file_db/YaxUnit-dev")
+
+            config {
+                import("/home/alko/Downloads/sources/configuration")
+                listOf("yaxunit", "smoke", "tests").forEach {
+                    import("/home/alko/Downloads/sources/$it"){
+                        extension = it
+                    }
+                }
+
+            }
+        }
         plan.printPlan()
         runBlocking { plan.execute() }
     }

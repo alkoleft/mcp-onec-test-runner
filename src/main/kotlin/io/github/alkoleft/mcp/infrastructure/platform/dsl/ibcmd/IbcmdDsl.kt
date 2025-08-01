@@ -1,34 +1,53 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd
 
-import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.executor.ProcessExecutor
-import kotlinx.coroutines.runBlocking
-import java.nio.file.Path
-import kotlin.time.Duration
-import kotlin.time.measureTime
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.CommandBuilder
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.CommonParameters
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.ConfigCommandBuilder
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.ExtensionCommandBuilder
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.IbcmdCommand
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.InfobaseCommandBuilder
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.SessionCommandBuilder
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.lock.LockListCommand
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.mobile.MobileAppExportCommand
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.mobile.MobileClientExportCommand
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.server.ServerConfigInitCommand
 
 /**
- * DSL для работы с ibcmd (Инфобазный менеджер) 1С:Предприятие
- *
- * Предоставляет удобный интерфейс для выполнения операций с информационными базами
- * через fluent API и DSL синтаксис.
+ * DSL для формирования плана команд ibcmd с поддержкой иерархической структуры
  */
-class IbcmdDsl(
-    private val context: PlatformUtilityContext
+class IbcmdPlanDsl(
+    context: PlatformUtilityContext
 ) {
-    private var connectionString: String = ""
-    private var user: String? = null
-    private var password: String? = null
-    private var outputPath: Path? = null
-    private var logPath: Path? = null
-    private var additionalParams: MutableList<String> = mutableListOf()
+    private val ibcmdContext = IbcmdContext(context)
+    private val commonParameters = CommonParameters()
+
+    private val commands = mutableListOf<IbcmdCommand>()
+
+    // Общие параметры для всех команд
+    var dbPath: String? = null
+        set(value) {
+            field = value
+            ibcmdContext.dbPath(value ?: "")
+        }
+
+    var user: String? = null
+        set(value) {
+            field = value
+            ibcmdContext.user(value ?: "")
+        }
+
+    var password: String? = null
+        set(value) {
+            field = value
+            ibcmdContext.password(value ?: "")
+        }
 
     /**
-     * Устанавливает строку подключения к информационной базе
+     * Устанавливает путь к базе данных
      */
-    fun connect(connectionString: String) {
-        this.connectionString = connectionString
+    fun dbPath(path: String) {
+        this.dbPath = path
     }
 
     /**
@@ -46,230 +65,295 @@ class IbcmdDsl(
     }
 
     /**
-     * Устанавливает путь для вывода
+     * Добавляет команду конфигурации в план
      */
-    fun output(path: Path) {
-        this.outputPath = path
+    fun config(block: ConfigCommandBuilder.() -> Unit) =
+        appendSubCommands(block)
+
+    /**
+     * Добавляет команды информационной базы в план
+     */
+    fun infobase(block: InfobaseCommandBuilder.() -> Unit) =
+        appendSubCommands(block)
+
+    /**
+     * Добавляет команды сервера в план
+     */
+    fun server(block: ServerPlanDsl.() -> Unit) {
+        val dsl = ServerPlanDsl()
+        dsl.block()
+        commands.addAll(dsl.buildCommands())
     }
 
     /**
-     * Устанавливает путь для лог-файла
+     * Добавляет команды сеансов в план
      */
-    fun log(path: Path) {
-        this.logPath = path
+    fun session(block: SessionCommandBuilder.() -> Unit) = appendSubCommands(block)
+
+    /**
+     * Добавляет команды блокировок в план
+     */
+    fun lock(block: LockPlanDsl.() -> Unit) {
+        val dsl = LockPlanDsl()
+        dsl.block()
+        commands.addAll(dsl.buildCommands())
     }
 
     /**
-     * Добавляет дополнительные параметры
+     * Добавляет команды мобильного приложения в план
      */
-    fun param(param: String) {
-        additionalParams.add(param)
+    fun mobileApp(block: MobileAppPlanDsl.() -> Unit) {
+        val dsl = MobileAppPlanDsl()
+        dsl.block()
+        commands.addAll(dsl.buildCommands())
     }
 
     /**
-     * Выполняет создание информационной базы
+     * Добавляет команды мобильного клиента в план
      */
-    fun create(): IbcmdResult {
-        return runBlocking {
-            executeIbcmdCommand("CREATEINFOBASE")
-        }
+    fun mobileClient(block: MobileClientPlanDsl.() -> Unit) {
+        val dsl = MobileClientPlanDsl()
+        dsl.block()
+        commands.addAll(dsl.buildCommands())
     }
 
     /**
-     * Выполняет удаление информационной базы
+     * Добавляет команды расширений в план
      */
-    fun drop(): IbcmdResult {
-        return runBlocking {
-            executeIbcmdCommand("DROPINFOBASE")
-        }
-    }
+    fun extension(block: ExtensionCommandBuilder.() -> Unit) =
+        appendSubCommands(block)
 
     /**
-     * Выполняет копирование информационной базы
+     * Строит план выполнения команд
      */
-    fun copy(): IbcmdResult {
-        return runBlocking {
-            executeIbcmdCommand("COPYINFOBASE")
-        }
+    fun buildPlan(): IbcmdPlan {
+        return IbcmdPlan(commands.toList(), ibcmdContext)
     }
 
-    /**
-     * Выполняет восстановление информационной базы
-     */
-    fun restore(): IbcmdResult {
-        return runBlocking {
-            executeIbcmdCommand("RESTOREINFOBASE")
-        }
-    }
-
-    /**
-     * Выполняет сжатие информационной базы
-     */
-    fun compress(): IbcmdResult {
-        return runBlocking {
-            executeIbcmdCommand("COMPRESSINFOBASE")
-        }
-    }
-
-    /**
-     * Выполняет реиндексацию информационной базы
-     */
-    fun reindex(): IbcmdResult {
-        return runBlocking {
-            executeIbcmdCommand("REINDEXINFOBASE")
-        }
-    }
-
-    /**
-     * Выполняет проверку информационной базы
-     */
-    fun check(): IbcmdResult {
-        return runBlocking {
-            executeIbcmdCommand("CHECKINFOBASE")
-        }
-    }
-
-    /**
-     * Выполняет обновление информационной базы
-     */
-    fun update(): IbcmdResult {
-        return runBlocking {
-            executeIbcmdCommand("UPDATEINFOBASE")
-        }
-    }
-
-    /**
-     * Выполняет получение списка информационных баз
-     */
-    fun list(): IbcmdResult {
-        return runBlocking {
-            executeIbcmdCommand("LISTINFOBASES")
-        }
-    }
-
-    /**
-     * Выполняет получение информации об информационной базе
-     */
-    fun info(): IbcmdResult {
-        return runBlocking {
-            executeIbcmdCommand("INFOBASE")
-        }
-    }
-
-    /**
-     * Выполняет произвольную команду ibcmd
-     */
-    fun command(command: String): IbcmdResult {
-        return runBlocking {
-            executeIbcmdCommand(command)
-        }
-    }
-
-    /**
-     * Выполняет команду ibcmd с синхронным API
-     */
-    fun commandSync(command: String): IbcmdResult {
-        return runBlocking {
-            executeIbcmdCommand(command)
-        }
-    }
-
-    /**
-     * Строит результат выполнения операций
-     */
-    fun buildResult(): IbcmdResult {
-        return IbcmdResult(
-            success = true,
-            output = "",
-            error = null,
-            exitCode = 0,
-            duration = Duration.ZERO
-        )
-    }
-
-    /**
-     * Выполняет команду ibcmd
-     */
-    private suspend fun executeIbcmdCommand(command: String): IbcmdResult {
-        val duration = measureTime {
-            try {
-                val location = context.locateUtility(UtilityType.INFOBASE_MANAGER_IBCMD)
-                val executor = ProcessExecutor()
-
-                val commandArgs = buildCommandArgs(command, location.executablePath)
-                val result = executor.execute(commandArgs)
-
-                context.setResult(
-                    success = result.exitCode == 0,
-                    output = result.output,
-                    error = result.error,
-                    exitCode = result.exitCode,
-                    duration = result.duration
-                )
-
-            } catch (e: Exception) {
-                context.setResult(
-                    success = false,
-                    output = "",
-                    error = e.message ?: "Unknown error",
-                    exitCode = -1,
-                    duration = Duration.ZERO
-                )
-            }
-        }
-
-        return IbcmdResult(
-            success = context.buildResult().success,
-            output = context.buildResult().output,
-            error = context.buildResult().error,
-            exitCode = context.buildResult().exitCode,
-            duration = duration
-        )
-    }
-
-    /**
-     * Строит аргументы команды для ibcmd
-     */
-    private fun buildCommandArgs(command: String, executablePath: Path): List<String> {
-        val args = mutableListOf<String>()
-
-        // Путь к исполняемому файлу
-        args.add(executablePath.toString())
-
-        // Команда
-        args.add(command)
-
-        // Строка подключения
-        if (connectionString.isNotEmpty()) {
-            args.add(connectionString)
-        }
-
-        // Пользователь
-        user?.let { args.add("/N$it") }
-
-        // Пароль
-        password?.let { args.add("/P$it") }
-
-        // Путь для вывода
-        outputPath?.let { args.add("/Out$it") }
-
-        // Путь для лог-файла
-        logPath?.let { args.add("/LogFile$it") }
-
-        // Дополнительные параметры
-        args.addAll(additionalParams)
-
-        return args
+    private inline fun <reified T : CommandBuilder> appendSubCommands(block: T.() -> Unit) {
+        val clazz = T::class.java
+        val builder = clazz.getDeclaredConstructor().newInstance()
+        builder.block()
+        commands.addAll(builder.result)
     }
 }
 
 /**
- * Результат выполнения операций с ibcmd
+ * DSL для планирования команд сервера
  */
-data class IbcmdResult(
-    val success: Boolean,
-    val output: String,
-    val error: String?,
-    val exitCode: Int,
-    val duration: Duration
-) 
+class ServerPlanDsl {
+    private val commands = mutableListOf<IbcmdCommand>()
+
+    /**
+     * Добавляет команду настройки сервера
+     */
+    fun configure(block: ServerConfigurePlanDsl.() -> Unit) {
+        val dsl = ServerConfigurePlanDsl()
+        dsl.block()
+        commands.add(dsl.buildCommand())
+    }
+
+    /**
+     * Строит список команд сервера
+     */
+    fun buildCommands(): List<IbcmdCommand> {
+        return commands.toList()
+    }
+}
+
+/**
+ * DSL для планирования команды настройки сервера
+ */
+class ServerConfigurePlanDsl {
+    var out: String? = null
+    var httpAddress: String? = null
+    var httpPort: Int? = null
+    var httpBase: String? = null
+    var name: String? = null
+
+    /**
+     * Устанавливает путь к выходному файлу
+     */
+    fun out(out: String) {
+        this.out = out
+    }
+
+    /**
+     * Устанавливает HTTP адрес
+     */
+    fun httpAddress(address: String) {
+        this.httpAddress = address
+    }
+
+    /**
+     * Устанавливает HTTP порт
+     */
+    fun httpPort(port: Int) {
+        this.httpPort = port
+    }
+
+    /**
+     * Устанавливает HTTP базу
+     */
+    fun httpBase(base: String) {
+        this.httpBase = base
+    }
+
+    /**
+     * Устанавливает имя базы
+     */
+    fun name(name: String) {
+        this.name = name
+    }
+
+    /**
+     * Строит команду настройки сервера
+     */
+    fun buildCommand(): ServerConfigInitCommand {
+        return ServerConfigInitCommand(
+            out = out,
+            httpAddress = httpAddress,
+            httpPort = httpPort,
+            httpBase = httpBase,
+            name = name
+        )
+    }
+}
+
+/**
+ * DSL для планирования команд блокировок
+ */
+class LockPlanDsl {
+    private val commands = mutableListOf<IbcmdCommand>()
+
+    /**
+     * Добавляет команду списка блокировок
+     */
+    fun list(block: LockListPlanDsl.() -> Unit = {}) {
+        val dsl = LockListPlanDsl()
+        dsl.block()
+        commands.add(dsl.buildCommand())
+    }
+
+    /**
+     * Строит список команд блокировок
+     */
+    fun buildCommands(): List<IbcmdCommand> {
+        return commands.toList()
+    }
+}
+
+/**
+ * DSL для планирования команды списка блокировок
+ */
+class LockListPlanDsl {
+    var session: String? = null
+
+    /**
+     * Устанавливает ID сеанса для фильтрации
+     */
+    fun session(sessionId: String) {
+        this.session = sessionId
+    }
+
+    /**
+     * Строит команду списка блокировок
+     */
+    fun buildCommand(): LockListCommand {
+        return LockListCommand(
+            session = session
+        )
+    }
+}
+
+/**
+ * DSL для планирования команд мобильного приложения
+ */
+class MobileAppPlanDsl {
+    private val commands = mutableListOf<IbcmdCommand>()
+
+    /**
+     * Добавляет команду создания мобильного приложения
+     */
+    fun create(block: MobileAppCreatePlanDsl.() -> Unit) {
+        val dsl = MobileAppCreatePlanDsl()
+        dsl.block()
+        commands.add(dsl.buildCommand())
+    }
+
+    /**
+     * Строит список команд мобильного приложения
+     */
+    fun buildCommands(): List<IbcmdCommand> {
+        return commands.toList()
+    }
+}
+
+/**
+ * DSL для планирования команды создания мобильного приложения
+ */
+class MobileAppCreatePlanDsl {
+    var path: String = ""
+
+    /**
+     * Устанавливает путь для экспорта
+     */
+    fun path(path: String) {
+        this.path = path
+    }
+
+    /**
+     * Строит команду экспорта мобильного приложения
+     */
+    fun buildCommand(): MobileAppExportCommand {
+        return MobileAppExportCommand(
+            path = path.ifEmpty { "/default/mobile/app/path" }
+        )
+    }
+}
+
+/**
+ * DSL для планирования команд мобильного клиента
+ */
+class MobileClientPlanDsl {
+    private val commands = mutableListOf<IbcmdCommand>()
+
+    /**
+     * Добавляет команду создания мобильного клиента
+     */
+    fun create(block: MobileClientCreatePlanDsl.() -> Unit) {
+        val dsl = MobileClientCreatePlanDsl()
+        dsl.block()
+        commands.add(dsl.buildCommand())
+    }
+
+    /**
+     * Строит список команд мобильного клиента
+     */
+    fun buildCommands(): List<IbcmdCommand> {
+        return commands.toList()
+    }
+}
+
+/**
+ * DSL для планирования команды создания мобильного клиента
+ */
+class MobileClientCreatePlanDsl {
+    var path: String = ""
+
+    /**
+     * Устанавливает путь для экспорта
+     */
+    fun path(path: String) {
+        this.path = path
+    }
+
+    /**
+     * Строит команду экспорта мобильного клиента
+     */
+    fun buildCommand(): MobileClientExportCommand {
+        return MobileClientExportCommand(
+            path = path.ifEmpty { "/default/mobile/client/path" }
+        )
+    }
+}

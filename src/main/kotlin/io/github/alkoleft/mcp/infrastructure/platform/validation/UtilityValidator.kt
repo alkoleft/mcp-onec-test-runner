@@ -1,11 +1,11 @@
 package io.github.alkoleft.mcp.infrastructure.platform.validation
 
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlin.io.path.exists
 import kotlin.io.path.isExecutable
 
@@ -23,20 +23,20 @@ class UtilityValidator {
         return try {
             // Basic existence check
             if (!location.executablePath.exists()) {
-                logger.debug("Utility not found at: ${location.executablePath}")
+                logger.debug { "Utility not found at: ${location.executablePath}" }
                 return false
             }
 
             // Permission check
             if (!location.executablePath.isExecutable()) {
-                logger.debug("Utility not executable: ${location.executablePath}")
+                logger.debug { "Utility not executable: ${location.executablePath}" }
                 return false
             }
 
             // Quick functional validation
             runQuickValidation(location)
         } catch (e: Exception) {
-            logger.debug("Validation failed for ${location.executablePath}: ${e.message}")
+            logger.debug { "Validation failed for ${location.executablePath}: ${e.message}" }
             false
         }
     }
@@ -59,19 +59,19 @@ class UtilityValidator {
                     if (completed) {
                         // For 1C utilities, exit code 0 or 1 is typically acceptable for help command
                         val isValid = process.exitValue() in 0..1
-                        logger.debug("Quick validation result for ${location.executablePath}: $isValid")
+                        logger.debug { "Quick validation result for ${location.executablePath}: $isValid" }
                         isValid
                     } else {
                         process.destroyForcibly()
-                        logger.debug("Quick validation timeout for ${location.executablePath}")
+                        logger.debug { "Quick validation timeout for ${location.executablePath}" }
                         false
                     }
                 }
-            } catch (e: TimeoutCancellationException) {
-                logger.debug("Quick validation timeout for ${location.executablePath}")
+            } catch (_: TimeoutCancellationException) {
+                logger.debug { "Quick validation timeout for ${location.executablePath}" }
                 false
             } catch (e: Exception) {
-                logger.debug("Quick validation failed for ${location.executablePath}: ${e.message}")
+                logger.debug { "Quick validation failed for ${location.executablePath}: ${e.message}" }
                 false
             }
         }

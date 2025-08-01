@@ -60,31 +60,6 @@ class PlatformUtilityDslTest {
     }
 
     @Test
-    fun `should create ibcmd DSL with version`() {
-        // Given
-        val version = "8.3.24.1482"
-        val mockLocation = UtilityLocation(
-            executablePath = Paths.get("/opt/1cv8/bin/ibcmd"),
-            version = version,
-            platformType = PlatformType.LINUX
-        )
-
-        coEvery { mockUtilLocator.locateUtility(UtilityType.INFOBASE_MANAGER_IBCMD, version) } returns mockLocation
-        coEvery { mockUtilLocator.validateUtility(any()) } returns true
-
-        // When
-        val result = platformDsl.ibcmd(version) {
-            connect("Srvr=localhost;Ref=TestDB;")
-            user("Administrator")
-            password("password")
-        }.buildResult()
-
-        // Then
-        assertTrue(result.success)
-        assertEquals(0, result.exitCode)
-    }
-
-    @Test
     fun `should handle configurator loadFromFiles command`() {
         // Given
         val version = "8.3.24.1482"
@@ -324,31 +299,6 @@ class PlatformUtilityDslTest {
     }
 
     @Test
-    fun `should handle ibcmd create command`() {
-        // Given
-        val version = "8.3.24.1482"
-        val mockLocation = UtilityLocation(
-            executablePath = Paths.get("/opt/1cv8/bin/ibcmd"),
-            version = version,
-            platformType = PlatformType.LINUX
-        )
-
-        coEvery { mockUtilLocator.locateUtility(UtilityType.INFOBASE_MANAGER_IBCMD, version) } returns mockLocation
-        coEvery { mockUtilLocator.validateUtility(any()) } returns true
-
-        // When
-        val result = platformDsl.ibcmd(version) {
-            connect("Srvr=localhost;Ref=TestDB;")
-            user("Administrator")
-            password("password")
-        }.create()
-
-        // Then
-        assertTrue(result.success)
-        assertEquals(0, result.exitCode)
-    }
-
-    @Test
     fun `should handle utility not found error`() {
         // Given
         val version = "8.3.24.1482"
@@ -461,34 +411,6 @@ class PlatformUtilityDslTest {
     }
 
     @Test
-    fun `should handle ibcmd with all parameters`() {
-        // Given
-        val version = "8.3.24.1482"
-        val mockLocation = UtilityLocation(
-            executablePath = Paths.get("/opt/1cv8/bin/ibcmd"),
-            version = version,
-            platformType = PlatformType.LINUX
-        )
-
-        coEvery { mockUtilLocator.locateUtility(UtilityType.INFOBASE_MANAGER_IBCMD, version) } returns mockLocation
-        coEvery { mockUtilLocator.validateUtility(any()) } returns true
-
-        // When
-        val result = platformDsl.ibcmd(version) {
-            connect("Srvr=localhost;Ref=TestDB;")
-            user("Administrator")
-            password("password")
-            output(Paths.get("/path/to/output.txt"))
-            log(Paths.get("/path/to/log.txt"))
-            param("/NoTruncate")
-        }.create()
-
-        // Then
-        assertTrue(result.success)
-        assertEquals(0, result.exitCode)
-    }
-
-    @Test
     fun `should handle custom configurator command`() {
         // Given
         val version = "8.3.24.1482"
@@ -512,29 +434,4 @@ class PlatformUtilityDslTest {
         assertTrue(result.success)
         assertEquals(0, result.exitCode)
     }
-
-    @Test
-    fun `should handle custom ibcmd command`() {
-        // Given
-        val version = "8.3.24.1482"
-        val mockLocation = UtilityLocation(
-            executablePath = Paths.get("/opt/1cv8/bin/ibcmd"),
-            version = version,
-            platformType = PlatformType.LINUX
-        )
-
-        coEvery { mockUtilLocator.locateUtility(UtilityType.INFOBASE_MANAGER_IBCMD, version) } returns mockLocation
-        coEvery { mockUtilLocator.validateUtility(any()) } returns true
-
-        // When
-        val result = platformDsl.ibcmd(version) {
-            connect("Srvr=localhost;Ref=TestDB;")
-            user("Administrator")
-            password("password")
-        }.command("LOCKINFOBASE")
-
-        // Then
-        assertTrue(result.success)
-        assertEquals(0, result.exitCode)
-    }
-} 
+}

@@ -5,7 +5,8 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtility
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.ConfiguratorDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.ConfiguratorPlanDsl
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdDsl
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdPlan
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdPlanDsl
 import kotlinx.coroutines.runBlocking
 import org.springframework.stereotype.Component
 
@@ -50,13 +51,13 @@ class PlatformUtilityDsl(
     }
 
     /**
-     * DSL для работы с ibcmd (Инфобазный менеджер)
+     * DSL для формирования плана команд ibcmd с поддержкой иерархической структуры
      */
-    fun ibcmd(version: String? = null, block: IbcmdDsl.() -> Unit): IbcmdDsl {
+    fun ibcmd(version: String? = null, block: IbcmdPlanDsl.() -> Unit): IbcmdPlan {
         val context = PlatformUtilityContext(utilLocator, version)
-        val ibcmdDsl = IbcmdDsl(context)
-        ibcmdDsl.block()
-        return ibcmdDsl
+        val ibcmdPlanDsl = IbcmdPlanDsl(context)
+        ibcmdPlanDsl.block()
+        return ibcmdPlanDsl.buildPlan()
     }
 
     /**

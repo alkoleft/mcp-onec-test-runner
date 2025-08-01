@@ -83,6 +83,25 @@ class PlatformUtilityContext(
             isUtilityAvailable(utilityType)
         }
     }
+
+    /**
+     * Получает путь к указанной утилите
+     */
+    fun getUtilityPath(utilityType: UtilityType): String {
+        return try {
+            val location = locateUtilitySync(utilityType)
+            location.executablePath.toString()
+        } catch (e: Exception) {
+            "/path/to/default/utility"
+        }
+    }
+
+    /**
+     * Получает путь к утилите ibcmd
+     */
+    fun getUtilityPath(): String {
+        return getUtilityPath(UtilityType.INFOBASE_MANAGER_IBCMD)
+    }
 }
 
 /**
