@@ -1,5 +1,6 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator
 
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.ConfiguratorCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.executor.ProcessExecutor
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlin.time.Duration

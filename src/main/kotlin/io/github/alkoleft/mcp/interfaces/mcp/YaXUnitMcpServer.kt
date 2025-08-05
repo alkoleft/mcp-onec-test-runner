@@ -36,7 +36,11 @@ class YaXUnitMcpServer(
         
         return runBlocking {
             try {
-                val result = testLauncherService.runAll()
+                val request = io.github.alkoleft.mcp.core.modules.RunAllTestsRequest(
+                    projectPath = Paths.get("."),
+                    ibConnection = projectConfiguration.informationBase?.connection ?: ""
+                )
+                val result = testLauncherService.runAll(request)
                 TestExecutionResult(
                     success = result.success,
                     message = if (result.success) "Все тесты выполнены успешно" else "Ошибка при выполнении тестов",
@@ -80,7 +84,12 @@ class YaXUnitMcpServer(
         
         return runBlocking {
             try {
-                val result = testLauncherService.runModule(moduleName)
+                val request = io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest(
+                    moduleName = moduleName,
+                    projectPath = Paths.get("."),
+                    ibConnection = projectConfiguration.informationBase?.connection ?: ""
+                )
+                val result = testLauncherService.runModule(request)
                 TestExecutionResult(
                     success = result.success,
                     message = if (result.success) "Тесты модуля '$moduleName' выполнены" else "Ошибка при выполнении тестов модуля",
@@ -125,7 +134,12 @@ class YaXUnitMcpServer(
         
         return runBlocking {
             try {
-                val result = testLauncherService.runList(moduleNames)
+                val request = io.github.alkoleft.mcp.core.modules.RunListTestsRequest(
+                    testNames = moduleNames,
+                    projectPath = Paths.get("."),
+                    ibConnection = projectConfiguration.informationBase?.connection ?: ""
+                )
+                val result = testLauncherService.runList(request)
                 TestExecutionResult(
                     success = result.success,
                     message = if (result.success) "Тесты модулей выполнены: ${moduleNames.joinToString(", ")}" else "Ошибка при выполнении тестов модулей",
@@ -136,19 +150,19 @@ class YaXUnitMcpServer(
                     details = mapOf(
                         "duration" to result.duration.toString(),
                         "successRate" to result.report.summary.successRate.toString(),
-                        "modules" to moduleNames.toString()
+                        "modules" to moduleNames.joinToString(", ")
                     )
                 )
             } catch (e: Exception) {
                 logger.error(e) { "Ошибка при запуске тестов модулей: $moduleNames" }
                 TestExecutionResult(
                     success = false,
-                    message = "Ошибка при выполнении тестов модулей: ${e.message}",
+                    message = "Ошибка при выполнении тестов модулей '${moduleNames.joinToString(", ")}': ${e.message}",
                     totalTests = 0,
                     passedTests = 0,
                     failedTests = 0,
                     executionTime = 0,
-                    details = mapOf("error" to e.message.toString(), "modules" to moduleNames.toString())
+                    details = mapOf("error" to e.message.toString(), "modules" to moduleNames.joinToString(", "))
                 )
             }
         }

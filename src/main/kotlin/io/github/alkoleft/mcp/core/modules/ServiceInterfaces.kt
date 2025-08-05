@@ -136,6 +136,24 @@ interface FileWatcher {
     suspend fun stopWatching(path: Path)
 }
 
+class FileWatcherImpl : FileWatcher {
+    override suspend fun watchDirectory(
+        path: Path,
+        callback: (FileChangeEvent) -> Unit
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getModifiedFiles(projectPath: Path): Set<Path> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun stopWatching(path: Path) {
+        TODO("Not yet implemented")
+    }
+
+}
+
 // Configuration management
 interface ConfigurationManager {
     fun getProjectConfiguration(projectPath: Path): ProjectConfiguration

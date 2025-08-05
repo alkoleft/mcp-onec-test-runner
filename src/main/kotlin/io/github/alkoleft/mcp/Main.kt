@@ -2,9 +2,11 @@ package io.github.alkoleft.mcp
 
 import io.github.alkoleft.mcp.interfaces.cli.RunnerCli
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 import kotlin.system.exitProcess
 
+@EnableConfigurationProperties
 @SpringBootApplication
 class McpYaxUnitRunnerApplication
 

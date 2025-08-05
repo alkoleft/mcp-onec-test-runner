@@ -31,7 +31,7 @@ class ConfiguratorContext(
      * Устанавливает строку подключения к информационной базе
      */
     fun connect(connectionString: String) {
-        this.connectionString = "\"$connectionString\""
+        this.connectionString = "\"${connectionString.replace("\"", "\"\"")}\""
     }
 
     /**

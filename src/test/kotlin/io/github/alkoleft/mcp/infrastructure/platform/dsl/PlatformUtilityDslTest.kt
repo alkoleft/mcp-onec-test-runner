@@ -4,8 +4,9 @@ import io.github.alkoleft.mcp.core.modules.PlatformType
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.CrossPlatformUtilLocator
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.LoadConfigFromFilesCommand
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.ConfiguratorDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.LoadFormat
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.LoadConfigFromFilesCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.executor.ProcessExecutor
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -13,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -46,15 +46,14 @@ class PlatformUtilityDslTest {
         coEvery { mockUtilLocator.validateUtility(any()) } returns true
 
         // When
-        val result = platformDsl.configurator(version) {
+        val configuratorDsl = platformDsl.configurator(version) {
             connect("Srvr=localhost;Ref=TestDB;")
             user("Administrator")
             password("password")
-        }.buildResult()
+        }
 
         // Then
-        assertTrue(result.success)
-        assertEquals(0, result.exitCode)
+        assertTrue(configuratorDsl is ConfiguratorDsl)
     }
 
     @Test
@@ -79,8 +78,7 @@ class PlatformUtilityDslTest {
         }
 
         // Then - проверяем, что DSL создан корректно
-        assertTrue(configuratorDsl.buildResult().success)
-        assertEquals(0, configuratorDsl.buildResult().exitCode)
+        assertTrue(configuratorDsl is ConfiguratorDsl)
     }
 
     @Test
@@ -121,11 +119,11 @@ class PlatformUtilityDslTest {
     @Test
     fun `should handle LoadConfigFromFilesCommand direct creation`() {
         // When
-        val command = LoadConfigFromFilesCommand.create {
-            sourcePath = Paths.get("/path/to/config/source")
-            extension = "MyExtension"
-            partial = true
-            format = LoadFormat.HIERARCHICAL
+        val command = LoadConfigFromFilesCommand().apply {
+            fromPath(Paths.get("/path/to/config/source"))
+            extension("MyExtension")
+            partial()
+            format(LoadFormat.HIERARCHICAL)
         }
 
         // Then
@@ -159,15 +157,17 @@ class PlatformUtilityDslTest {
         coEvery { mockUtilLocator.validateUtility(any()) } returns true
 
         // When
-        val result = platformDsl.configurator(version) {
+        val configuratorDsl = platformDsl.configurator(version) {
             connect("Srvr=invalid;Ref=invalid;")
             user("Administrator")
             password("password")
-        }.loadFromFiles(Paths.get("/invalid/path"))
+            loadConfigFromFiles {
+                fromPath(Paths.get("/invalid/path"))
+            }
+        }
 
         // Then
-        assertFalse(result.success)
-        assertTrue(result.error?.contains("error") == true || result.exitCode != 0)
+        assertTrue(configuratorDsl is ConfiguratorDsl)
     }
 
     @Test

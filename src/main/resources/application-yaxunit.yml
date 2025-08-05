@@ -1,0 +1,47 @@
+# Настройки для проекта YAxUnit
+# Профиль: yaxunit
+
+# Базовые настройки приложения
+app:
+  # Базовый путь к проекту
+  base-path: "/home/common/develop/repos/yaxunit/yaxunit"
+  
+  # Набор исходного кода проекта
+  source-set:
+    # Основная конфигурация YAxUnit (движок)
+    - path: "fixtures/demo-configuration/"
+      name: demo
+      type: "CONFIGURATION"
+      purpose: [ "TESTS" ]
+    
+    # Основная конфигурация YAxUnit (движок)
+    - path: "exts/yaxunit"
+      name: yaxunit
+      type: "EXTENSION"
+      purpose: [ "MAIN", "YAXUNIT" ]
+    
+    # Тесты YAxUnit
+    - path: "tests"
+      name: tests
+      type: "EXTENSION"
+      purpose: [ "TESTS", "YAXUNIT" ]
+    
+    # Дымовые тесты
+    - path: "exts/smoke"
+      name: smoke
+      type: "EXTENSION"
+      purpose: [ "MAIN", "YAXUNIT" ]
+  
+  # Настройки подключения к информационной базе
+  connection:
+    infobase-connection: "File='/home/common/develop/file-data-base/YAxUnit/';"
+    user: ""
+    password: ""
+  
+  # Версия платформы из v8config.json
+  platform-version: "8.3.10.2309"
+  
+  # Настройки инструментов
+  tools-properties:
+    # Тип сборщика: DESIGNER или IBMCMD
+    builder: "DESIGNER"

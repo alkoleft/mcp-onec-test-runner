@@ -3,9 +3,9 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.examples
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformUtilityDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.ConnectionSpeed
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.DynamicMode
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.LoadConfigFromFilesCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.LoadFormat
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.SessionTerminateMode
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.LoadConfigFromFilesCommand
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Paths
 
@@ -69,11 +69,7 @@ class ConfiguratorPlanExamples(
 
             // Команда 4: Проверка модулей
             checkModules {
-                thinClient()
-                webClient()
-                server()
-                mobileClient()
-                extendedModulesCheck()
+                allModules()
             }
         }
 
@@ -163,9 +159,6 @@ class ConfiguratorPlanExamples(
 
             // Проверка модулей с расширением
             checkModules {
-                thinClient()
-                webClient()
-                server()
                 extension("MyExtension")
             }
         }
@@ -261,27 +254,27 @@ class ConfiguratorPlanExamples(
 
             // Пример 6: Использование свойств через присвоение
             loadConfigFromFiles {
-                sourcePath = Paths.get("/path/to/config/source")
-                extension = "MyExtension"
-                partial = true
-                format = LoadFormat.HIERARCHICAL
-                updateConfigDumpInfo = true
+                fromPath(Paths.get("/path/to/config/source"))
+                extension("MyExtension")
+                partial()
+                format(LoadFormat.HIERARCHICAL)
+                updateConfigDumpInfo()
             }
 
             // Пример 7: Смешанное использование методов и свойств
             loadConfigFromFiles {
                 fromPath(Paths.get("/path/to/config/source"))
-                extension = "MyExtension"
+                extension("MyExtension")
                 partial()
-                format = LoadFormat.PLAIN
-                noCheck = true
+                format(LoadFormat.PLAIN)
+                noCheck()
             }
 
             // Пример 8: Загрузка всех расширений через свойство
             loadConfigFromFiles {
-                sourcePath = Paths.get("/path/to/config/source")
-                allExtensions = true
-                updateConfigDumpInfo = true
+                fromPath(Paths.get("/path/to/config/source"))
+                allExtensions()
+                updateConfigDumpInfo()
             }
         }
 
@@ -300,33 +293,34 @@ class ConfiguratorPlanExamples(
      * Примеры использования LoadConfigFromFilesCommand напрямую
      */
     fun createLoadConfigFromFilesCommandExamples() {
-        // Пример 1: Создание команды через companion object
-        val command1 = LoadConfigFromFilesCommand.create {
-            sourcePath = Paths.get("/path/to/config/source")
-            extension = "MyExtension"
-            partial = true
-            format = LoadFormat.HIERARCHICAL
+        // Пример 1: Создание команды через DSL методы
+        val command1 = LoadConfigFromFilesCommand().apply {
+            fromPath(Paths.get("/path/to/config/source"))
+            extension("MyExtension")
+            partial()
+            format(LoadFormat.HIERARCHICAL)
         }
 
         // Пример 2: Создание команды напрямую
-        val command2 = LoadConfigFromFilesCommand(
-            sourcePath = Paths.get("/path/to/config/source"),
-            allExtensions = true,
-            updateConfigDumpInfo = true
-        )
+        val command2 = LoadConfigFromFilesCommand().apply {
+            fromPath(Paths.get("/path/to/config/source"))
+            allExtensions()
+            updateConfigDumpInfo()
+        }
 
         // Пример 3: Создание команды с архивом
-        val command3 = LoadConfigFromFilesCommand(
-            archive = Paths.get("/path/to/config.zip"),
-            noCheck = true
-        )
+        val command3 = LoadConfigFromFilesCommand().apply {
+            fromPath(Paths.get("/path/to/config/source"))
+            archive(Paths.get("/path/to/config.zip"))
+            noCheck()
+        }
 
         // Пример 4: Создание команды с файлами
-        val command4 = LoadConfigFromFilesCommand(
-            sourcePath = Paths.get("/path/to/config/source"),
-            files = "CommonModules/MyModule/Ext/Module.bsl,CommonModules/MyModule/Ext/Module.xml",
-            partial = true
-        )
+        val command4 = LoadConfigFromFilesCommand().apply {
+            fromPath(Paths.get("/path/to/config/source"))
+            files("CommonModules/MyModule/Ext/Module.bsl,CommonModules/MyModule/Ext/Module.xml")
+            partial()
+        }
 
         println("Команда 1: ${command1.arguments}")
         println("Команда 2: ${command2.arguments}")

@@ -60,8 +60,6 @@ class LinuxSearchStrategy : SearchStrategy {
         VersionLocation("/opt/1cv8/arm64"),
         VersionLocation("/opt/1cv8/e2kv4"),
         VersionLocation("/opt/1cv8/i386"),
-//        StandardLocation("/opt/1C/v8.3/x86_64"),
-//        StandardLocation("/opt/1C/v8.3/i386"),
     )
 }
 

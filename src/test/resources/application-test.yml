@@ -1,0 +1,163 @@
+# Профиль конфигурации для тестовой среды
+# Активируется с помощью spring.profiles.active=test
+
+spring:
+  application:
+    name: mcp-yaxunit-runner-test
+
+# Настройки приложения для ApplicationProperties
+app:
+  base-path: "./test-project"
+  source-set:
+    - path: "configuration"
+      name: "MainConfiguration"
+      type: "CONFIGURATION"
+      purpose: [ "MAIN" ]
+    - path: "tests"
+      name: "Tests"
+      type: "EXTENSION"
+      purpose: [ "TESTS" ]
+    - path: "yaxunit"
+      name: "YaXUnit"
+      type: "EXTENSION"
+      purpose: [ "YAXUNIT" ]
+  connection:
+    connection-string: "File='./test-ib';"
+    user: "test"
+    password: ""
+  platform-version: "8.3.22.1709"
+  tools:
+    builder: "DESIGNER"
+
+# Настройки проекта для тестов
+project:
+  tests_path: "./test-tests"
+  build_timeout: 120000  # 2 минуты для тестов
+  test_timeout: 300000   # 5 минут для тестов
+
+# Настройки платформы 1С для тестов
+platform:
+  version: null
+  auto_detect_version: true
+  search_paths:
+    - "./test-1cv8"
+    - "/tmp/test-1cv8"
+
+# Настройки информационной базы для тестов
+information_base:
+  connection: "File='./test-ib';"
+  user: "test"
+  password: ""
+
+# Настройки сборки для тестов
+build:
+  incremental_enabled: false  # Отключаем для чистых тестов
+  hash_storage_size: 100
+  parallel_build: false
+
+# Настройки логирования для тестов
+logging:
+  level: INFO
+  enable_file_logging: false
+  file_path: null
+
+# Настройки сервера для тестов
+server:
+  port: 0  # Случайный порт для тестов
+  enable_websocket: false
+  websocket_path: "/test-yaxunit"
+
+# Настройки MCP сервера для тестов
+mcp:
+  server:
+    name: "yaxunit-runner-test"
+    version: "1.0.0-test"
+    description: "MCP server for YaXUnit test execution (Test)"
+
+# Настройки CLI для тестов
+cli:
+  enable: true
+  commands:
+    run_all: true
+    run_list: true
+    run_module: true
+
+# Настройки WebSocket для тестов
+websocket:
+  enabled: false
+  path: "/test-yaxunit"
+  max_connections: 1
+  idle_timeout: 30000  # 30 секунд
+
+# Настройки безопасности для тестов
+security:
+  enabled: false
+  cors:
+    allowed_origins: "*"
+    allowed_methods: "*"
+    allowed_headers: "*"
+
+# Настройки мониторинга для тестов
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+# Настройки метрик для тестов
+metrics:
+  enabled: false
+  export:
+    prometheus:
+      enabled: false
+
+# Настройки кэширования для тестов
+cache:
+  enabled: false
+  type: memory
+  max_size: 100
+  ttl: 60000  # 1 минута
+
+# Настройки уведомлений для тестов
+notifications:
+  enabled: false
+  webhook_url: null
+  email:
+    enabled: false
+
+# Настройки отчетов для тестов
+reports:
+  enabled: true
+  format: json
+  output_dir: "./test-reports"
+  include_coverage: false
+  include_timing: true
+
+# Настройки параллельного выполнения для тестов
+parallel:
+  enabled: false
+  max_threads: 1
+  queue_size: 1
+
+# Настройки таймаутов для тестов
+timeouts:
+  connection: 5000       # 5 секунд
+  read: 10000           # 10 секунд
+  write: 10000          # 10 секунд
+  process: 60000        # 1 минута
+
+# Настройки резервного копирования для тестов
+backup:
+  enabled: false
+  directory: "./test-backup"
+  max_files: 1
+  retention_days: 1
+
+# Настройки разработки для тестов
+development:
+  debug: false
+  hot_reload: false
+  profile: false 

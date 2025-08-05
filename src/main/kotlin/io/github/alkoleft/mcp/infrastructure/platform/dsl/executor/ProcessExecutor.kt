@@ -4,12 +4,10 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.time.Duration
 import kotlin.time.toDuration
 
@@ -75,7 +73,7 @@ class ProcessExecutor {
         while (stderrReader.readLine().also { stderrLine = it } != null) {
             stderr.append(stderrLine).append("\n")
             stderrLineCount++
-            logger.warn { "STDERR: $stderrLine" }
+            logger.debug { "STDERR: $stderrLine" }
             if (stderrLineCount % 50 == 0) {
                 logger.debug { "Прочитано строк stderr: $stderrLineCount" }
             }
@@ -125,9 +123,7 @@ class ProcessExecutor {
     ) {
         logger.info { "Процесс завершен: PID: ${process.pid()}, Код завершения: $exitCode, Время выполнения: ${duration.inWholeMilliseconds}ms" }
 
-        if (workingDirectory != null) {
-            logger.info { "Рабочий каталог: $workingDirectory" }
-        }
+        workingDirectory?.let { logger.info { "Рабочий каталог: $workingDirectory" } }
 
         if (exitCode != 0) {
             logger.warn { "Код ошибки: $exitCode" }
@@ -142,12 +138,12 @@ class ProcessExecutor {
             }
             logger.warn { "=== ${processType.uppercase()} ЗАВЕРШИЛСЯ С ОШИБКОЙ! ===" }
         } else {
-            if (streamData.stdout.isNotEmpty()) {
-                logger.info { "STDOUT вывод: ${streamData.stdout.toString().trim()}" }
-            }
-            if (streamData.stderr.isNotEmpty()) {
-                logger.warn { "STDERR вывод (предупреждения): ${streamData.stderr.toString().trim()}" }
-            }
+//            if (streamData.stdout.isNotEmpty()) {
+//                logger.info { "STDOUT вывод: ${streamData.stdout.toString().trim()}" }
+//            }
+//            if (streamData.stderr.isNotEmpty()) {
+//                logger.warn { "STDERR вывод (предупреждения): ${streamData.stderr.toString().trim()}" }
+//            }
             if (logContent.isNotBlank()) {
                 logger.info { "Логи 1С: $logContent" }
             }
@@ -234,7 +230,7 @@ class ProcessExecutor {
      */
     private fun logStartProcess(params: ExecutionParams, logPath: Path?, commandString: String) {
         logger.info { "=== ЗАПУСК ${params.processType.uppercase()} ===" }
-        logger.info { "Команда: $commandString" }
+        logger.info { "Команда: $commandString /Out $logPath" }
 
         if (logPath != null) {
             logger.info { "Файл логов: $logPath" }
@@ -406,26 +402,6 @@ class ProcessExecutor {
     }
 
     /**
-     * Выполняет команду 1С с логированием и таймаутом
-     */
-    suspend fun executeWithLoggingAndTimeout(
-        commandArgs: List<String>,
-        timeoutMs: Long = 300000, // 5 минут по умолчанию
-        logFilePath: Path? = null,
-        includeStdout: Boolean = true
-    ): ProcessResult {
-        return executeProcess(
-            ExecutionParams(
-                commandArgs = commandArgs,
-                timeoutMs = timeoutMs,
-                logFilePath = logFilePath ?: generateLogFilePath(),
-                includeStdout = includeStdout,
-                processType = "процесс 1С с таймаутом"
-            )
-        )
-    }
-
-    /**
      * Выполняет команду с таймаутом
      */
     suspend fun executeWithTimeout(
@@ -461,12 +437,7 @@ class ProcessExecutor {
      * Генерирует путь к файлу логов с временной меткой
      */
     private fun generateLogFilePath(): Path {
-        val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
-        val logDir = Paths.get("logs")
-        if (!Files.exists(logDir)) {
-            Files.createDirectories(logDir)
-        }
-        return logDir.resolve("onec_log_${timestamp}.log")
+        return File.createTempFile("onec_log_", "log").toPath()
     }
 
     /**
