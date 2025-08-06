@@ -20,15 +20,15 @@ class YaXUnitTestAction(
     private val platformUtilityDsl: PlatformUtilityDsl
 ) : RunTestAction {
 
-    override suspend fun run(filter: String?, projectProperties: ApplicationProperties): TestExecutionResult {
+    override suspend fun run(filter: String?, properties: ApplicationProperties): TestExecutionResult {
         val startTime = Instant.now()
         logger.info { "Starting YaXUnit test execution with filter: $filter" }
 
         return withContext(Dispatchers.IO) {
             try {
-                val testsPath = projectProperties.testsPath ?: projectProperties.basePath.resolve("tests")
+                val testsPath = properties.testsPath ?: properties.basePath.resolve("tests")
                 val yaxunitEnginePath =
-                    projectProperties.yaxunitEnginePath ?: projectProperties.basePath.resolve("yaxunit")
+                    properties.yaxunitEnginePath ?: properties.basePath.resolve("yaxunit")
 
                 logger.info { "Tests path: $testsPath" }
                 logger.info { "YaXUnit engine path: $yaxunitEnginePath" }

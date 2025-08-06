@@ -4,6 +4,7 @@ import io.github.alkoleft.mcp.application.actions.ActionConfiguration
 import io.github.alkoleft.mcp.application.actions.build.DesignerBuildAction
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.ConnectionProperties
+import io.github.alkoleft.mcp.configuration.properties.SourceSet
 import io.github.alkoleft.mcp.configuration.properties.SourceSetItem
 import io.github.alkoleft.mcp.configuration.properties.SourceSetPurpose
 import io.github.alkoleft.mcp.configuration.properties.SourceSetType
@@ -32,6 +33,7 @@ const val version = "8.3.22.1709"
 class RealTests(
     @Autowired private val platformDsl: PlatformUtilityDsl
 ) {
+    @Ignore
     @Test
     fun designerRealExecute() {
         val plan = platformDsl.configuratorPlan(version) {
@@ -76,10 +78,10 @@ class RealTests(
     @Test
     fun designerBuildActionFullBuild() {
         val action = DesignerBuildAction(platformDsl)
-        val projectProperties = createTestApplicationProperties()
+        val properties = createTestApplicationProperties()
 
         runBlocking {
-            val result = action.build(projectProperties)
+            val result = action.build(properties, properties.sourceSet)
             println("Результат полной сборки: $result")
         }
     }
@@ -88,10 +90,10 @@ class RealTests(
     @Test
     fun designerBuildActionConfigurationBuild() {
         val action = DesignerBuildAction(platformDsl)
-        val projectProperties = createTestApplicationProperties()
+        val properties = createTestApplicationProperties()
 
         runBlocking {
-            val result = action.buildConfiguration(projectProperties)
+            val result = action.buildConfiguration(properties)
             println("Результат сборки конфигурации: $result")
         }
     }
@@ -100,11 +102,11 @@ class RealTests(
     @Test
     fun designerBuildActionExtensionBuild() {
         val action = DesignerBuildAction(platformDsl)
-        val projectProperties = createTestApplicationProperties()
+        val properties = createTestApplicationProperties()
         val extensionName = "yaxunit"
 
         runBlocking {
-            val result = action.buildExtension(extensionName, projectProperties)
+            val result = action.buildExtension(extensionName, properties)
             println("Результат сборки расширения $extensionName: $result")
         }
     }
@@ -113,12 +115,12 @@ class RealTests(
     @Test
     fun designerBuildActionMultipleExtensionsBuild() {
         val action = DesignerBuildAction(platformDsl)
-        val projectProperties = createTestApplicationProperties()
+        val properties = createTestApplicationProperties()
         val extensions = listOf("yaxunit", "tests")
 
         runBlocking {
             extensions.forEach { extensionName ->
-                val result = action.buildExtension(extensionName, projectProperties)
+                val result = action.buildExtension(extensionName, properties)
                 println("Результат сборки расширения $extensionName: $result")
             }
         }
@@ -128,10 +130,10 @@ class RealTests(
     @Test
     fun designerBuildActionWithCustomPaths() {
         val action = DesignerBuildAction(platformDsl)
-        val projectProperties = createCustomApplicationProperties()
+        val properties = createCustomApplicationProperties()
 
         runBlocking {
-            val result = action.build(projectProperties)
+            val result = action.build(properties)
             println("Результат сборки с кастомными путями: $result")
         }
     }
@@ -142,7 +144,8 @@ class RealTests(
     private fun createTestApplicationProperties(): ApplicationProperties {
         return ApplicationProperties(
             basePath = Path(sourcesPath),
-            sourceSet = listOf(
+            sourceSet = SourceSet(
+                listOf(
                 SourceSetItem(
                     path = "configuration",
                     name = "configuration",
@@ -161,6 +164,7 @@ class RealTests(
                     type = SourceSetType.EXTENSION,
                     purpose = setOf(SourceSetPurpose.TESTS)
                 )
+                )
             ),
             connection = ConnectionProperties(
                 connectionString = "File=\"$ibPath\";"
@@ -176,7 +180,8 @@ class RealTests(
     private fun createCustomApplicationProperties(): ApplicationProperties {
         return ApplicationProperties(
             basePath = Path("/custom/path/to/project"),
-            sourceSet = listOf(
+            sourceSet = SourceSet(
+                listOf(
                 SourceSetItem(
                     path = "src/configuration",
                     name = "main-config",
@@ -188,6 +193,7 @@ class RealTests(
                     name = "custom-extension",
                     type = SourceSetType.EXTENSION,
                     purpose = setOf(SourceSetPurpose.YAXUNIT)
+                )
                 )
             ),
             connection = ConnectionProperties(

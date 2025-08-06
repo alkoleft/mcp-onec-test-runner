@@ -8,12 +8,12 @@ import java.nio.file.Path
  *
  * /LoadConfigFromFiles <каталог загрузки> [-Extension <имя расширения>]
  * [-AllExtensions][-files "<файлы>"][-partial][-listFile <файл списка>][-format <режим>]
- * [-updateConfigDumpInfo][-NoCheck][-Archive <имя ZIP-архива>]
+ * [-updateConfigDumpInfo][-NoCheck][-Archive <имя ZIP-архива>][/UpdateDBCfg]
  *
  * Загрузка конфигурации из файлов. Загрузка расширения в основную конфигурацию
  * (и наоборот) не поддерживается.
  */
-class LoadConfigFromFilesCommand : ConfiguratorCommand() {
+class LoadConfigFromFilesCommand : ConfiguratorCommand(), UpdateDBCfgSupport {
     override val name: String = "LoadConfigFromFiles"
     override val description: String = "Загрузка конфигурации из файлов"
 
@@ -28,6 +28,7 @@ class LoadConfigFromFilesCommand : ConfiguratorCommand() {
     var updateConfigDumpInfo: Boolean = false
     var noCheck: Boolean = false
     var archive: Path? = null
+    override var updateDBCfg: Boolean = false
 
     // DSL методы
     fun fromPath(path: Path) {
@@ -114,6 +115,9 @@ class LoadConfigFromFilesCommand : ConfiguratorCommand() {
                 args.add(arch.toString())
             }
 
+            // Параметр /UpdateDBCfg
+            addUpdateDBCfgToArguments(args)
+
             return args
         }
 
@@ -131,6 +135,9 @@ class LoadConfigFromFilesCommand : ConfiguratorCommand() {
             if (updateConfigDumpInfo) params["updateConfigDumpInfo"] = "true"
             if (noCheck) params["noCheck"] = "true"
             archive?.let { params["archive"] = it.toString() }
+
+            // Параметр updateDBCfg
+            addUpdateDBCfgToParameters(params)
 
             return params
         }

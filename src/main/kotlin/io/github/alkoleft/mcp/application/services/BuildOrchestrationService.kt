@@ -2,6 +2,9 @@ package io.github.alkoleft.mcp.application.services
 
 import io.github.alkoleft.mcp.application.actions.ActionFactory
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
+import io.github.alkoleft.mcp.configuration.properties.SourceSet
+import io.github.alkoleft.mcp.configuration.properties.SourceSetPurpose
+import io.github.alkoleft.mcp.configuration.properties.SourceSetType
 import io.github.alkoleft.mcp.core.modules.BuildDecision
 import io.github.alkoleft.mcp.core.modules.BuildResult
 import io.github.alkoleft.mcp.core.modules.BuildService
@@ -20,7 +23,7 @@ private val logger = KotlinLogging.logger { }
 @Service
 class BuildOrchestrationService(
     private val actionFactory: ActionFactory,
-    private val applicationProperties: ApplicationProperties
+    private val properties: ApplicationProperties
 ) : BuildService {
 
     override suspend fun ensureBuild(projectPath: Path): BuildResult {
@@ -63,7 +66,7 @@ class BuildOrchestrationService(
         logger.info { "Determining build strategy for project: $projectPath" }
 
         val changeAction = actionFactory.createChangeAnalysisAction()
-        val changes = changeAction.analyze(applicationProperties)
+        val changes = changeAction.analyze(properties)
 
         return if (changes.hasChanges) {
             logger.info { "Changes detected, performing incremental build" }
@@ -74,11 +77,19 @@ class BuildOrchestrationService(
         }
     }
 
+    fun fullBuildSourceSet(): SourceSet {
+        val typeFilter = setOf(SourceSetType.CONFIGURATION, SourceSetType.EXTENSION)
+        val purposeFilter = setOf(SourceSetPurpose.MAIN, SourceSetPurpose.YAXUNIT)
+        return properties.sourceSet
+            .subSourceSet { it.type in typeFilter && it.purpose.intersect(purposeFilter).isNotEmpty() }
+    }
+
     override suspend fun performFullBuild(projectPath: Path): BuildResult {
         logger.info { "Performing full build for project: $projectPath" }
 
-        val buildAction = actionFactory.createBuildAction(applicationProperties.tools.builder)
-        val result = buildAction.build(applicationProperties)
+
+        val buildAction = actionFactory.createBuildAction(properties.tools.builder)
+        val result = buildAction.build(properties, fullBuildSourceSet())
 
         return BuildResult(
             success = result.success,
@@ -91,11 +102,11 @@ class BuildOrchestrationService(
     override suspend fun performIncrementalBuild(projectPath: Path, changedModules: Set<String>): BuildResult {
         logger.info { "Performing incremental build for modules: $changedModules" }
 
-        val buildAction = actionFactory.createBuildAction(applicationProperties.tools.builder)
+        val buildAction = actionFactory.createBuildAction(properties.tools.builder)
 
         val results = mutableListOf<io.github.alkoleft.mcp.application.actions.BuildResult>()
         changedModules.forEach { module ->
-            val result = buildAction.buildExtension(module, applicationProperties)
+            val result = buildAction.buildExtension(module, properties)
             results.add(result)
         }
 

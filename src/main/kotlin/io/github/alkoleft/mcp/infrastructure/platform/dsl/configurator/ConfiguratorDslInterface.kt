@@ -8,6 +8,7 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.DeleteCfgCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.DumpConfigToFilesCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.DumpExtensionToFilesCommand
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.LoadCfgCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.LoadConfigFromFilesCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.UpdateDBCfgCommand
 import java.nio.file.Path
@@ -94,6 +95,11 @@ interface ConfiguratorDslInterface<T> {
     fun param(param: String)
 
     /**
+     * Загружает конфигурацию из файла .cf
+     */
+    fun loadCfg(block: LoadCfgCommand.() -> Unit): T
+
+    /**
      * Загружает конфигурацию из каталога с файлами исходников
      */
     fun loadConfigFromFiles(block: LoadConfigFromFilesCommand.() -> Unit): T
@@ -141,5 +147,5 @@ interface ConfiguratorDslInterface<T> {
     /**
      * Удаляет расширение конфигурации
      */
-    fun deleteCfg(block: DeleteCfgCommand.() -> Unit): T
+    fun deleteExtension(block: DeleteCfgCommand.() -> Unit): T
 }

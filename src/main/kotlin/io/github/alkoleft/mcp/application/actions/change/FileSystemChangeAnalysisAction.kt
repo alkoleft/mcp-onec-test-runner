@@ -20,12 +20,12 @@ class FileSystemChangeAnalysisAction(
     private val fileWatcher: FileWatcher
 ) : ChangeAnalysisAction {
 
-    override suspend fun analyze(projectProperties: ApplicationProperties): ChangeAnalysisResult {
-        logger.info { "Analyzing changes for project: ${projectProperties.basePath}" }
+    override suspend fun analyze(properties: ApplicationProperties): ChangeAnalysisResult {
+        logger.info { "Analyzing changes for project: ${properties.basePath}" }
 
         return withContext(Dispatchers.IO) {
             try {
-                val changedFiles = fileWatcher.getModifiedFiles(projectProperties.basePath)
+                val changedFiles = fileWatcher.getModifiedFiles(properties.basePath)
 
                 if (changedFiles.isEmpty()) {
                     logger.info { "No changes detected in project" }
@@ -34,8 +34,8 @@ class FileSystemChangeAnalysisAction(
 
                 logger.info { "Found ${changedFiles.size} changed files" }
 
-                val affectedModules = determineAffectedModules(changedFiles, projectProperties)
-                val changeTypes = determineChangeTypes(changedFiles, projectProperties)
+                val affectedModules = determineAffectedModules(changedFiles, properties)
+                val changeTypes = determineChangeTypes(changedFiles, properties)
 
                 logger.info { "Affected modules: ${affectedModules.joinToString(", ")}" }
 
@@ -55,11 +55,11 @@ class FileSystemChangeAnalysisAction(
 
     private fun determineAffectedModules(
         changedFiles: Set<Path>,
-        projectProperties: ApplicationProperties
+        properties: ApplicationProperties
     ): Set<String> {
-        return projectProperties.sourceSet
+        return properties.sourceSet
             .filter { sourceItem ->
-                val sourcePath = projectProperties.basePath.resolve(sourceItem.path)
+                val sourcePath = properties.basePath.resolve(sourceItem.path)
                 changedFiles.any { changedFile ->
                     changedFile.startsWith(sourcePath)
                 }
@@ -70,7 +70,7 @@ class FileSystemChangeAnalysisAction(
 
     private fun determineChangeTypes(
         changedFiles: Set<Path>,
-        projectProperties: ApplicationProperties
+        properties: ApplicationProperties
     ): Map<Path, ChangeType> {
         return changedFiles.associateWith { file ->
             when {

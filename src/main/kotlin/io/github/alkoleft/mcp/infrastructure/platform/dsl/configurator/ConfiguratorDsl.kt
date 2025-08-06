@@ -10,6 +10,7 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.DeleteCfgCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.DumpConfigToFilesCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.DumpExtensionToFilesCommand
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.LoadCfgCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.LoadConfigFromFilesCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.UpdateDBCfgCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.executor.ProcessExecutor
@@ -92,6 +93,9 @@ abstract class ConfiguratorDslCommon<T>(private val context: PlatformUtilityCont
 class ConfiguratorDsl(
     context: PlatformUtilityContext
 ) : ConfiguratorDslCommon<ConfiguratorResult>(context) {
+    override fun loadCfg(block: LoadCfgCommand.() -> Unit) =
+        configureAndExecute(LoadCfgCommand(), block)
+
     override fun loadConfigFromFiles(block: LoadConfigFromFilesCommand.() -> Unit) =
         configureAndExecute(LoadConfigFromFilesCommand(), block)
 
@@ -119,7 +123,7 @@ class ConfiguratorDsl(
     override fun createCfg(block: CreateCfgCommand.() -> Unit) =
         configureAndExecute(CreateCfgCommand(), block)
 
-    override fun deleteCfg(block: DeleteCfgCommand.() -> Unit) =
+    override fun deleteExtension(block: DeleteCfgCommand.() -> Unit) =
         configureAndExecute(DeleteCfgCommand(), block)
 
     /**
@@ -202,6 +206,12 @@ class ConfiguratorPlanDsl(
 ) : ConfiguratorDslCommon<Unit>(context) {
     private val commands = mutableListOf<ConfiguratorCommand>()
 
+    override fun loadCfg(block: LoadCfgCommand.() -> Unit) {
+        val command = LoadCfgCommand()
+        command.block()
+        commands.add(command)
+    }
+
     override fun loadConfigFromFiles(block: LoadConfigFromFilesCommand.() -> Unit) {
         val command = LoadConfigFromFilesCommand()
         command.block()
@@ -256,7 +266,7 @@ class ConfiguratorPlanDsl(
         commands.add(command)
     }
 
-    override fun deleteCfg(block: DeleteCfgCommand.() -> Unit) {
+    override fun deleteExtension(block: DeleteCfgCommand.() -> Unit) {
         val command = DeleteCfgCommand()
         command.block()
         commands.add(command)
