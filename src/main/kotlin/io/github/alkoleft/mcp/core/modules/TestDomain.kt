@@ -162,6 +162,7 @@ enum class UtilityType(val fileName: String) {
     INFOBASE_MANAGER_IBCMD("ibcmd"),
     IBSRV("ibsrv"),
     THINK_CLIENT("1cv8c"),
+    ENTERPRISE("1cv8c"),
 }
 
 // File change detection

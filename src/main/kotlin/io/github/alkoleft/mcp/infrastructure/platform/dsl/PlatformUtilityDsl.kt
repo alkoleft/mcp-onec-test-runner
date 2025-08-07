@@ -7,6 +7,8 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.Configura
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.ConfiguratorPlanDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdPlan
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdPlanDsl
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.enterprise.EnterpriseDsl
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.enterprise.EnterpriseContext
 import kotlinx.coroutines.runBlocking
 import org.springframework.stereotype.Component
 
@@ -58,6 +60,17 @@ class PlatformUtilityDsl(
         val ibcmdPlanDsl = IbcmdPlanDsl(context)
         ibcmdPlanDsl.block()
         return ibcmdPlanDsl.buildPlan()
+    }
+
+    /**
+     * DSL для работы с 1С:Предприятие
+     */
+    fun enterprise(version: String? = null, block: EnterpriseDsl.() -> Unit): EnterpriseDsl {
+        val context = PlatformUtilityContext(utilLocator, version)
+        val enterpriseContext = EnterpriseContext(context)
+        val enterpriseDsl = EnterpriseDsl(enterpriseContext)
+        enterpriseDsl.block()
+        return enterpriseDsl
     }
 
     /**

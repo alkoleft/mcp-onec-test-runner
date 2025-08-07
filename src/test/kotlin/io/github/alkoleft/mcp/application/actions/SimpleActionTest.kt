@@ -7,6 +7,9 @@ import io.github.alkoleft.mcp.application.actions.test.YaXUnitTestAction
 import io.github.alkoleft.mcp.configuration.properties.BuilderType
 import io.github.alkoleft.mcp.core.modules.FileWatcher
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformUtilityDsl
+import io.github.alkoleft.mcp.infrastructure.platform.CrossPlatformUtilLocator
+import io.github.alkoleft.mcp.infrastructure.process.JsonYaXUnitConfigWriter
+import io.github.alkoleft.mcp.infrastructure.process.EnhancedReportParser
 import io.mockk.mockk
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
@@ -16,8 +19,10 @@ class SimpleActionTest {
     @Test
     fun `should create action factory with all action types`() {
         val platformUtilityDsl = mockk<PlatformUtilityDsl>()
-        val fileWatcher = mockk<FileWatcher>()
-        val factory = ActionFactoryImpl(platformUtilityDsl)
+        val utilLocator = mockk<CrossPlatformUtilLocator>()
+        val configWriter = mockk<JsonYaXUnitConfigWriter>()
+        val reportParser = mockk<EnhancedReportParser>()
+        val factory = ActionFactoryImpl(platformUtilityDsl, utilLocator, configWriter, reportParser)
 
         // Test that factory can create all action types
         val designerAction = factory.createBuildAction(BuilderType.DESIGNER)
@@ -36,6 +41,9 @@ class SimpleActionTest {
     @Test
     fun `should create action implementations`() {
         val platformUtilityDsl = mockk<PlatformUtilityDsl>()
+        val utilLocator = mockk<CrossPlatformUtilLocator>()
+        val configWriter = mockk<JsonYaXUnitConfigWriter>()
+        val reportParser = mockk<EnhancedReportParser>()
         val fileWatcher = mockk<FileWatcher>()
 
         // Test that all action implementations can be instantiated
@@ -48,7 +56,7 @@ class SimpleActionTest {
         val changeAction = FileSystemChangeAnalysisAction(fileWatcher)
         assertTrue(changeAction is ChangeAnalysisAction)
 
-        val testAction = YaXUnitTestAction(platformUtilityDsl)
+        val testAction = YaXUnitTestAction(platformUtilityDsl, utilLocator, configWriter, reportParser)
         assertTrue(testAction is RunTestAction)
     }
 } 

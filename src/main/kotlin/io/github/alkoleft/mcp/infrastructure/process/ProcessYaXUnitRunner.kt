@@ -1,400 +1,273 @@
 package io.github.alkoleft.mcp.infrastructure.process
 
-import io.github.alkoleft.mcp.core.modules.PlatformType
-import io.github.alkoleft.mcp.core.modules.TestExecutionError
 import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
-import io.github.alkoleft.mcp.core.modules.UtilityLocation
-import io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult
 import io.github.alkoleft.mcp.core.modules.YaXUnitRunner
+import io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult
+import io.github.alkoleft.mcp.core.modules.UtilityLocation
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.ConfiguratorContext
+import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
+import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.alkoleft.mcp.infrastructure.platform.CrossPlatformUtilLocator
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityResult
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdContext
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdPlan
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdPlanDsl
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.springframework.stereotype.Component
-import java.io.File
-import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
-import java.util.concurrent.TimeUnit
+import java.nio.file.Files
+import kotlin.time.Duration as KotlinDuration
+
+private val logger = KotlinLogging.logger { }
 
 /**
- * YAXUnit test runner that executes 1C:Enterprise processes for running tests.
- * Handles process execution, output capture, and result parsing.
+ * Реализация YaXUnitRunner для запуска тестов через 1С:Предприятие
  */
-private val logger = KotlinLogging.logger {  }
-
-@Component
-class ProcessYaXUnitRunner : YaXUnitRunner {
-
-    // Execution timeouts
-    private val defaultTestTimeout = Duration.ofMinutes(30)
-    private val processStartTimeout = Duration.ofSeconds(30)
+class ProcessYaXUnitRunner(
+    private val utilLocator: CrossPlatformUtilLocator,
+    private val configWriter: JsonYaXUnitConfigWriter
+) : YaXUnitRunner {
 
     override suspend fun executeTests(
         utilityLocation: UtilityLocation,
         configPath: Path,
-        request: TestExecutionRequest,
-    ): YaXUnitExecutionResult =
-        withContext(Dispatchers.IO) {
-            val startTime = Instant.now()
-            logger.info { "Starting YAXUnit test execution with utility: ${utilityLocation.executablePath}" }
-
-            try {
-                // Prepare execution parameters
-                val executionParams = prepareExecutionParameters(utilityLocation, configPath, request)
-                logger.debug { "Execution command: ${executionParams.command.joinToString(" ")}" }
-
-                // Execute the 1C process
-                val processResult = executeProcess(executionParams)
-
-                val duration = Duration.between(startTime, Instant.now())
-                logger.info { "YAXUnit execution completed in ${duration.toMillis()}ms with exit code: ${processResult.exitCode}" }
-
-                // Determine report path
-                val reportPath = findGeneratedReport(request.projectPath, request.testsPath)
-
-                YaXUnitExecutionResult(
-                    success = processResult.exitCode == 0,
-                    reportPath = reportPath,
-                    exitCode = processResult.exitCode,
-                    standardOutput = processResult.standardOutput,
-                    errorOutput = processResult.errorOutput,
-                    duration = duration,
-                )
-            } catch (e: Exception) {
-                logger.error(e) { "YAXUnit execution failed" }
-
-                val duration = Duration.between(startTime, Instant.now())
-                YaXUnitExecutionResult(
-                    success = false,
-                    reportPath = null,
-                    exitCode = -1,
-                    standardOutput = "",
-                    errorOutput = "Execution failed: ${e.message}",
-                    duration = duration,
-                )
+        request: TestExecutionRequest
+    ): YaXUnitExecutionResult = withContext(Dispatchers.IO) {
+        val startTime = Instant.now()
+        logger.info { "Starting YaXUnit test execution for ${request.javaClass.simpleName}" }
+        
+        try {
+            // Создаем временную конфигурацию для запуска тестов
+            logger.debug { "Creating temporary configuration at: $configPath" }
+            val tempConfigPath = configWriter.createTempConfig(request)
+            logger.debug { "Configuration created successfully" }
+            
+            // Формируем команду запуска 1С:Предприятие с параметром RunUnitTests
+            logger.debug { "Building enterprise command arguments" }
+            val commandArgs = buildEnterpriseCommandArgs(
+                utilityLocation,
+                request,
+                tempConfigPath
+            )
+            logger.info { "Command: ${commandArgs.joinToString(" ")}" }
+            
+            // Выполняем команду
+            logger.info { "Executing test process..." }
+            val processResult = executeProcess(commandArgs)
+            logger.info { "Process completed with exit code: ${processResult.exitCode}" }
+            
+            val duration = Duration.between(startTime, Instant.now())
+            logger.info { "Test execution completed in ${duration.toSeconds()}s" }
+            
+            // Определяем путь к отчету
+            val reportPath = determineReportPath(request, tempConfigPath)
+            if (reportPath != null && Files.exists(reportPath)) {
+                logger.info { "Test report found at: $reportPath" }
+            } else {
+                logger.warn { "Test report not found at expected location" }
             }
+            
+            YaXUnitExecutionResult(
+                success = processResult.success,
+                reportPath = if (processResult.success) reportPath else null,
+                exitCode = processResult.exitCode,
+                standardOutput = processResult.output,
+                errorOutput = processResult.error ?: "",
+                duration = duration
+            )
+            
+        } catch (e: Exception) {
+            val duration = Duration.between(startTime, Instant.now())
+            logger.error(e) { "YaXUnit test execution failed after ${duration.toSeconds()}s" }
+            YaXUnitExecutionResult(
+                success = false,
+                reportPath = null,
+                exitCode = -1,
+                standardOutput = "",
+                errorOutput = e.message ?: "Unknown error",
+                duration = duration
+            )
         }
-
+    }
+    
     /**
-     * Prepares execution parameters based on platform and request type
+     * Строит аргументы команды для запуска 1С:Предприятие
      */
-    private suspend fun prepareExecutionParameters(
+    private fun buildEnterpriseCommandArgs(
         utilityLocation: UtilityLocation,
-        configPath: Path,
         request: TestExecutionRequest,
-    ): ExecutionParameters =
-        withContext(Dispatchers.IO) {
-            val command = mutableListOf<String>()
-            val workingDirectory = request.projectPath.toFile()
-
-            // Base 1C command
-            command.add(utilityLocation.executablePath.toString())
-
-            // Connection parameters
-            when {
-                request.ibConnection.startsWith("/F") -> {
-                    // File database
-                    command.add("ENTERPRISE")
-                    command.add(request.ibConnection)
-                }
-
-                request.ibConnection.contains("Srvr=") -> {
-                    // Server database
-                    command.add("ENTERPRISE")
-                    command.add("/S${request.ibConnection}")
-                }
-
-                else -> {
-                    throw TestExecutionError.TestRunFailed("Invalid database connection format: ${request.ibConnection}")
-                }
-            }
-
-            // Authentication parameters (if provided)
-            val ibUser = System.getenv("IB_USER")
-            val ibPassword = System.getenv("IB_PWD")
-
-            if (!ibUser.isNullOrBlank()) {
-                command.add("/N$ibUser")
-                if (!ibPassword.isNullOrBlank()) {
-                    command.add("/P$ibPassword")
-                }
-            }
-
-            // YAXUnit execution parameters
-            command.add("/C")
-            command.add("RunUnitTests")
-
-            // Configuration file parameter
-            if (Files.exists(configPath)) {
-                command.add("/TestConfig:${configPath.toAbsolutePath()}")
-            }
-
-            // Output parameters
-            val reportPath = request.projectPath.resolve(".yaxunit").resolve("test-report.json")
-            Files.createDirectories(reportPath.parent)
-            command.add("/Out:${reportPath.toAbsolutePath()}")
-
-            // Platform-specific adjustments
-            adjustCommandForPlatform(command, utilityLocation.platformType)
-
-            ExecutionParameters(
-                command = command,
-                workingDirectory = workingDirectory,
-                timeout = defaultTestTimeout,
-                environmentVariables = prepareEnvironmentVariables(),
-            )
-        }
-
-    /**
-     * Adjusts command for platform-specific requirements
-     */
-    private fun adjustCommandForPlatform(
-        command: MutableList<String>,
-        platformType: PlatformType,
-    ) {
-        when (platformType) {
-            PlatformType.WINDOWS -> {
-                // Windows-specific adjustments
-                command.add("/DisableStartupDialogs")
-                command.add("/DisableStartupMessages")
-            }
-
-            PlatformType.LINUX, PlatformType.MACOS -> {
-                // Unix-specific adjustments
-                command.add("-DisableStartupDialogs")
-                command.add("-DisableStartupMessages")
-            }
-        }
+        configPath: Path
+    ): List<String> {
+        val args = mutableListOf<String>()
+        
+        // Путь к исполняемому файлу 1С:Предприятие
+        args.add(utilityLocation.executablePath.toString())
+        args.add("ENTERPRISE")
+        
+        // Параметры подключения к информационной базе
+        logger.debug { "Building connection arguments for: ${request.ibConnection}" }
+        args.addAll(buildConnectionArgs(request))
+        
+        // Параметры авторизации если указаны
+        args.addAll(buildAuthArgs(request))
+        
+        // Параметр запуска тестов
+        args.add("/C")
+        args.add("RunUnitTests=${configPath.toAbsolutePath()}")
+        
+        logger.debug { "Built command arguments: ${args.joinToString(" ")}" }
+        return args
     }
-
+    
     /**
-     * Prepares environment variables for process execution
+     * Строит аргументы подключения к информационной базе
      */
-    private fun prepareEnvironmentVariables(): Map<String, String> {
-        val env = mutableMapOf<String, String>()
-
-        // Preserve important system variables
-        System.getenv("PATH")?.let { env["PATH"] = it }
-        System.getenv("TEMP")?.let { env["TEMP"] = it }
-        System.getenv("TMP")?.let { env["TMP"] = it }
-        System.getenv("HOME")?.let { env["HOME"] = it }
-        System.getenv("USER")?.let { env["USER"] = it }
-
-        // 1C-specific environment variables
-        System.getenv("V8_LOCALE")?.let { env["V8_LOCALE"] = it }
-        System.getenv("V8_CODEPAGE")?.let { env["V8_CODEPAGE"] = it }
-
-        return env
+    private fun buildConnectionArgs(request: TestExecutionRequest): List<String> {
+        val args = mutableListOf<String>()
+        
+        // Парсим строку подключения
+        val connectionString = request.ibConnection
+        logger.debug { "Parsing connection string: $connectionString" }
+        
+        // Если это файловая база
+        if (connectionString.startsWith("File=")) {
+            val dbPath = connectionString.substringAfter("File=").substringBefore(";")
+            logger.debug { "File database detected: $dbPath" }
+            args.add("/IBName")
+            args.add(dbPath)
+        } else {
+            // Для серверной базы
+            logger.debug { "Server database detected" }
+            args.add("/IBConnectionString")
+            args.add(connectionString)
+        }
+        
+        return args
     }
-
+    
     /**
-     * Executes the 1C process with timeout and output capture
+     * Строит аргументы авторизации
      */
-    private suspend fun executeProcess(params: ExecutionParameters): ProcessExecutionResult =
-        withContext(Dispatchers.IO) {
-            logger.debug { "Executing process in directory: ${params.workingDirectory}" }
-            logger.debug { "Process timeout: ${params.timeout.toMinutes()} minutes" }
-
-            val processBuilder =
-                ProcessBuilder(params.command)
-                    .directory(params.workingDirectory)
-                    .redirectErrorStream(false)
-
-            // Set environment variables
-            processBuilder.environment().putAll(params.environmentVariables)
-
-            val process =
-                try {
-                    processBuilder.start()
-                } catch (e: Exception) {
-                    logger.error(e) { "Failed to start 1C process" }
-                    throw TestExecutionError.TestRunFailed("Process start failed: ${e.message}")
-                }
-
-            // Monitor process execution with timeout
-            val processCompleted =
-                withTimeoutOrNull(params.timeout.toMillis()) {
-                    process.waitFor(params.timeout.toMillis(), TimeUnit.MILLISECONDS)
-                } ?: false
-
-            if (!processCompleted) {
-                logger.warn { "Process execution timed out after ${params.timeout.toMinutes()} minutes" }
-                process.destroyForcibly()
-
-                return@withContext ProcessExecutionResult(
-                    exitCode = -2,
-                    standardOutput = "Process execution timed out",
-                    errorOutput = "Execution exceeded timeout of ${params.timeout.toMinutes()} minutes",
-                )
+    private fun buildAuthArgs(request: TestExecutionRequest): List<String> {
+        val args = mutableListOf<String>()
+        
+        // Парсим строку подключения для извлечения параметров авторизации
+        val connectionString = request.ibConnection
+        
+        // Ищем параметры авторизации в строке подключения
+        val authParams = connectionString.split(";")
+            .filter { it.contains("=") }
+            .associate { 
+                val (key, value) = it.split("=", limit = 2)
+                key.trim() to value.trim()
             }
-
-            // Capture output
-            val standardOutput =
-                try {
-                    process.inputStream
-                        .bufferedReader()
-                        .readText()
-                        .trim()
-                } catch (e: Exception) {
-                    logger.debug(e) { "Failed to read standard output" }
-                    ""
-                }
-
-            val errorOutput =
-                try {
-                    process.errorStream
-                        .bufferedReader()
-                        .readText()
-                        .trim()
-                } catch (e: Exception) {
-                    logger.debug(e) { "Failed to read error output" }
-                    ""
-                }
-
-            val exitCode = process.exitValue()
-
-            logger.debug { "Process completed with exit code: $exitCode" }
-            if (standardOutput.isNotBlank()) {
-                logger.debug { "Standard output: $standardOutput" }
-            }
-            if (errorOutput.isNotBlank()) {
-                logger.debug { "Error output: $errorOutput" }
-            }
-
-            ProcessExecutionResult(
-                exitCode = exitCode,
-                standardOutput = standardOutput,
-                errorOutput = errorOutput,
-            )
+        
+        // Добавляем параметры авторизации если они есть
+        authParams["N"]?.let { username ->
+            logger.debug { "Adding username parameter: $username" }
+            args.add("/N")
+            args.add(username)
         }
-
-    /**
-     * Finds the generated test report file
-     */
-    private suspend fun findGeneratedReport(
-        projectPath: Path,
-        testsPath: Path,
-    ): Path? =
-        withContext(Dispatchers.IO) {
-            val possibleReportPaths =
-                listOf(
-                    projectPath.resolve(".yaxunit").resolve("test-report.json"),
-                    projectPath.resolve(".yaxunit").resolve("test-results.json"),
-                    testsPath.resolve("test-report.json"),
-                    testsPath.resolve("test-results.json"),
-                    projectPath.resolve("test-report.json"),
-                    projectPath.resolve("test-results.json"),
-                )
-
-            for (reportPath in possibleReportPaths) {
-                if (Files.exists(reportPath) && Files.size(reportPath) > 0) {
-                    logger.debug { "Found test report at: $reportPath" }
-                    return@withContext reportPath
-                }
-            }
-
-            logger.warn { "No test report found in expected locations" }
-            return@withContext null
+        
+        authParams["P"]?.let { password ->
+            logger.debug { "Adding password parameter" }
+            args.add("/P")
+            args.add(password)
         }
-
+        
+        return args
+    }
+    
     /**
-     * Validates that the utility can be executed
+     * Выполняет процесс запуска тестов
      */
-    suspend fun validateUtilityAccess(utilityLocation: UtilityLocation): Boolean =
-        withContext(Dispatchers.IO) {
-            try {
-                val testCommand = listOf(utilityLocation.executablePath.toString(), "/?")
-
-                val process =
-                    ProcessBuilder(testCommand)
-                        .redirectErrorStream(true)
-                        .start()
-
-                val completed = process.waitFor(5, TimeUnit.SECONDS)
-
-                if (!completed) {
-                    process.destroyForcibly()
-                    logger.debug { "Utility validation timed out" }
-                    return@withContext false
-                }
-
-                val exitCode = process.exitValue()
-                logger.debug { "Utility validation completed with exit code: $exitCode" }
-
-                // For 1C utilities, exit codes 0, 1, or 2 are typically acceptable for help command
-                exitCode in 0..2
-            } catch (e: Exception) {
-                logger.debug(e) { "Utility validation failed" }
-                false
+    private suspend fun executeProcess(commandArgs: List<String>): PlatformUtilityResult {
+        val processStartTime = Instant.now()
+        logger.debug { "Starting process with command: ${commandArgs.joinToString(" ")}" }
+        
+        val processBuilder = ProcessBuilder(commandArgs)
+        processBuilder.redirectErrorStream(true)
+        
+        // Устанавливаем рабочую директорию
+        val workingDir = commandArgs.first().let { Path.of(it) }.parent
+        if (workingDir != null && Files.exists(workingDir)) {
+            processBuilder.directory(workingDir.toFile())
+            logger.debug { "Set working directory to: $workingDir" }
+        }
+        
+        val process = processBuilder.start()
+        logger.debug { "Process started with PID: ${process.pid()}" }
+        
+        // Читаем вывод процесса
+        val output = process.inputStream.bufferedReader().readText()
+        logger.debug { "Process output length: ${output.length} characters" }
+        
+        val exitCode = process.waitFor()
+        val processDuration = Duration.between(processStartTime, Instant.now())
+        logger.info { "Process completed with exit code $exitCode in ${processDuration.toSeconds()}s" }
+        
+        return PlatformUtilityResult(
+            success = exitCode == 0,
+            output = output,
+            error = if (exitCode != 0) "Process exited with code $exitCode" else null,
+            exitCode = exitCode,
+            duration = KotlinDuration.parse(processDuration.toString())
+        )
+    }
+    
+    /**
+     * Определяет путь к отчету о тестировании
+     */
+    private fun determineReportPath(request: TestExecutionRequest, configPath: Path): Path? {
+        // Пытаемся найти отчет в нескольких возможных местах
+        val possiblePaths = listOf(
+            request.testsPath.resolve("reports").resolve("report.xml"),
+            request.testsPath.resolve("reports").resolve("junit.xml"),
+            request.testsPath.resolve("report.xml"),
+            request.testsPath.resolve("junit.xml"),
+            configPath.parent.resolve("report.xml"),
+            configPath.parent.resolve("junit.xml")
+        )
+        
+        logger.debug { "Searching for test report in possible paths: ${possiblePaths.joinToString(", ")}" }
+        
+        for (path in possiblePaths) {
+            if (Files.exists(path)) {
+                logger.info { "Found test report at: $path" }
+                return path
             }
         }
-
+        
+        logger.warn { "Test report not found in any expected location" }
+        return null
+    }
+    
     /**
-     * Gets detailed information about the 1C platform version
+     * Запускает тесты через ibcmd (альтернативный способ)
+     * TODO: Реализовать в будущих версиях
      */
-    suspend fun getPlatformInfo(utilityLocation: UtilityLocation): PlatformInfo? =
-        withContext(Dispatchers.IO) {
-            try {
-                val versionCommand = listOf(utilityLocation.executablePath.toString(), "/?")
-
-                val process =
-                    ProcessBuilder(versionCommand)
-                        .redirectErrorStream(false)
-                        .start()
-
-                val completed = process.waitFor(10, TimeUnit.SECONDS)
-
-                if (!completed) {
-                    process.destroyForcibly()
-                    return@withContext null
-                }
-
-                val output = process.inputStream.bufferedReader().readText()
-
-                // Parse version information from output
-                val versionPattern = Regex("""(\d+\.\d+\.\d+\.\d+)""")
-                val version = versionPattern.find(output)?.value
-
-                PlatformInfo(
-                    version = version,
-                    platform = utilityLocation.platformType,
-                    executablePath = utilityLocation.executablePath,
-                    rawOutput = output,
-                )
-            } catch (e: Exception) {
-                logger.debug(e) { "Failed to get platform info" }
-                null
-            }
-        }
+    suspend fun executeTestsViaIbcmd(
+        request: TestExecutionRequest,
+        properties: ApplicationProperties
+    ): YaXUnitExecutionResult = withContext(Dispatchers.IO) {
+        val startTime = Instant.now()
+        logger.info { "Starting YaXUnit test execution via ibcmd" }
+        
+        val duration = Duration.between(startTime, Instant.now())
+        logger.warn { "ibcmd test execution not implemented yet" }
+        
+        YaXUnitExecutionResult(
+            success = false,
+            reportPath = null,
+            exitCode = -1,
+            standardOutput = "",
+            errorOutput = "ibcmd test execution not implemented yet",
+            duration = duration
+        )
+    }
 }
-
-/**
- * Parameters for process execution
- */
-private data class ExecutionParameters(
-    val command: List<String>,
-    val workingDirectory: File,
-    val timeout: Duration,
-    val environmentVariables: Map<String, String>,
-)
-
-/**
- * Result of process execution
- */
-private data class ProcessExecutionResult(
-    val exitCode: Int,
-    val standardOutput: String,
-    val errorOutput: String,
-)
-
-/**
- * Information about the 1C platform
- */
-data class PlatformInfo(
-    val version: String?,
-    val platform: PlatformType,
-    val executablePath: Path,
-    val rawOutput: String,
-)

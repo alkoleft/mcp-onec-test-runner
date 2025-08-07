@@ -8,6 +8,9 @@ import io.github.alkoleft.mcp.configuration.properties.BuilderType
 import io.github.alkoleft.mcp.core.modules.FileWatcher
 import io.github.alkoleft.mcp.core.modules.FileWatcherImpl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformUtilityDsl
+import io.github.alkoleft.mcp.infrastructure.platform.CrossPlatformUtilLocator
+import io.github.alkoleft.mcp.infrastructure.process.JsonYaXUnitConfigWriter
+import io.github.alkoleft.mcp.infrastructure.process.EnhancedReportParser
 
 /**
  * Фабрика для создания Actions
@@ -23,6 +26,9 @@ interface ActionFactory {
  */
 class ActionFactoryImpl(
     private val platformUtilityDsl: PlatformUtilityDsl,
+    private val utilLocator: CrossPlatformUtilLocator,
+    private val configWriter: JsonYaXUnitConfigWriter,
+    private val reportParser: EnhancedReportParser
 ) : ActionFactory {
     private val fileWatcher: FileWatcher = FileWatcherImpl()
     override fun createBuildAction(type: BuilderType): BuildAction {
@@ -37,6 +43,6 @@ class ActionFactoryImpl(
     }
 
     override fun createRunTestAction(): RunTestAction {
-        return YaXUnitTestAction(platformUtilityDsl)
+        return YaXUnitTestAction(platformUtilityDsl, utilLocator, configWriter, reportParser)
     }
 } 
