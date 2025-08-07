@@ -1,18 +1,16 @@
 package io.github.alkoleft.mcp.infrastructure.process
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.databind.node.ArrayNode
+import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
 import io.github.alkoleft.mcp.core.modules.YaXUnitConfigWriter
-import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
-import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
-import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
-import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
-import io.github.alkoleft.mcp.configuration.properties.ConnectionProperties
+import io.github.alkoleft.mcp.core.modules.strategy.YaXUnitConfig
+import io.github.alkoleft.mcp.infrastructure.strategy.builders.YaXUnitConfigBuilderImpl
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -22,10 +20,12 @@ private val logger = KotlinLogging.logger { }
 /**
  * Реализация YaXUnitConfigWriter для создания JSON конфигураций запуска тестов
  * Поддерживает все параметры из документации YaXUnit
+ * Интегрирован с построителем конфигурации
  */
 class JsonYaXUnitConfigWriter : YaXUnitConfigWriter {
     
     private val objectMapper = ObjectMapper()
+    private val configBuilder = YaXUnitConfigBuilderImpl()
     
     override suspend fun writeConfig(
         request: TestExecutionRequest,
@@ -56,94 +56,19 @@ class JsonYaXUnitConfigWriter : YaXUnitConfigWriter {
      * Создает конфигурацию для запуска тестов
      */
     private fun createConfig(request: TestExecutionRequest): ObjectNode {
-        val config = objectMapper.createObjectNode()
-        
         logger.debug { "Creating configuration for request type: ${request.javaClass.simpleName}" }
-        
-        // Создаем фильтр в зависимости от типа запроса
-        val filter = createFilter(request)
-        if (filter.size() > 0) {
-            config.set<ObjectNode>("filter", filter)
-            logger.debug { "Added filter configuration" }
+
+        // Создаем конфигурацию с помощью построителя
+        val config = configBuilder.createFromRequest(request)
+
+        // Валидируем конфигурацию
+        val validationResult = configBuilder.validate()
+        if (!validationResult.isValid) {
+            logger.warn { "Configuration validation failed: ${validationResult.errors.joinToString(", ")}" }
         }
-        
-        // Настройки отчета
-        config.put("reportFormat", "jUnit")
-        config.put("reportPath", determineReportPath(request))
-        config.put("closeAfterTests", true)
-        config.put("showReport", false)
-        
-        logger.debug { "Added report configuration: format=jUnit, path=${config.get("reportPath")}" }
-        
-        // Настройки логирования
-        val logging = createLoggingConfig(request)
-        config.set<ObjectNode>("logging", logging)
-        
-        logger.debug { "Added logging configuration" }
-        
-        return config
-    }
-    
-    /**
-     * Создает конфигурацию фильтра в зависимости от типа запроса
-     */
-    private fun createFilter(request: TestExecutionRequest): ObjectNode {
-        val filter = objectMapper.createObjectNode()
-        
-        when (request) {
-            is RunAllTestsRequest -> {
-                // Для запуска всех тестов фильтр не нужен
-                logger.debug { "No filter needed for RunAllTestsRequest" }
-            }
-            is RunModuleTestsRequest -> {
-                // Фильтр по модулю
-                val modulesArray = filter.putArray("modules")
-                modulesArray.add(request.moduleName)
-                logger.debug { "Added module filter: ${request.moduleName}" }
-            }
-            is RunListTestsRequest -> {
-                // Фильтр по списку тестов
-                val testsArray = filter.putArray("tests")
-                request.testNames.forEach { testName ->
-                    testsArray.add(testName)
-                    logger.debug { "Added test filter: $testName" }
-                }
-            }
-        }
-        
-        return filter
-    }
-    
-    /**
-     * Создает конфигурацию логирования
-     */
-    private fun createLoggingConfig(request: TestExecutionRequest): ObjectNode {
-        val logging = objectMapper.createObjectNode()
-        
-        // Путь к файлу лога
-        val logPath = request.testsPath.resolve("logs").resolve("tests.log")
-        logging.put("file", logPath.toString())
-        
-        // Настройки вывода
-        logging.put("console", false)
-        logging.put("level", "info")
-        
-        // Дополнительные настройки логирования
-        logging.put("includeTimestamp", true)
-        logging.put("includeTestDetails", true)
-        
-        logger.debug { "Created logging configuration: file=$logPath, level=info" }
-        
-        return logging
-    }
-    
-    /**
-     * Определяет путь к отчету
-     */
-    private fun determineReportPath(request: TestExecutionRequest): String {
-        val reportPath = request.testsPath.resolve("reports").resolve("junit.xml")
-        logger.debug { "Determined report path: $reportPath" }
-        return reportPath.toString()
+
+        // Конвертируем в JSON
+        return convertConfigToJson(config)
     }
     
     /**
@@ -170,8 +95,8 @@ class JsonYaXUnitConfigWriter : YaXUnitConfigWriter {
         properties.connection?.let { connection ->
             val connectionConfig = objectMapper.createObjectNode()
             connectionConfig.put("connectionString", connection.connectionString)
-            
-            config.set<ObjectNode>("connection", connectionConfig)
+
+            config.set<JsonNode>("connection", connectionConfig)
             logger.debug { "Added connection configuration" }
         }
         
@@ -214,7 +139,43 @@ class JsonYaXUnitConfigWriter : YaXUnitConfigWriter {
         
         return config
     }
-    
+
+    /**
+     * Конвертирует конфигурацию в JSON формат
+     */
+    private fun convertConfigToJson(config: YaXUnitConfig): ObjectNode {
+        val jsonConfig = objectMapper.createObjectNode()
+
+        // Добавляем фильтр если есть
+        config.filter?.let { filter ->
+            val filterNode = objectMapper.createObjectNode()
+            if (filter.modules.isNotEmpty()) {
+                val modulesArray = filterNode.putArray("modules")
+                filter.modules.forEach { modulesArray.add(it) }
+            }
+            if (filter.tests.isNotEmpty()) {
+                val testsArray = filterNode.putArray("tests")
+                filter.tests.forEach { testsArray.add(it) }
+            }
+            jsonConfig.set<JsonNode>("filter", filterNode)
+        }
+
+        // Добавляем настройки отчета
+        jsonConfig.put("reportFormat", config.reportFormat)
+        config.reportPath?.let { jsonConfig.put("reportPath", it.toString()) }
+        jsonConfig.put("closeAfterTests", config.closeAfterTests)
+        jsonConfig.put("showReport", config.showReport)
+
+        // Добавляем настройки логирования
+        val loggingNode = objectMapper.createObjectNode()
+        config.logging.file?.let { loggingNode.put("file", it.toString()) }
+        loggingNode.put("console", config.logging.console)
+        loggingNode.put("level", config.logging.level)
+        jsonConfig.set<JsonNode>("logging", loggingNode)
+
+        return jsonConfig
+    }
+
     /**
      * Валидирует конфигурацию
      */
@@ -222,7 +183,7 @@ class JsonYaXUnitConfigWriter : YaXUnitConfigWriter {
         logger.debug { "Validating YaXUnit configuration" }
         
         // Проверяем обязательные поля
-        val requiredFields = listOf("reportFormat", "reportPath", "closeAfterTests", "showReport", "logging")
+        val requiredFields = listOf("reportFormat", "closeAfterTests", "showReport", "logging")
         val missingFields = requiredFields.filter { !config.has(it) }
         
         if (missingFields.isNotEmpty()) {

@@ -15,74 +15,8 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.UpdateDBCfgCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.executor.ProcessExecutor
 import kotlinx.coroutines.runBlocking
-import java.nio.file.Path
 import kotlin.time.Duration
 import kotlin.time.measureTime
-
-abstract class ConfiguratorDslCommon<T>(private val context: PlatformUtilityContext) :
-    ConfiguratorDslInterface<T> {
-    protected val configuratorContext = ConfiguratorContext(context)
-
-    override fun connect(connectionString: String) {
-        configuratorContext.connect(connectionString)
-    }
-
-    override fun connectToServer(serverName: String, dbName: String) {
-        configuratorContext.connectToServer(serverName, dbName)
-    }
-
-    override fun connectToFile(path: String) {
-        configuratorContext.connectToFile(path)
-    }
-
-    override fun user(user: String) {
-        configuratorContext.user(user)
-    }
-
-    override fun password(password: String) {
-        configuratorContext.password(password)
-    }
-
-    override fun config(path: Path) {
-        configuratorContext.config(path)
-    }
-
-    override fun output(path: Path) {
-        configuratorContext.output(path)
-    }
-
-    override fun log(path: Path) {
-        configuratorContext.log(path)
-    }
-
-    override fun language(code: String) {
-        configuratorContext.language(code)
-    }
-
-    override fun localization(code: String) {
-        configuratorContext.localization(code)
-    }
-
-    override fun connectionSpeed(speed: ConnectionSpeed) {
-        configuratorContext.connectionSpeed(speed)
-    }
-
-    override fun disableStartupDialogs() {
-        configuratorContext.disableStartupDialogs()
-    }
-
-    override fun disableStartupMessages() {
-        configuratorContext.disableStartupMessages()
-    }
-
-    override fun noTruncate() {
-        configuratorContext.noTruncate()
-    }
-
-    override fun param(param: String) {
-        configuratorContext.param(param)
-    }
-}
 
 /**
  * DSL для работы с конфигуратором 1С:Предприятие
@@ -91,8 +25,9 @@ abstract class ConfiguratorDslCommon<T>(private val context: PlatformUtilityCont
  * через fluent API и DSL синтаксис с немедленным выполнением команд.
  */
 class ConfiguratorDsl(
-    context: PlatformUtilityContext
-) : ConfiguratorDslCommon<ConfiguratorResult>(context) {
+    utilityContext: PlatformUtilityContext
+) : BasePlatformDsl<ConfiguratorContext>(ConfiguratorContext(utilityContext)),
+    ConfiguratorDslInterface<ConfiguratorResult> {
     override fun loadCfg(block: LoadCfgCommand.() -> Unit) =
         configureAndExecute(LoadCfgCommand(), block)
 
@@ -139,7 +74,7 @@ class ConfiguratorDsl(
                 val args = buildCommandArgsWithArgs(command.arguments)
                 val result = executor.executeWithLogging(args)
 
-                configuratorContext.setResult(
+                context.setResult(
                     success = result.exitCode == 0,
                     output = result.output,
                     error = result.error,
@@ -148,7 +83,7 @@ class ConfiguratorDsl(
                 )
 
             } catch (e: Exception) {
-                configuratorContext.setResult(
+                context.setResult(
                     success = false,
                     output = "",
                     error = e.message ?: "Unknown error",
@@ -159,10 +94,10 @@ class ConfiguratorDsl(
         }
 
         return ConfiguratorResult(
-            success = configuratorContext.buildResult().success,
-            output = configuratorContext.buildResult().output,
-            error = configuratorContext.buildResult().error,
-            exitCode = configuratorContext.buildResult().exitCode,
+            success = context.buildResult().success,
+            output = context.buildResult().output,
+            error = context.buildResult().error,
+            exitCode = context.buildResult().exitCode,
             duration = duration
         )
     }
@@ -176,7 +111,7 @@ class ConfiguratorDsl(
         val args = mutableListOf<String>()
 
         // Базовые аргументы конфигуратора
-        args.addAll(configuratorContext.buildBaseArgs())
+        args.addAll(context.buildBaseArgs())
 
         // Команда и её аргументы (команда уже включена в commandArgs)
         args.addAll(commandArgs)
@@ -202,8 +137,9 @@ class ConfiguratorDsl(
  * через fluent API и DSL синтаксис с последующим выполнением плана.
  */
 class ConfiguratorPlanDsl(
-    context: PlatformUtilityContext
-) : ConfiguratorDslCommon<Unit>(context) {
+    utilityContext: PlatformUtilityContext
+) : BasePlatformDsl<ConfiguratorContext>(ConfiguratorContext(utilityContext)),
+    ConfiguratorDslInterface<Unit> {
     private val commands = mutableListOf<ConfiguratorCommand>()
 
     override fun loadCfg(block: LoadCfgCommand.() -> Unit) {
@@ -276,7 +212,7 @@ class ConfiguratorPlanDsl(
      * Строит план выполнения команд
      */
     fun buildPlan(): ConfiguratorPlan {
-        return ConfiguratorPlan(commands.toList(), configuratorContext)
+        return ConfiguratorPlan(commands.toList(), context)
     }
 }
 

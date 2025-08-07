@@ -1,234 +1,147 @@
-# 🎨 CREATIVE DESIGN: YaXUnit Test Runner Implementation
+# 🎨 CREATIVE DESIGN: YaXUnit Test Runner Architecture
 
-## 🎯 DESIGN OBJECTIVES
-Создать надежную и расширяемую систему запуска тестов YaXUnit, которая интегрируется с существующей архитектурой MCP и поддерживает все описанные в документации способы запуска тестов с фокусом на jUnit XML отчетах.
+## 📋 COMPONENT OVERVIEW
+Архитектурный дизайн для системы YaXUnit Test Runner с фокусом на jUnit XML формате отчетов и интеграции с 1С:Предприятие.
 
-## 🏗️ ARCHITECTURAL DECISIONS
+## 🎯 DESIGN DECISIONS
 
-### 1. Core Components Design
+### 1. Plugin-Based Architecture with Strategy Pattern
 
-#### YaXUnitTestAction
+**Selected Approach:** Plugin-Based Architecture with Strategy Pattern
+
+**Justification:**
+- Гибкость для jUnit XML обработки
+- Расширяемость конфигурации
+- Тестируемость компонентов
+- Соответствие принципам SOLID
+
+**Key Components:**
+- `ReportParserStrategy` - стратегии парсинга отчетов
+- `CommandBuilderStrategy` - стратегии построения команд
+- `ErrorHandler` - цепочка обработки ошибок
+- `YaXUnitConfigBuilder` - построитель конфигурации
+
+### 2. jUnit XML Report Processing
+
+**Architecture:**
 ```kotlin
-class YaXUnitTestAction(
-    private val platformUtilityDsl: PlatformUtilityDsl,
-    private val utilLocator: CrossPlatformUtilLocator,
-    private val configWriter: JsonYaXUnitConfigWriter,
-    private val reportParser: EnhancedReportParser
-) : RunTestAction
-```
+interface ReportParserStrategy {
+    suspend fun parse(input: InputStream): GenericTestReport
+    fun canHandle(format: ReportFormat): Boolean
+}
 
-**Key Responsibilities:**
-- Координация процесса запуска тестов
-- Создание конфигурации запуска
-- Локализация утилиты ENTERPRISE
-- Обработка результатов и jUnit XML отчетов
-
-#### ProcessYaXUnitRunner
-```kotlin
-class ProcessYaXUnitRunner(
-    private val utilLocator: CrossPlatformUtilLocator,
-    private val configWriter: JsonYaXUnitConfigWriter
-) : YaXUnitRunner
-```
-
-**Key Responsibilities:**
-- Формирование команды запуска 1С:Предприятие
-- Выполнение процесса тестирования
-- Обработка выходных данных
-- Управление временными файлами
-
-### 2. Configuration System Design
-
-#### JsonYaXUnitConfigWriter Enhancements
-```kotlin
-data class YaXUnitConfig(
-    val filter: TestFilter? = null,
-    val reportFormat: ReportFormat = ReportFormat.JUNIT_XML,
-    val reportPath: String? = null,
-    val closeAfterTests: Boolean = true,
-    val showReport: Boolean = false,
-    val logging: LoggingConfig? = null,
-    val externalControl: ExternalControlConfig? = null
-)
-
-data class TestFilter(
-    val modules: List<String>? = null,
-    val extensions: List<String>? = null,
-    val tests: List<String>? = null,
-    val tags: List<String>? = null,
-    val contexts: List<String>? = null
-)
-
-data class LoggingConfig(
-    val file: String? = null,
-    val enable: Boolean? = null,
-    val console: Boolean = false,
-    val level: String = "debug"
-)
-```
-
-### 3. Enterprise Integration Design
-
-#### Command Line Formation
-```kotlin
-// Пример команды запуска согласно документации:
-// "C:\Program Files\1cv8\8.3.18.1698\bin\1cv8c.exe" ENTERPRISE /IBName MyInfoBase /N Admin /C RunUnitTests=C:\tmp\test-config.json
-
-private fun buildEnterpriseCommandArgs(
-    utilityLocation: UtilityLocation,
-    request: TestExecutionRequest,
-    configPath: Path
-): List<String> {
-    return listOf(
-        utilityLocation.executablePath.toString(),
-        "ENTERPRISE",
-        *buildConnectionArgs(request),
-        "/C",
-        "RunUnitTests=${configPath.toAbsolutePath()}"
-    )
+class JUnitXmlParserStrategy : ReportParserStrategy {
+    // Специализированная обработка jUnit XML
 }
 ```
 
-### 4. jUnit Report Processing Design
+**Features:**
+- Поддержка множественных test suites
+- Детальная обработка ошибок
+- Извлечение метаданных тестов
+- Совместимость с GenericTestReport
 
-#### EnhancedReportParser Integration
+### 3. Test Configuration Management
+
+**Architecture:**
 ```kotlin
-interface EnhancedReportParser : ReportParser {
-    suspend fun parseJUnitReport(input: InputStream): GenericTestReport
-    suspend fun detectReportFormat(input: InputStream): ReportFormat
+class YaXUnitConfigBuilder {
+    fun withFilter(filter: TestFilter): YaXUnitConfigBuilder
+    fun withReportFormat(format: String): YaXUnitConfigBuilder
+    fun build(): YaXUnitConfig
 }
 
-// jUnit XML Report Structure
-data class JUnitTestSuite(
-    val name: String,
-    val tests: Int,
-    val failures: Int,
-    val errors: Int,
-    val skipped: Int,
-    val time: Double,
-    val testCases: List<JUnitTestCase>
-)
-
-data class JUnitTestCase(
-    val name: String,
-    val className: String,
-    val time: Double,
-    val status: TestStatus,
-    val failure: JUnitFailure? = null,
-    val systemOut: String? = null,
-    val systemErr: String? = null
-)
-
-data class JUnitFailure(
-    val message: String,
-    val type: String,
-    val details: String
-)
+class YaXUnitConfigValidator {
+    fun validate(config: YaXUnitConfig): ValidationResult
+}
 ```
 
-## 🔧 TECHNICAL IMPLEMENTATION PLAN
+**Features:**
+- Builder Pattern для конфигурации
+- Валидация всех параметров
+- Поддержка всех опций из документации
+- Гибкая система расширения
 
-### Phase 1: Core Infrastructure (CURRENT FOCUS)
+### 4. Enterprise Command Building
 
-#### 1.1 Enhance ProcessYaXUnitRunner
-- [ ] Реализовать `buildEnterpriseCommandArgs()` с поддержкой всех типов подключения
-- [ ] Добавить обработку различных форматов строк подключения (File=, IBConnectionString)
-- [ ] Реализовать `executeProcess()` с детальным логированием
-- [ ] Добавить `determineReportPath()` с поддержкой jUnit XML формата
+**Architecture:**
+```kotlin
+interface CommandBuilderStrategy {
+    fun buildCommand(request: TestExecutionRequest, configPath: Path): List<String>
+    fun canHandle(connectionType: ConnectionType): Boolean
+}
 
-#### 1.2 Improve JsonYaXUnitConfigWriter
-- [ ] Создать data classes для конфигурации (YaXUnitConfig, TestFilter, LoggingConfig)
-- [ ] Реализовать поддержку всех параметров конфигурации
-- [ ] Добавить валидацию конфигурации
-- [ ] Поддержка jUnit XML формата отчетов
+class FileDatabaseCommandBuilder : CommandBuilderStrategy
+class ServerDatabaseCommandBuilder : CommandBuilderStrategy
+```
 
-#### 1.3 Update YaXUnitTestAction
-- [ ] Интегрировать с улучшенным ProcessYaXUnitRunner
-- [ ] Добавить поддержку различных типов запросов (RunAllTestsRequest, RunModuleTestsRequest, RunListTestsRequest)
-- [ ] Реализовать обработку jUnit XML отчетов через EnhancedReportParser
-- [ ] Добавить детальное логирование процесса
+**Features:**
+- Стратегии для разных типов подключения
+- Автоматическое определение типа базы
+- Обработка параметров авторизации
+- Интеграция с CrossPlatformUtilLocator
 
-### Phase 2: Platform Integration
+### 5. Error Handling & Recovery
 
-#### 2.1 CrossPlatformUtilLocator Enhancement
-- [ ] Убедиться, что ENTERPRISE utility type поддерживается
-- [ ] Добавить специфичные пути поиска для 1cv8c.exe
-- [ ] Реализовать валидацию ENTERPRISE utility
-- [ ] Добавить кэширование путей к ENTERPRISE
+**Architecture:**
+```kotlin
+interface ErrorHandler {
+    fun canHandle(error: Throwable): Boolean
+    fun handle(error: Throwable, context: ErrorContext): ErrorResolution
+    fun setNext(handler: ErrorHandler): ErrorHandler
+}
 
-#### 2.2 Platform-Specific Adaptations
-- [ ] Windows: поддержка путей C:\Program Files\1cv8\
-- [ ] Linux: поддержка путей /opt/1cv8/
-- [ ] Добавить определение версии платформы
-- [ ] Реализовать fallback механизмы
+sealed class ErrorResolution {
+    object Success : ErrorResolution()
+    data class Retry(val maxAttempts: Int, val delay: Duration) : ErrorResolution()
+    data class Fail(val reason: String) : ErrorResolution()
+}
+```
 
-### Phase 3: Configuration & Reporting
+**Features:**
+- Chain of Responsibility для обработки ошибок
+- Стратегии восстановления
+- Детальная диагностика проблем
+- Логирование всех ошибок
 
-#### 3.1 Configuration Management
-- [ ] Поддержка всех параметров фильтрации (modules, extensions, tests, tags, contexts)
-- [ ] Реализация LoggingConfig с поддержкой файлов и консоли
-- [ ] Добавить ExternalControlConfig для интеграции с EDT
-- [ ] Валидация конфигурации перед запуском
+## 🏗️ IMPLEMENTATION ROADMAP
 
-#### 3.2 jUnit Report Processing
-- [ ] Реализовать EnhancedReportParser для jUnit XML формата
-- [ ] Поддержка стандартного jUnit XML schema
-- [ ] Автоматическое определение jUnit XML отчета
-- [ ] Преобразование в GenericTestReport
+### Phase 1: Core Strategy Interfaces
+1. Создать базовые интерфейсы стратегий
+2. Реализовать фабрики для создания стратегий
+3. Обновить существующие компоненты для использования стратегий
 
-### Phase 4: Error Handling & Logging
+### Phase 2: jUnit XML Processing
+1. Реализовать JUnitXmlParserStrategy
+2. Создать тесты для парсинга jUnit XML
+3. Интегрировать с EnhancedReportParser
 
-#### 4.1 Comprehensive Error Handling
-- [ ] Обработка ошибок запуска процесса
-- [ ] Валидация конфигурации
-- [ ] Обработка ошибок парсинга jUnit XML отчетов
-- [ ] Graceful degradation при отсутствии отчетов
+### Phase 3: Configuration Management
+1. Реализовать YaXUnitConfigBuilder
+2. Создать YaXUnitConfigValidator
+3. Обновить JsonYaXUnitConfigWriter
 
-#### 4.2 Detailed Logging
-- [ ] Логирование процесса формирования команды
-- [ ] Логирование выполнения процесса
-- [ ] Логирование обработки jUnit XML результатов
-- [ ] Поддержка различных уровней логирования
+### Phase 4: Command Building
+1. Реализовать CommandBuilderStrategy
+2. Создать стратегии для разных типов подключения
+3. Обновить ProcessYaXUnitRunner
 
-## 🎯 SUCCESS METRICS
+### Phase 5: Error Handling
+1. Реализовать ErrorHandler chain
+2. Создать специализированные обработчики
+3. Интегрировать с YaXUnitTestAction
 
-### Functional Requirements
-- ✅ Запуск тестов через 1С:Предприятие с параметром RunUnitTests
-- ✅ Поддержка всех параметров конфигурации из документации
-- ✅ Обработка jUnit XML отчетов
-- ✅ Интеграция с ENTERPRISE utility type
-- ✅ Корректная обработка ошибок
+## ✅ VERIFICATION
 
-### Quality Requirements
-- ✅ 100% покрытие тестами новых компонентов
-- ✅ Документация API и примеры использования
-- ✅ Поддержка Windows и Linux платформ
-- ✅ Производительность: запуск тестов < 30 секунд
+- ✅ Архитектура поддерживает все требования
+- ✅ Компоненты изолированы и тестируемы
+- ✅ Система расширяема для новых форматов
+- ✅ Обработка ошибок детализирована
+- ✅ Интеграция с существующим кодом обеспечена
 
-### Integration Requirements
-- ✅ Совместимость с существующей архитектурой MCP
-- ✅ Интеграция с ActionFactory
-- ✅ Поддержка всех типов TestExecutionRequest
-- ✅ Расширяемость для будущих форматов отчетов
+## 📝 NEXT STEPS
 
-## 📝 IMPLEMENTATION NOTES
-
-### Key Design Principles
-1. **Separation of Concerns** - каждый компонент отвечает за свою область
-2. **Dependency Injection** - использование Spring для управления зависимостями
-3. **Error Resilience** - graceful handling ошибок на всех уровнях
-4. **Platform Independence** - поддержка различных операционных систем
-5. **jUnit XML Focus** - специализация на jUnit XML формате отчетов
-
-### Integration Points
-- **ActionFactory** - регистрация YaXUnitTestAction
-- **CrossPlatformUtilLocator** - поиск ENTERPRISE utility
-- **EnhancedReportParser** - обработка jUnit XML отчетов
-- **ApplicationProperties** - конфигурация приложения
-
-### Testing Strategy
-- **Unit Tests** - для каждого компонента отдельно
-- **Integration Tests** - тестирование взаимодействия компонентов
-- **End-to-End Tests** - полный цикл запуска тестов
-- **Platform Tests** - тестирование на различных ОС
-- **jUnit XML Tests** - тестирование парсинга jUnit XML отчетов
+1. Начать реализацию с Phase 1: Core Strategy Interfaces
+2. Создать unit тесты для каждого компонента
+3. Интегрировать новые компоненты с существующим кодом
+4. Протестировать на различных сценариях

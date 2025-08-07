@@ -1,23 +1,20 @@
 package io.github.alkoleft.mcp.infrastructure.process
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.alkoleft.mcp.core.modules.GenericTestCase
 import io.github.alkoleft.mcp.core.modules.GenericTestReport
 import io.github.alkoleft.mcp.core.modules.GenericTestSuite
-import io.github.alkoleft.mcp.core.modules.GenericTestCase
-import io.github.alkoleft.mcp.core.modules.TestMetadata
-import io.github.alkoleft.mcp.core.modules.TestSummary
-import io.github.alkoleft.mcp.core.modules.TestStatus
-import io.github.alkoleft.mcp.core.modules.ReportParser
 import io.github.alkoleft.mcp.core.modules.ReportFormat
+import io.github.alkoleft.mcp.core.modules.ReportParser
+import io.github.alkoleft.mcp.core.modules.TestMetadata
+import io.github.alkoleft.mcp.core.modules.TestStatus
+import io.github.alkoleft.mcp.core.modules.TestSummary
+import io.github.alkoleft.mcp.infrastructure.strategy.ReportParserFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.w3c.dom.Document
 import org.w3c.dom.Element
-import org.w3c.dom.NodeList
 import java.io.InputStream
-import java.nio.file.Files
-import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
 import javax.xml.parsers.DocumentBuilderFactory
@@ -25,21 +22,19 @@ import javax.xml.parsers.DocumentBuilderFactory
 /**
  * Расширенный парсер отчетов о тестировании
  * Поддерживает различные форматы: jUnit XML, JSON, YaXUnit JSON
+ * Интегрирован со стратегиями парсинга
  */
 class EnhancedReportParser : ReportParser {
     
     private val objectMapper = ObjectMapper()
+    private val parserFactory = ReportParserFactory()
     
     override suspend fun parseReport(
         input: InputStream,
         format: ReportFormat
     ): GenericTestReport = withContext(Dispatchers.IO) {
-        when (format) {
-            ReportFormat.JUNIT_XML -> parseJUnitXml(input)
-            ReportFormat.JSON -> parseJsonReport(input)
-            ReportFormat.YAXUNIT_JSON -> parseYaXUnitJson(input)
-            ReportFormat.PLAIN_TEXT -> parsePlainText(input)
-        }
+        val strategy = parserFactory.createStrategy(format)
+        strategy.parse(input)
     }
     
     override suspend fun detectFormat(input: InputStream): ReportFormat = withContext(Dispatchers.IO) {

@@ -25,14 +25,14 @@ private val logger = KotlinLogging.logger { }
 @Service
 class TestLauncherService(
     private val actionFactory: ActionFactory,
-    private val applicationProperties: ApplicationProperties
+    private val properties: ApplicationProperties
 ) : TestLauncher {
 
     override suspend fun runAll(request: RunAllTestsRequest): TestExecutionResult {
         logger.info { "Starting full test execution for project: ${request.projectPath}" }
 
         val testAction = actionFactory.createRunTestAction()
-        val result = testAction.run(null, applicationProperties)
+        val result = testAction.run(properties, null)
 
         return TestExecutionResult(
             success = result.success,
@@ -46,7 +46,7 @@ class TestLauncherService(
         logger.info { "Starting module test execution for: ${request.moduleName} in project: ${request.projectPath}" }
 
         val testAction = actionFactory.createRunTestAction()
-        val result = testAction.run(request.moduleName, applicationProperties)
+        val result = testAction.run(properties, request.moduleName)
 
         return TestExecutionResult(
             success = result.success,
@@ -60,7 +60,7 @@ class TestLauncherService(
         logger.info { "Starting specific tests execution for: ${request.testNames} in project: ${request.projectPath}" }
 
         val testAction = actionFactory.createRunTestAction()
-        val result = testAction.run(request.testNames.firstOrNull(), applicationProperties)
+        val result = testAction.run(properties, request.testNames.firstOrNull())
 
         return TestExecutionResult(
             success = result.success,

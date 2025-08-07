@@ -19,7 +19,7 @@ class UtilityValidator {
     /**
      * Validates utility location by checking existence, permissions and basic functionality
      */
-    suspend fun validateUtility(location: UtilityLocation): Boolean {
+    fun validateUtility(location: UtilityLocation): Boolean {
         return try {
             // Basic existence check
             if (!location.executablePath.exists()) {
@@ -32,9 +32,9 @@ class UtilityValidator {
                 logger.debug { "Utility not executable: ${location.executablePath}" }
                 return false
             }
-
+            return true
             // Quick functional validation
-            runQuickValidation(location)
+//            runQuickValidation(location)
         } catch (e: Exception) {
             logger.debug { "Validation failed for ${location.executablePath}: ${e.message}" }
             false

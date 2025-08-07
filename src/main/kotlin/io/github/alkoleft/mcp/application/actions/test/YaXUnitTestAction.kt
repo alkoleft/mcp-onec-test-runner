@@ -4,21 +4,25 @@ import io.github.alkoleft.mcp.application.actions.RunTestAction
 import io.github.alkoleft.mcp.application.actions.TestExecutionResult
 import io.github.alkoleft.mcp.application.actions.exceptions.TestExecuteException
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformUtilityDsl
-import io.github.alkoleft.mcp.infrastructure.process.ProcessYaXUnitRunner
-import io.github.alkoleft.mcp.infrastructure.process.JsonYaXUnitConfigWriter
-import io.github.alkoleft.mcp.infrastructure.process.EnhancedReportParser
+import io.github.alkoleft.mcp.core.modules.GenericTestReport
 import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
-import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
+import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
+import io.github.alkoleft.mcp.core.modules.TestStatus
 import io.github.alkoleft.mcp.core.modules.UtilityType
-import io.github.alkoleft.mcp.core.modules.ReportFormat
+import io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult
+import io.github.alkoleft.mcp.core.modules.strategy.ErrorContext
+import io.github.alkoleft.mcp.core.modules.strategy.ErrorResolution
 import io.github.alkoleft.mcp.infrastructure.platform.CrossPlatformUtilLocator
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformUtilityDsl
+import io.github.alkoleft.mcp.infrastructure.process.EnhancedReportParser
+import io.github.alkoleft.mcp.infrastructure.process.JsonYaXUnitConfigWriter
+import io.github.alkoleft.mcp.infrastructure.process.YaXUnitRunner
+import io.github.alkoleft.mcp.infrastructure.strategy.ErrorHandlerFactory
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Files
-import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
 
@@ -27,6 +31,7 @@ private val logger = KotlinLogging.logger { }
 /**
  * Реализация RunTestAction для тестирования через YaXUnit
  * Поддерживает запуск всех тестов, тестов модуля и конкретных тестов
+ * Интегрирован со стратегиями обработки ошибок
  */
 class YaXUnitTestAction(
     private val platformUtilityDsl: PlatformUtilityDsl,
@@ -35,14 +40,16 @@ class YaXUnitTestAction(
     private val reportParser: EnhancedReportParser
 ) : RunTestAction {
 
-    override suspend fun run(filter: String?, properties: ApplicationProperties): TestExecutionResult {
+    private val errorHandlerFactory = ErrorHandlerFactory()
+
+    override suspend fun run(properties: ApplicationProperties, filter: String?): TestExecutionResult {
         val startTime = Instant.now()
         logger.info { "Starting YaXUnit test execution with filter: $filter" }
 
         return withContext(Dispatchers.IO) {
             try {
                 // Создаем запрос на выполнение тестов на основе фильтра
-                val request = createTestRequest(filter, properties)
+                val request = createTestRequest(properties, filter)
                 logger.debug { "Created test request: ${request.javaClass.simpleName}" }
                 
                 // Локализуем утилиту 1С:Предприятие
@@ -50,15 +57,10 @@ class YaXUnitTestAction(
                 val utilityLocation = utilLocator.locateUtility(UtilityType.ENTERPRISE, properties.platformVersion)
                 logger.info { "Found ENTERPRISE utility at: ${utilityLocation.executablePath}" }
                 
-                // Создаем временную конфигурацию
-                logger.debug { "Creating temporary configuration" }
-                val configPath = configWriter.createTempConfig(request)
-                logger.debug { "Configuration created at: $configPath" }
-                
                 // Создаем runner и выполняем тесты
-                val runner = ProcessYaXUnitRunner(utilLocator, configWriter)
+                val runner = YaXUnitRunner(properties, platformUtilityDsl, configWriter)
                 logger.info { "Executing tests via ProcessYaXUnitRunner" }
-                val executionResult = runner.executeTests(utilityLocation, configPath, request)
+                val executionResult = runner.executeTests(utilityLocation, request)
                 
                 // Парсим отчет если он был создан
                 val report = parseTestReport(executionResult)
@@ -87,7 +89,34 @@ class YaXUnitTestAction(
             } catch (e: Exception) {
                 val duration = Duration.between(startTime, Instant.now())
                 logger.error(e) { "YaXUnit test execution failed after ${duration.toSeconds()}s" }
-                throw TestExecuteException("YaXUnit test execution failed: ${e.message}", e)
+
+                // Обрабатываем ошибку с помощью цепочки обработчиков
+                val errorHandler = errorHandlerFactory.createErrorHandlerChain()
+                val errorContext = ErrorContext(
+                    request = filter,
+                    utilityLocation = properties.platformVersion,
+                    configPath = null,
+                    attempt = 1,
+                    maxAttempts = 3
+                )
+
+                val resolution = errorHandler.handle(e, errorContext)
+                when (resolution) {
+                    is ErrorResolution.Retry -> {
+                        logger.info { "Retrying test execution: ${resolution.reason}" }
+                        // TODO: Реализовать повторную попытку
+                        throw TestExecuteException("YaXUnit test execution failed: ${e.message}", e)
+                    }
+
+                    is ErrorResolution.Fail -> {
+                        logger.error { "Test execution failed: ${resolution.reason}" }
+                        throw TestExecuteException("YaXUnit test execution failed: ${resolution.reason}", e)
+                    }
+
+                    else -> {
+                        throw TestExecuteException("YaXUnit test execution failed: ${e.message}", e)
+                    }
+                }
             }
         }
     }
@@ -95,7 +124,7 @@ class YaXUnitTestAction(
     /**
      * Парсит отчет о тестировании
      */
-    private suspend fun parseTestReport(executionResult: io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult): io.github.alkoleft.mcp.core.modules.GenericTestReport? {
+    private suspend fun parseTestReport(executionResult: YaXUnitExecutionResult): GenericTestReport? {
         return if (executionResult.reportPath != null && Files.exists(executionResult.reportPath)) {
             try {
                 logger.debug { "Parsing test report from: ${executionResult.reportPath}" }
@@ -126,8 +155,8 @@ class YaXUnitTestAction(
      * Строит список ошибок
      */
     private fun buildErrorList(
-        executionResult: io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult,
-        report: io.github.alkoleft.mcp.core.modules.GenericTestReport?
+        executionResult: YaXUnitExecutionResult,
+        report: GenericTestReport?
     ): List<String> {
         val errors = mutableListOf<String>()
         
@@ -138,7 +167,7 @@ class YaXUnitTestAction(
         
         // Добавляем ошибки из отчета
         report?.testSuites?.forEach { testSuite ->
-            testSuite.testCases.filter { it.status == io.github.alkoleft.mcp.core.modules.TestStatus.FAILED }
+            testSuite.testCases.filter { it.status == TestStatus.FAILED }
                 .forEach { testCase ->
                     val errorMsg = testCase.errorMessage ?: "Test failed without error message"
                     errors.add("${testCase.name}: $errorMsg")
@@ -151,7 +180,10 @@ class YaXUnitTestAction(
     /**
      * Создает запрос на выполнение тестов на основе фильтра
      */
-    private fun createTestRequest(filter: String?, properties: ApplicationProperties): io.github.alkoleft.mcp.core.modules.TestExecutionRequest {
+    private fun createTestRequest(
+        properties: ApplicationProperties,
+        filter: String?
+    ): io.github.alkoleft.mcp.core.modules.TestExecutionRequest {
         val testsPath = properties.testsPath ?: properties.basePath.resolve("tests")
         
         return when {
@@ -167,17 +199,17 @@ class YaXUnitTestAction(
             filter.startsWith("module:") -> {
                 val moduleName = filter.substringAfter("module:").trim()
                 logger.debug { "Creating RunModuleTestsRequest for module: $moduleName" }
-                createModuleTestRequest(moduleName, properties)
+                createModuleTestRequest(properties, moduleName)
             }
             filter.contains(",") -> {
                 val testNames = filter.split(",").map { it.trim() }
                 logger.debug { "Creating RunListTestsRequest for tests: ${testNames.joinToString(", ")}" }
-                createListTestRequest(testNames, properties)
+                createListTestRequest(properties, testNames)
             }
             else -> {
                 // Одиночный тест
                 logger.debug { "Creating RunListTestsRequest for single test: $filter" }
-                createListTestRequest(listOf(filter), properties)
+                createListTestRequest(properties, listOf(filter))
             }
         }
     }
@@ -185,7 +217,7 @@ class YaXUnitTestAction(
     /**
      * Создает запрос для запуска тестов конкретного модуля
      */
-    private fun createModuleTestRequest(moduleName: String, properties: ApplicationProperties): RunModuleTestsRequest {
+    private fun createModuleTestRequest(properties: ApplicationProperties, moduleName: String): RunModuleTestsRequest {
         val testsPath = properties.testsPath ?: properties.basePath.resolve("tests")
         
         return RunModuleTestsRequest(
@@ -200,7 +232,7 @@ class YaXUnitTestAction(
     /**
      * Создает запрос для запуска конкретных тестов
      */
-    private fun createListTestRequest(testNames: List<String>, properties: ApplicationProperties): RunListTestsRequest {
+    private fun createListTestRequest(properties: ApplicationProperties, testNames: List<String>): RunListTestsRequest {
         val testsPath = properties.testsPath ?: properties.basePath.resolve("tests")
         
         return RunListTestsRequest(
@@ -217,30 +249,30 @@ class YaXUnitTestAction(
      */
     suspend fun runAllTests(properties: ApplicationProperties): TestExecutionResult {
         logger.info { "Running all tests in project" }
-        return run(null, properties)
+        return run(properties, null)
     }
     
     /**
      * Запускает тесты конкретного модуля
      */
-    suspend fun runModuleTests(moduleName: String, properties: ApplicationProperties): TestExecutionResult {
+    suspend fun runModuleTests(properties: ApplicationProperties, moduleName: String): TestExecutionResult {
         logger.info { "Running tests for module: $moduleName" }
-        return run("module:$moduleName", properties)
+        return run(properties, "module:$moduleName")
     }
     
     /**
      * Запускает конкретные тесты
      */
-    suspend fun runSpecificTests(testNames: List<String>, properties: ApplicationProperties): TestExecutionResult {
+    suspend fun runSpecificTests(properties: ApplicationProperties, testNames: List<String>): TestExecutionResult {
         logger.info { "Running specific tests: ${testNames.joinToString(", ")}" }
-        return run(testNames.joinToString(","), properties)
+        return run(properties, testNames.joinToString(","))
     }
     
     /**
      * Запускает один тест
      */
-    suspend fun runSingleTest(testName: String, properties: ApplicationProperties): TestExecutionResult {
+    suspend fun runSingleTest(properties: ApplicationProperties, testName: String): TestExecutionResult {
         logger.info { "Running single test: $testName" }
-        return run(testName, properties)
+        return run(properties, testName)
     }
 } 

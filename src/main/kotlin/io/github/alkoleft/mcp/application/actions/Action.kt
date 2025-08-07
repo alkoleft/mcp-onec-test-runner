@@ -28,7 +28,7 @@ interface ChangeAnalysisAction {
  * Интерфейс для запуска тестов
  */
 interface RunTestAction {
-    suspend fun run(filter: String? = null, properties: ApplicationProperties): TestExecutionResult
+    suspend fun run(properties: ApplicationProperties, filter: String? = null): TestExecutionResult
 }
 
 /**

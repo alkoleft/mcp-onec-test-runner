@@ -2,6 +2,7 @@ package io.github.alkoleft.mcp
 
 import io.github.alkoleft.mcp.application.actions.ActionConfiguration
 import io.github.alkoleft.mcp.application.actions.build.DesignerBuildAction
+import io.github.alkoleft.mcp.application.actions.test.YaXUnitTestAction
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.ConnectionProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
@@ -11,6 +12,8 @@ import io.github.alkoleft.mcp.configuration.properties.SourceSetType
 import io.github.alkoleft.mcp.configuration.properties.ToolsProperties
 import io.github.alkoleft.mcp.infrastructure.platform.CrossPlatformUtilLocator
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformUtilityDsl
+import io.github.alkoleft.mcp.infrastructure.process.EnhancedReportParser
+import io.github.alkoleft.mcp.infrastructure.process.JsonYaXUnitConfigWriter
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -31,7 +34,10 @@ const val version = "8.3.22.1709"
     ]
 )
 class RealTests(
-    @Autowired private val platformDsl: PlatformUtilityDsl
+    @Autowired private val platformDsl: PlatformUtilityDsl,
+    @Autowired private val utilLocator: CrossPlatformUtilLocator,
+    @Autowired private val configWriter: JsonYaXUnitConfigWriter,
+    @Autowired private val reportParser: EnhancedReportParser
 ) {
     @Ignore
     @Test
@@ -135,6 +141,114 @@ class RealTests(
         runBlocking {
             val result = action.build(properties)
             println("Результат сборки с кастомными путями: $result")
+        }
+    }
+
+    // Реальные тесты для YaXUnit
+    @Test
+    fun yaxunitRealTestRunAll() {
+        val properties = createTestApplicationProperties()
+        val action = YaXUnitTestAction(platformDsl, utilLocator, configWriter, reportParser)
+
+        runBlocking {
+            println("=== Запуск всех тестов YaXUnit ===")
+            val result = action.runAllTests(properties)
+
+            println("Результат выполнения всех тестов:")
+            println("- Успешно: ${result.success}")
+            println("- Всего тестов: ${result.testsRun}")
+            println("- Пройдено: ${result.testsPassed}")
+            println("- Провалено: ${result.testsFailed}")
+            println("- Длительность: ${result.duration.toSeconds()} секунд")
+            println("- Путь к отчету: ${result.reportPath}")
+
+            if (result.errors.isNotEmpty()) {
+                println("Ошибки:")
+                result.errors.forEach { error ->
+                    println("  - $error")
+                }
+            }
+        }
+    }
+
+    @Test
+    fun yaxunitRealTestRunModule() {
+        val properties = createTestApplicationProperties()
+        val action = YaXUnitTestAction(platformDsl, utilLocator, configWriter, reportParser)
+        val moduleName = "ОМ_ЮТКоллекции" // Модуль с тестами
+
+        runBlocking {
+            println("=== Запуск тестов модуля '$moduleName' ===")
+            val result = action.runModuleTests(properties, moduleName)
+
+            println("Результат выполнения тестов модуля '$moduleName':")
+            println("- Успешно: ${result.success}")
+            println("- Всего тестов: ${result.testsRun}")
+            println("- Пройдено: ${result.testsPassed}")
+            println("- Провалено: ${result.testsFailed}")
+            println("- Длительность: ${result.duration.toSeconds()} секунд")
+            println("- Путь к отчету: ${result.reportPath}")
+
+            if (result.errors.isNotEmpty()) {
+                println("Ошибки:")
+                result.errors.forEach { error ->
+                    println("  - $error")
+                }
+            }
+        }
+    }
+
+    @Test
+    fun yaxunitRealTestRunSpecificTests() {
+        val properties = createTestApplicationProperties()
+        val action = YaXUnitTestAction(platformDsl, utilLocator, configWriter, reportParser)
+        val testNames = listOf("TestExample", "TestCalculator") // Примеры имен тестов
+
+        runBlocking {
+            println("=== Запуск конкретных тестов: ${testNames.joinToString(", ")} ===")
+            val result = action.runSpecificTests(properties, testNames)
+
+            println("Результат выполнения конкретных тестов:")
+            println("- Успешно: ${result.success}")
+            println("- Всего тестов: ${result.testsRun}")
+            println("- Пройдено: ${result.testsPassed}")
+            println("- Провалено: ${result.testsFailed}")
+            println("- Длительность: ${result.duration.toSeconds()} секунд")
+            println("- Путь к отчету: ${result.reportPath}")
+
+            if (result.errors.isNotEmpty()) {
+                println("Ошибки:")
+                result.errors.forEach { error ->
+                    println("  - $error")
+                }
+            }
+        }
+    }
+
+    @Test
+    fun yaxunitRealTestRunSingleTest() {
+        val properties = createTestApplicationProperties()
+        val action = YaXUnitTestAction(platformDsl, utilLocator, configWriter, reportParser)
+        val testName = "TestExample" // Пример имени теста
+
+        runBlocking {
+            println("=== Запуск одного теста: '$testName' ===")
+            val result = action.runSingleTest(properties, testName)
+
+            println("Результат выполнения теста '$testName':")
+            println("- Успешно: ${result.success}")
+            println("- Всего тестов: ${result.testsRun}")
+            println("- Пройдено: ${result.testsPassed}")
+            println("- Провалено: ${result.testsFailed}")
+            println("- Длительность: ${result.duration.toSeconds()} секунд")
+            println("- Путь к отчету: ${result.reportPath}")
+
+            if (result.errors.isNotEmpty()) {
+                println("Ошибки:")
+                result.errors.forEach { error ->
+                    println("  - $error")
+                }
+            }
         }
     }
 

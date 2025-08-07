@@ -155,4 +155,22 @@ class CrossPlatformUtilLocatorTest {
 
         assertTrue(exception.utility.contains(UtilityType.DESIGNER.name), "Exception should contain correct utility type")
     }
+
+    @Test
+    fun `should handle ENTERPRISE utility type`() {
+        // Arrange
+        val locator = CrossPlatformUtilLocator()
+
+        // Act & Assert
+        val exception = assertFailsWith<TestExecutionError.UtilNotFound> {
+            runBlocking {
+                locator.locateUtility(UtilityType.ENTERPRISE, "8.3.24")
+            }
+        }
+
+        assertTrue(
+            exception.utility.contains(UtilityType.ENTERPRISE.name),
+            "Exception should contain correct utility type"
+        )
+    }
 } 

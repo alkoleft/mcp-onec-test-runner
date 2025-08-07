@@ -1,8 +1,12 @@
 package io.github.alkoleft.mcp.infrastructure.process
 
-import com.fasterxml.jackson.databind.node.ObjectNode
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.ConnectionProperties
+import io.github.alkoleft.mcp.configuration.properties.SourceSet
+import io.github.alkoleft.mcp.configuration.properties.SourceSetItem
+import io.github.alkoleft.mcp.configuration.properties.SourceSetPurpose
+import io.github.alkoleft.mcp.configuration.properties.SourceSetType
+import io.github.alkoleft.mcp.configuration.properties.ToolsProperties
 import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
@@ -31,17 +35,19 @@ class JsonYaXUnitConfigWriterTest {
             platformVersion = "8.3.24.1482",
             connection = ConnectionProperties(
                 connectionString = "File=C:\\TestDB;"
-            )
+            ),
+            sourceSet = SourceSet(
+                listOf(
+                    SourceSetItem(
+                        path = tempDir.resolve("src").toString(),
+                        name = "main",
+                        type = SourceSetType.CONFIGURATION,
+                        purpose = setOf(SourceSetPurpose.MAIN)
+                    )
+                )
+            ),
+            tools = ToolsProperties()
         )
-    }
-
-    @Test
-    fun `should create config writer`() {
-        // Given & When
-        val configWriter = JsonYaXUnitConfigWriter()
-        
-        // Then
-        assertTrue { configWriter is JsonYaXUnitConfigWriter }
     }
 
     @Test

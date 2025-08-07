@@ -96,6 +96,7 @@ data class GenericTestSuite(
     val passed: Int,
     val failed: Int,
     val skipped: Int,
+    val errors: Int = 0,
     val duration: Duration,
     val testCases: List<GenericTestCase>,
 )

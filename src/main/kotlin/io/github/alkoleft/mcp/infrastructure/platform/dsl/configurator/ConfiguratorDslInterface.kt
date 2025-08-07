@@ -45,11 +45,6 @@ interface ConfiguratorDslInterface<T> {
     fun password(password: String)
 
     /**
-     * Устанавливает путь к конфигурации (для операций с файлами .cf)
-     */
-    fun config(path: Path)
-
-    /**
      * Устанавливает путь для вывода
      */
     fun output(path: Path)
@@ -57,7 +52,7 @@ interface ConfiguratorDslInterface<T> {
     /**
      * Устанавливает путь для лог-файла
      */
-    fun log(path: Path)
+    fun log(path: Path) = output(path)
 
     /**
      * Устанавливает код языка интерфейса

@@ -4,6 +4,7 @@ import io.github.alkoleft.mcp.application.services.TestLauncherService
 import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
 import io.github.alkoleft.mcp.core.modules.TestExecutionResult
 import io.github.alkoleft.mcp.core.modules.TestStatus
+import io.github.alkoleft.mcp.interfaces.cli.RunnerCli
 import io.github.alkoleft.mcp.interfaces.cli.commands.TestCommand
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
@@ -42,7 +43,7 @@ class RunAllCommand : Callable<Int> {
                         .getDeclaredField("parent")
                         .apply {
                             isAccessible = true
-                        }.get(testCommand) as io.github.alkoleft.mcp.interfaces.cli.RunnerCli
+                        }.get(testCommand) as RunnerCli
 
                 val config = parentCli.createConfiguration()
                 val errors = config.validate()

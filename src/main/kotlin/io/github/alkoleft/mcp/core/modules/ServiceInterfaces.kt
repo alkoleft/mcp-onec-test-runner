@@ -81,7 +81,6 @@ interface UtilLocator {
 interface YaXUnitRunner {
     suspend fun executeTests(
         utilityLocation: UtilityLocation,
-        configPath: Path,
         request: TestExecutionRequest,
     ): YaXUnitExecutionResult
 }
