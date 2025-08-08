@@ -61,7 +61,7 @@ class RunListCommand : Callable<Int> {
                     logger.info { "Test list completed successfully" }
                     0
                 } else {
-                    logger.error { "Test list failed: ${result.error?.message ?: "Unknown error"}" }
+                    logger.error { "Test list failed: Unknown error" }
                     1
                 }
             } catch (e: Exception) {

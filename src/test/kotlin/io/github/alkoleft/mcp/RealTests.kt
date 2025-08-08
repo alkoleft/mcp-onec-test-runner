@@ -11,8 +11,8 @@ import io.github.alkoleft.mcp.configuration.properties.SourceSetPurpose
 import io.github.alkoleft.mcp.configuration.properties.SourceSetType
 import io.github.alkoleft.mcp.configuration.properties.ToolsProperties
 import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
-import io.github.alkoleft.mcp.infrastructure.platform.CrossPlatformUtilLocator
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformUtilityDsl
+import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.process.EnhancedReportParser
 import io.github.alkoleft.mcp.infrastructure.process.JsonYaXUnitConfigWriter
 import kotlinx.coroutines.runBlocking
@@ -29,13 +29,13 @@ const val version = "8.3.22.1709"
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.NONE,
     classes = [
-        PlatformUtilityDsl::class,
+        PlatformDsl::class,
         CrossPlatformUtilLocator::class,
         ActionConfiguration::class
     ]
 )
 class RealTests(
-    @Autowired private val platformDsl: PlatformUtilityDsl,
+    @Autowired private val platformDsl: PlatformDsl,
     @Autowired private val utilLocator: CrossPlatformUtilLocator,
     @Autowired private val configWriter: JsonYaXUnitConfigWriter,
     @Autowired private val reportParser: EnhancedReportParser
@@ -43,7 +43,7 @@ class RealTests(
     @Ignore
     @Test
     fun designerRealExecute() {
-        val plan = platformDsl.configuratorPlan(version) {
+        platformDsl.configurator(version) {
             connectToFile(ibPath)
             disableStartupDialogs()
             disableStartupMessages()
@@ -56,9 +56,7 @@ class RealTests(
                     extension = it
                 }
             }
-        }.buildPlan()
-        plan.printPlan()
-        runBlocking { plan.execute() }
+        }
     }
 
     @Ignore

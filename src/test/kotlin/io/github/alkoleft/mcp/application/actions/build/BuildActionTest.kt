@@ -8,7 +8,7 @@ import io.github.alkoleft.mcp.configuration.properties.SourceSetItem
 import io.github.alkoleft.mcp.configuration.properties.SourceSetPurpose
 import io.github.alkoleft.mcp.configuration.properties.SourceSetType
 import io.github.alkoleft.mcp.configuration.properties.ToolsProperties
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformUtilityDsl
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -20,7 +20,7 @@ import java.nio.file.Paths
 class BuildActionTest {
 
     @Mock
-    private lateinit var mockDsl: PlatformUtilityDsl
+    private lateinit var mockDsl: PlatformDsl
 
     @Test
     fun `should handle ibcmd build successfully`() {

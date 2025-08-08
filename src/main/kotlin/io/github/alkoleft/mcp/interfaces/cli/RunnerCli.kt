@@ -19,6 +19,7 @@ private val logger = KotlinLogging.logger { }
  * Main CLI entry point for MCP YaXUnit Runner.
  * Provides commands for running MCP server and executing tests.
  */
+@org.springframework.context.annotation.Profile("cli")
 @Component
 @Command(
     name = "mcp-yaxunit-runner",

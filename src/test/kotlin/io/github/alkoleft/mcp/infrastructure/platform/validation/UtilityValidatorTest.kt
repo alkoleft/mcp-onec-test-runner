@@ -2,10 +2,10 @@ package io.github.alkoleft.mcp.infrastructure.platform.validation
 
 import io.github.alkoleft.mcp.core.modules.PlatformType
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
+import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityValidator
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlin.test.assertNotNull
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Paths
 

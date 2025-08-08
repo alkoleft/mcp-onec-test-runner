@@ -8,6 +8,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Primary
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import picocli.CommandLine
 import picocli.CommandLine.IFactory
@@ -18,9 +19,13 @@ import picocli.CommandLine.IFactory
 class McpYaxUnitRunnerApplication
 
 fun main(args: Array<String>) {
-    runApplication<McpYaxUnitRunnerApplication>(*args)
+    val profile = io.github.alkoleft.mcp.interfaces.cli.BootstrapCli.detectProfile(args)
+    val app = org.springframework.boot.SpringApplication(McpYaxUnitRunnerApplication::class.java)
+    app.setAdditionalProfiles(profile)
+    app.run(*args)
 }
 
+@Profile("cli")
 @Component
 class ApplicationRunner(private val runner: RunnerCli, private val factory: IFactory) : CommandLineRunner,
     ExitCodeGenerator {

@@ -1,6 +1,6 @@
 package io.github.alkoleft.mcp.interfaces.cli.commands.test
 
-import io.github.alkoleft.mcp.application.services.TestLauncherService
+import io.github.alkoleft.mcp.application.services.LauncherService
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
 import io.github.alkoleft.mcp.core.modules.TestExecutionResult
@@ -23,7 +23,7 @@ private val logger = KotlinLogging.logger { }
     description = ["Запуск тестов конкретного модуля"],
     mixinStandardHelpOptions = true,
 )
-class RunModuleCommand(var properties: ApplicationProperties, var testLauncher: TestLauncherService) : Callable<Int> {
+class RunModuleCommand(var properties: ApplicationProperties, var launcher: LauncherService) : Callable<Int> {
     @Option(
         names = ["--module"],
         description = ["Имя модуля для тестирования"],
@@ -44,7 +44,7 @@ class RunModuleCommand(var properties: ApplicationProperties, var testLauncher: 
                 logger.info { "  Module: $moduleName" }
                 logger.info { "  Platform: ${request.platformVersion ?: "auto-detect"}" }
 
-                val result = testLauncher.run(request)
+                val result = launcher.run(request)
 
                 // Print results
                 printTestResults(result, moduleName)
@@ -53,7 +53,7 @@ class RunModuleCommand(var properties: ApplicationProperties, var testLauncher: 
                     logger.info { "Module tests completed successfully" }
                     0
                 } else {
-                    logger.error { "Module tests failed: ${result.error?.message ?: "Unknown error"}" }
+                    logger.error { "Module tests failed: Unknown error" }
                     1
                 }
             } catch (e: Exception) {

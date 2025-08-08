@@ -3,7 +3,7 @@ package io.github.alkoleft.mcp.application.actions.build
 import io.github.alkoleft.mcp.application.actions.BuildResult
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformUtilityDsl
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.oshai.kotlinlogging.KotlinLogging
 
 private val logger = KotlinLogging.logger { }
@@ -12,7 +12,7 @@ private val logger = KotlinLogging.logger { }
  * Реализация BuildAction для сборки через ibcmd
  */
 class IbcmdBuildAction(
-    dsl: PlatformUtilityDsl
+    dsl: PlatformDsl
 ) : AbstractBuildAction(dsl) {
     override suspend fun executeBuildDsl(properties: ApplicationProperties, sourceSet: SourceSet): BuildResult {
         logger.info { "Executing ibcmd build DSL" }

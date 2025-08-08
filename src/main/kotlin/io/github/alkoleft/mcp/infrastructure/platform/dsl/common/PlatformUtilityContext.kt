@@ -2,7 +2,7 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.common
 
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
-import io.github.alkoleft.mcp.infrastructure.platform.CrossPlatformUtilLocator
+import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
 import kotlinx.coroutines.runBlocking
 import org.springframework.stereotype.Component
 

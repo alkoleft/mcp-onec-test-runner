@@ -3,11 +3,11 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl
 import io.github.alkoleft.mcp.core.modules.PlatformType
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
-import io.github.alkoleft.mcp.infrastructure.platform.CrossPlatformUtilLocator
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.ConfiguratorDsl
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.LoadFormat
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.commands.LoadConfigFromFilesCommand
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.executor.ProcessExecutor
+import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.DesignerDsl
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.LoadFormat
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.LoadConfigFromFilesCommand
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
 import io.mockk.coEvery
 import io.mockk.mockk
 import org.junit.jupiter.api.BeforeEach
@@ -23,13 +23,13 @@ class PlatformUtilityDslTest {
 
     private lateinit var mockUtilLocator: CrossPlatformUtilLocator
     private lateinit var mockProcessExecutor: ProcessExecutor
-    private lateinit var platformDsl: PlatformUtilityDsl
+    private lateinit var platformDsl: PlatformDsl
 
     @BeforeEach
     fun setUp() {
         mockUtilLocator = mockk<CrossPlatformUtilLocator>()
         mockProcessExecutor = mockk<ProcessExecutor>()
-        platformDsl = PlatformUtilityDsl(mockUtilLocator)
+        platformDsl = PlatformDsl(mockUtilLocator)
     }
 
     @Test
@@ -53,7 +53,7 @@ class PlatformUtilityDslTest {
         }
 
         // Then
-        assertTrue(configuratorDsl is ConfiguratorDsl)
+        assertTrue(configuratorDsl is DesignerDsl)
     }
 
     @Test
@@ -78,7 +78,7 @@ class PlatformUtilityDslTest {
         }
 
         // Then - проверяем, что DSL создан корректно
-        assertTrue(configuratorDsl is ConfiguratorDsl)
+        assertTrue(configuratorDsl is DesignerDsl)
     }
 
     @Test
@@ -167,42 +167,6 @@ class PlatformUtilityDslTest {
         }
 
         // Then
-        assertTrue(configuratorDsl is ConfiguratorDsl)
-    }
-
-    @Test
-    fun `should handle platform check`() {
-        // Given
-        val version = "8.3.24.1482"
-
-        coEvery { mockUtilLocator.locateUtility(any(), version) } returns mockk<UtilityLocation>()
-        coEvery { mockUtilLocator.validateUtility(any()) } returns true
-
-        // When
-        val result = platformDsl.platform(version) {
-            // Platform check context
-        }
-
-        // Then
-        assertTrue(result.success)
-        assertEquals(0, result.exitCode)
-    }
-
-    @Test
-    fun `should handle sync platform check`() {
-        // Given
-        val version = "8.3.24.1482"
-
-        coEvery { mockUtilLocator.locateUtility(any(), version) } returns mockk<UtilityLocation>()
-        coEvery { mockUtilLocator.validateUtility(any()) } returns true
-
-        // When
-        val result = platformDsl.platformSync(version) {
-            // Sync platform check context
-        }
-
-        // Then
-        assertTrue(result.success)
-        assertEquals(0, result.exitCode)
+        assertTrue(configuratorDsl is DesignerDsl)
     }
 }

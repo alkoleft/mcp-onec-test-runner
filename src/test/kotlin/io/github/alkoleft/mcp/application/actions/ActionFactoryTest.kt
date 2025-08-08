@@ -12,8 +12,8 @@ import io.github.alkoleft.mcp.configuration.properties.SourceSetItem
 import io.github.alkoleft.mcp.configuration.properties.SourceSetPurpose
 import io.github.alkoleft.mcp.configuration.properties.SourceSetType
 import io.github.alkoleft.mcp.configuration.properties.ToolsProperties
-import io.github.alkoleft.mcp.infrastructure.platform.CrossPlatformUtilLocator
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformUtilityDsl
+import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.process.EnhancedReportParser
 import io.github.alkoleft.mcp.infrastructure.process.JsonYaXUnitConfigWriter
 import io.mockk.mockk
@@ -25,12 +25,12 @@ class ActionFactoryTest {
 
     @Test
     fun `should create correct build action for each type`() {
-        val platformUtilityDsl = mockk<PlatformUtilityDsl>()
+        val platformDsl = mockk<PlatformDsl>()
         val utilLocator = mockk<CrossPlatformUtilLocator>()
         val configWriter = mockk<JsonYaXUnitConfigWriter>()
         val reportParser = mockk<EnhancedReportParser>()
         val factory = ActionFactoryImpl(
-            platformUtilityDsl, utilLocator, configWriter, reportParser
+            platformDsl, utilLocator, configWriter, reportParser
         )
 
         val designerAction = factory.createBuildAction(BuilderType.DESIGNER)
@@ -42,12 +42,12 @@ class ActionFactoryTest {
 
     @Test
     fun `should create correct change analysis action`() {
-        val platformUtilityDsl = mockk<PlatformUtilityDsl>()
+        val platformDsl = mockk<PlatformDsl>()
         val utilLocator = mockk<CrossPlatformUtilLocator>()
         val configWriter = mockk<JsonYaXUnitConfigWriter>()
         val reportParser = mockk<EnhancedReportParser>()
         val factory = ActionFactoryImpl(
-            platformUtilityDsl,
+            platformDsl,
             utilLocator,
             configWriter,
             reportParser
@@ -59,12 +59,12 @@ class ActionFactoryTest {
 
     @Test
     fun `should create correct run test action`() {
-        val platformUtilityDsl = mockk<PlatformUtilityDsl>()
+        val platformDsl = mockk<PlatformDsl>()
         val utilLocator = mockk<CrossPlatformUtilLocator>()
         val configWriter = mockk<JsonYaXUnitConfigWriter>()
         val reportParser = mockk<EnhancedReportParser>()
         val factory = ActionFactoryImpl(
-            platformUtilityDsl,
+            platformDsl,
             utilLocator,
             configWriter,
             reportParser

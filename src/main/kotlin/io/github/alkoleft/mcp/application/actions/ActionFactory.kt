@@ -7,8 +7,8 @@ import io.github.alkoleft.mcp.application.actions.test.YaXUnitTestAction
 import io.github.alkoleft.mcp.configuration.properties.BuilderType
 import io.github.alkoleft.mcp.core.modules.FileWatcher
 import io.github.alkoleft.mcp.core.modules.FileWatcherImpl
-import io.github.alkoleft.mcp.infrastructure.platform.CrossPlatformUtilLocator
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformUtilityDsl
+import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.process.EnhancedReportParser
 import io.github.alkoleft.mcp.infrastructure.process.JsonYaXUnitConfigWriter
 
@@ -25,7 +25,7 @@ interface ActionFactory {
  * Реализация ActionFactory
  */
 class ActionFactoryImpl(
-    private val platformUtilityDsl: PlatformUtilityDsl,
+    private val platformDsl: PlatformDsl,
     private val utilLocator: CrossPlatformUtilLocator,
     private val configWriter: JsonYaXUnitConfigWriter,
     private val reportParser: EnhancedReportParser
@@ -33,8 +33,8 @@ class ActionFactoryImpl(
     private val fileWatcher: FileWatcher = FileWatcherImpl()
     override fun createBuildAction(type: BuilderType): BuildAction {
         return when (type) {
-            BuilderType.DESIGNER -> DesignerBuildAction(platformUtilityDsl)
-            BuilderType.IBMCMD -> IbcmdBuildAction(platformUtilityDsl)
+            BuilderType.DESIGNER -> DesignerBuildAction(platformDsl)
+            BuilderType.IBMCMD -> IbcmdBuildAction(platformDsl)
         }
     }
 
@@ -43,6 +43,6 @@ class ActionFactoryImpl(
     }
 
     override fun createRunTestAction(): RunTestAction {
-        return YaXUnitTestAction(platformUtilityDsl, utilLocator, configWriter, reportParser)
+        return YaXUnitTestAction(platformDsl, utilLocator, configWriter, reportParser)
     }
 } 

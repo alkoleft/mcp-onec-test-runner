@@ -25,8 +25,7 @@ private val logger = KotlinLogging.logger { }
  */
 @Service
 class TestLauncherService(
-    private val actionFactory: ActionFactory,
-    private val properties: ApplicationProperties
+    private val actionFactory: ActionFactory
 ) : TestLauncher {
 
     override suspend fun run(request: TestExecutionRequest): TestExecutionResult {
@@ -37,29 +36,6 @@ class TestLauncherService(
         }
 
         val testAction = actionFactory.createRunTestAction()
-        val result = testAction.run(request)
-
-        return TestExecutionResult(
-            success = result.success,
-            report = createEmptyReport(),
-            duration = result.duration,
-            error = if (result.errors.isNotEmpty()) TestExecutionError.TestRunFailed(result.errors.joinToString("; ")) else null
-        )
-    }
-
-    private fun createEmptyReport(): GenericTestReport {
-        return GenericTestReport(
-            metadata = TestMetadata(),
-            summary = TestSummary(
-                totalTests = 0,
-                passed = 0,
-                failed = 0,
-                skipped = 0,
-                errors = 0
-            ),
-            testSuites = emptyList(),
-            timestamp = Instant.now(),
-            duration = Duration.ZERO
-        )
+        return testAction.run(request)
     }
 }

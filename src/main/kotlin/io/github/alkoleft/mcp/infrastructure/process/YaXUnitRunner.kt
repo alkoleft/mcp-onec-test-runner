@@ -4,9 +4,9 @@ import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult
 import io.github.alkoleft.mcp.core.modules.YaXUnitRunner
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformUtilityDsl
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityResult
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.ifNoBlank
+import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
 import io.github.alkoleft.mcp.infrastructure.strategy.ErrorHandlerFactory
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
@@ -23,7 +23,7 @@ private val logger = KotlinLogging.logger { }
  * Интегрирован со стратегиями построения команд и обработки ошибок
  */
 class YaXUnitRunner(
-    private val platformUtilityDsl: PlatformUtilityDsl,
+    private val platformDsl: PlatformDsl,
     private val configWriter: JsonYaXUnitConfigWriter
 ) : YaXUnitRunner {
 
@@ -91,7 +91,7 @@ class YaXUnitRunner(
     private suspend fun executeTests(
         request: TestExecutionRequest,
         configPath: Path
-    ): PlatformUtilityResult = platformUtilityDsl.enterprise(request.platformVersion) {
+    ): PlatformUtilityResult = platformDsl.enterprise(request.platformVersion) {
         connect(request.ibConnection)
         request.user?.ifNoBlank { user(it) }
         request.password?.ifNoBlank { password(it) }

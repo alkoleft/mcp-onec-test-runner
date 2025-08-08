@@ -1,17 +1,17 @@
 package io.github.alkoleft.mcp.application.actions.test
 
 import io.github.alkoleft.mcp.application.actions.RunTestAction
-import io.github.alkoleft.mcp.application.actions.TestExecutionResult
 import io.github.alkoleft.mcp.application.actions.exceptions.TestExecuteException
 import io.github.alkoleft.mcp.core.modules.GenericTestReport
 import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
+import io.github.alkoleft.mcp.core.modules.TestExecutionResult
 import io.github.alkoleft.mcp.core.modules.TestStatus
 import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult
 import io.github.alkoleft.mcp.core.modules.strategy.ErrorContext
 import io.github.alkoleft.mcp.core.modules.strategy.ErrorResolution
-import io.github.alkoleft.mcp.infrastructure.platform.CrossPlatformUtilLocator
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformUtilityDsl
+import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.process.EnhancedReportParser
 import io.github.alkoleft.mcp.infrastructure.process.JsonYaXUnitConfigWriter
 import io.github.alkoleft.mcp.infrastructure.process.YaXUnitRunner
@@ -31,7 +31,7 @@ private val logger = KotlinLogging.logger { }
  * Интегрирован со стратегиями обработки ошибок
  */
 class YaXUnitTestAction(
-    private val platformUtilityDsl: PlatformUtilityDsl,
+    private val platformDsl: PlatformDsl,
     private val utilLocator: CrossPlatformUtilLocator,
     private val configWriter: JsonYaXUnitConfigWriter,
     private val reportParser: EnhancedReportParser
@@ -51,7 +51,7 @@ class YaXUnitTestAction(
                 logger.info { "Found ENTERPRISE utility at: ${utilityLocation.executablePath}" }
                 
                 // Создаем runner и выполняем тесты
-                val runner = YaXUnitRunner(platformUtilityDsl, configWriter)
+                val runner = YaXUnitRunner(platformDsl, configWriter)
                 logger.info { "Executing tests via ProcessYaXUnitRunner" }
                 val executionResult = runner.executeTests(utilityLocation, request)
                 
@@ -65,17 +65,12 @@ class YaXUnitTestAction(
                 val testsPassed = report?.summary?.passed ?: 0
                 val testsFailed = report?.summary?.failed ?: 0
                 
-                val errors = buildErrorList(executionResult, report)
-                
                 logger.info { "YaXUnit test execution completed: $testsRun tests, $testsPassed passed, $testsFailed failed in ${duration.toSeconds()}s" }
 
                 TestExecutionResult(
                     success = executionResult.success,
-                    testsRun = testsRun,
-                    testsPassed = testsPassed,
-                    testsFailed = testsFailed,
-                    reportPath = executionResult.reportPath,
-                    errors = errors,
+                    reportPath = executionResult.reportPath!!,
+                    report = report!!,
                     duration = duration
                 )
 

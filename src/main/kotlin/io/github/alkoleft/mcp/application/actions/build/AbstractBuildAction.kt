@@ -5,7 +5,7 @@ import io.github.alkoleft.mcp.application.actions.BuildResult
 import io.github.alkoleft.mcp.application.actions.exceptions.BuildException
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformUtilityDsl
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -19,7 +19,7 @@ private val logger = KotlinLogging.logger { }
  * для измерения времени выполнения, обработки ошибок и логирования
  */
 abstract class AbstractBuildAction(
-    protected val dsl: PlatformUtilityDsl
+    protected val dsl: PlatformDsl
 ) : BuildAction {
 
     /**

@@ -1,7 +1,7 @@
 package io.github.alkoleft.mcp.infrastructure.platform.search
 
 import io.github.alkoleft.mcp.core.modules.PlatformType
-import io.github.alkoleft.mcp.infrastructure.platform.detection.PlatformDetector
+import io.github.alkoleft.mcp.infrastructure.utility.PlatformDetector
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

@@ -47,7 +47,7 @@ class RunAllCommand(private val properties: ApplicationProperties, private val t
                     logger.info { "All tests completed successfully" }
                     0
                 } else {
-                    logger.error { "Tests failed: ${result.error?.message ?: "Unknown error"}" }
+                    logger.error { "Tests failed: Unknown error" }
                     1
                 }
             } catch (e: Exception) {

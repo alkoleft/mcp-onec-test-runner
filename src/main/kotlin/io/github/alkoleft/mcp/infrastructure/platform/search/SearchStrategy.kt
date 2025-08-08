@@ -1,18 +1,18 @@
 package io.github.alkoleft.mcp.infrastructure.platform.search
 
 import io.github.alkoleft.mcp.core.modules.PlatformType
-import io.github.alkoleft.mcp.infrastructure.platform.detection.PlatformDetector
+import io.github.alkoleft.mcp.infrastructure.utility.PlatformDetector
 import java.nio.file.Paths
 
 /**
  * Factory for creating platform-specific search strategies
  */
-class SearchStrategyFactory(private val platformDetector: PlatformDetector) {
+class SearchStrategyFactory() {
     /**
      * Creates platform-specific search strategy
      */
     fun createSearchStrategy(): SearchStrategy =
-        when (platformDetector.current) {
+        when (PlatformDetector.current) {
             PlatformType.WINDOWS -> WindowsSearchStrategy()
             PlatformType.LINUX -> LinuxSearchStrategy()
             PlatformType.MACOS -> MacSearchStrategy()

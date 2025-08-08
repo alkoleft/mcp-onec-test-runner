@@ -4,6 +4,8 @@ import io.github.alkoleft.mcp.core.modules.PlatformType
 import io.github.alkoleft.mcp.core.modules.TestExecutionError
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
+import io.github.alkoleft.mcp.infrastructure.utility.PlatformDetector
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Paths
 import kotlin.test.Test
@@ -32,7 +34,7 @@ class CrossPlatformUtilLocatorTest {
         // Act
         val platformDetector = locator.javaClass.getDeclaredField("platformDetector")
             .apply { isAccessible = true }
-            .get(locator) as io.github.alkoleft.mcp.infrastructure.platform.detection.PlatformDetector
+            .get(locator) as PlatformDetector
         val platform = platformDetector.current
 
         // Assert

@@ -2,8 +2,8 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.enterprise
 
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityResult
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.BasePlatformDsl
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.executor.ProcessExecutor
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.BasePlatformDsl
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Component

@@ -46,8 +46,8 @@ data class RunListTestsRequest(
 data class TestExecutionResult(
     val success: Boolean,
     val report: GenericTestReport,
+    val reportPath: Path,
     val duration: Duration,
-    val error: TestExecutionError? = null,
 )
 
 sealed class TestExecutionError : Exception() {

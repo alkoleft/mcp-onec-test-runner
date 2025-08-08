@@ -5,8 +5,8 @@ import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
 import io.github.alkoleft.mcp.configuration.properties.SourceSetItem
 import io.github.alkoleft.mcp.configuration.properties.SourceSetType
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformUtilityDsl
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.ConfiguratorResult
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.ConfiguratorResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Path
 
@@ -16,7 +16,7 @@ private val logger = KotlinLogging.logger { }
  * Реализация BuildAction для сборки через конфигуратор 1С
  */
 class DesignerBuildAction(
-    dsl: PlatformUtilityDsl
+    dsl: PlatformDsl
 ) : AbstractBuildAction(dsl) {
 
     /**

@@ -6,7 +6,6 @@ import io.github.alkoleft.mcp.core.modules.BuildService
 import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
-import io.github.alkoleft.mcp.infrastructure.config.ProjectConfiguration
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
 import org.springframework.ai.tool.annotation.Tool
@@ -24,7 +23,6 @@ private val logger = KotlinLogging.logger {  }
 class YaXUnitMcpServer(
     private val testLauncherService: TestLauncherService,
     private val buildService: BuildService,
-    private val projectConfiguration: ProjectConfiguration,
     private val properties: ApplicationProperties,
 ) {
 
@@ -224,41 +222,6 @@ class YaXUnitMcpServer(
                 message = "Ошибка при получении списка модулей: ${e.message}",
                 modules = emptyList(),
                 totalCount = 0
-            )
-        }
-    }
-
-    /**
-     * Получает конфигурацию проекта
-     * @return Текущая конфигурация проекта
-     */
-    @Tool(
-        name = "yaxunit_get_configuration",
-        description = "Возвращает текущую конфигурацию проекта YaXUnit."
-    )
-    fun getConfiguration(): ConfigurationResult {
-        logger.info { "Получение конфигурации проекта" }
-        
-        return try {
-            ConfigurationResult(
-                success = true,
-                message = "Конфигурация получена успешно",
-                projectSettings = projectConfiguration.project,
-                platformSettings = projectConfiguration.platform,
-                buildSettings = projectConfiguration.build,
-                loggingSettings = projectConfiguration.logging,
-                serverSettings = projectConfiguration.server
-            )
-        } catch (e: Exception) {
-            logger.error(e) { "Ошибка при получении конфигурации" }
-            ConfigurationResult(
-                success = false,
-                message = "Ошибка при получении конфигурации: ${e.message}",
-                projectSettings = null,
-                platformSettings = null,
-                buildSettings = null,
-                loggingSettings = null,
-                serverSettings = null
             )
         }
     }

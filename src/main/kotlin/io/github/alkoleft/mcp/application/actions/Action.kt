@@ -3,8 +3,10 @@ package io.github.alkoleft.mcp.application.actions
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
 import io.github.alkoleft.mcp.core.modules.ChangeType
+import io.github.alkoleft.mcp.core.modules.GenericTestReport
 import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.ConfiguratorResult
+import io.github.alkoleft.mcp.core.modules.TestExecutionResult
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.ConfiguratorResult
 import java.nio.file.Path
 import java.time.Duration
 
@@ -58,9 +60,8 @@ data class ChangeAnalysisResult(
  */
 data class TestExecutionResult(
     val success: Boolean,
-    val testsRun: Int = 0,
-    val testsPassed: Int = 0,
-    val testsFailed: Int = 0,
+    val report: GenericTestReport,
+
     val reportPath: Path? = null,
     val errors: List<String> = emptyList(),
     val duration: Duration = Duration.ZERO
