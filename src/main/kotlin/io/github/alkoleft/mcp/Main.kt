@@ -45,6 +45,38 @@ class ApplicationRunner(private val runner: RunnerCli, private val factory: IFac
     }
 }
 
+@Profile("mcp")
+@Component
+class McpServerRunner : CommandLineRunner {
+    private val logger = io.github.oshai.kotlinlogging.KotlinLogging.logger {}
+
+    override fun run(vararg args: String) {
+        logger.info { "Starting MCP server on STDIO transport..." }
+        logger.info { "MCP server ready. Waiting for protocol messages on STDIN..." }
+        
+        // Keep the application alive by waiting for shutdown signal
+        // The actual MCP protocol handling is done by Spring AI MCP framework
+        try {
+            // Use a shutdown hook to handle graceful shutdown
+            Runtime.getRuntime().addShutdownHook(Thread {
+                logger.info { "Received shutdown signal, stopping MCP server..." }
+            })
+            
+            // Keep the main thread alive by waiting indefinitely
+            // The MCP framework will handle STDIN/STDOUT communication
+            val lock = Object()
+            synchronized(lock) {
+                lock.wait()
+            }
+        } catch (e: InterruptedException) {
+            logger.info { "MCP server interrupted, shutting down..." }
+            Thread.currentThread().interrupt()
+        } catch (e: Exception) {
+            logger.error(e) { "Error in MCP server runner" }
+        }
+    }
+}
+
 @Primary
 @Profile("cli")
 @Component

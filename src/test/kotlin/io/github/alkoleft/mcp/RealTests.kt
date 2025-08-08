@@ -1,8 +1,8 @@
 package io.github.alkoleft.mcp
 
-import io.github.alkoleft.mcp.configuration.ActionConfiguration
 import io.github.alkoleft.mcp.application.actions.build.DesignerBuildAction
 import io.github.alkoleft.mcp.application.actions.test.YaXUnitTestAction
+import io.github.alkoleft.mcp.configuration.ActionConfiguration
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.ConnectionProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
@@ -11,8 +11,10 @@ import io.github.alkoleft.mcp.configuration.properties.SourceSetPurpose
 import io.github.alkoleft.mcp.configuration.properties.SourceSetType
 import io.github.alkoleft.mcp.configuration.properties.ToolsProperties
 import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
-import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
+import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
+import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
+import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
 import io.github.alkoleft.mcp.infrastructure.process.EnhancedReportParser
 import io.github.alkoleft.mcp.infrastructure.process.JsonYaXUnitConfigWriter
 import kotlinx.coroutines.runBlocking
@@ -28,11 +30,6 @@ const val version = "8.3.22.1709"
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.NONE,
-    classes = [
-        PlatformDsl::class,
-        CrossPlatformUtilLocator::class,
-        ActionConfiguration::class
-    ]
 )
 class RealTests(
     @Autowired private val platformDsl: PlatformDsl,
@@ -153,22 +150,7 @@ class RealTests(
 
         runBlocking {
             println("=== Запуск всех тестов YaXUnit ===")
-            val result = action.run(properties, RunAllTestsRequest(properties))
-
-            println("Результат выполнения всех тестов:")
-            println("- Успешно: ${result.success}")
-            println("- Всего тестов: ${result.testsRun}")
-            println("- Пройдено: ${result.testsPassed}")
-            println("- Провалено: ${result.testsFailed}")
-            println("- Длительность: ${result.duration.toSeconds()} секунд")
-            println("- Путь к отчету: ${result.reportPath}")
-
-            if (result.errors.isNotEmpty()) {
-                println("Ошибки:")
-                result.errors.forEach { error ->
-                    println("  - $error")
-                }
-            }
+            action.run(RunAllTestsRequest(properties))
         }
     }
 
@@ -181,22 +163,7 @@ class RealTests(
 
         runBlocking {
             println("=== Запуск тестов модуля '$moduleName' ===")
-            val result = action.runModuleTests(properties, moduleName)
-
-            println("Результат выполнения тестов модуля '$moduleName':")
-            println("- Успешно: ${result.success}")
-            println("- Всего тестов: ${result.testsRun}")
-            println("- Пройдено: ${result.testsPassed}")
-            println("- Провалено: ${result.testsFailed}")
-            println("- Длительность: ${result.duration.toSeconds()} секунд")
-            println("- Путь к отчету: ${result.reportPath}")
-
-            if (result.errors.isNotEmpty()) {
-                println("Ошибки:")
-                result.errors.forEach { error ->
-                    println("  - $error")
-                }
-            }
+            action.run(RunModuleTestsRequest(moduleName, properties))
         }
     }
 
@@ -209,22 +176,7 @@ class RealTests(
 
         runBlocking {
             println("=== Запуск конкретных тестов: ${testNames.joinToString(", ")} ===")
-            val result = action.runSpecificTests(properties, testNames)
-
-            println("Результат выполнения конкретных тестов:")
-            println("- Успешно: ${result.success}")
-            println("- Всего тестов: ${result.testsRun}")
-            println("- Пройдено: ${result.testsPassed}")
-            println("- Провалено: ${result.testsFailed}")
-            println("- Длительность: ${result.duration.toSeconds()} секунд")
-            println("- Путь к отчету: ${result.reportPath}")
-
-            if (result.errors.isNotEmpty()) {
-                println("Ошибки:")
-                result.errors.forEach { error ->
-                    println("  - $error")
-                }
-            }
+            action.run(RunListTestsRequest(testNames, properties))
         }
     }
 
@@ -237,22 +189,7 @@ class RealTests(
 
         runBlocking {
             println("=== Запуск одного теста: '$testName' ===")
-            val result = action.runSingleTest(properties, testName)
-
-            println("Результат выполнения теста '$testName':")
-            println("- Успешно: ${result.success}")
-            println("- Всего тестов: ${result.testsRun}")
-            println("- Пройдено: ${result.testsPassed}")
-            println("- Провалено: ${result.testsFailed}")
-            println("- Длительность: ${result.duration.toSeconds()} секунд")
-            println("- Путь к отчету: ${result.reportPath}")
-
-            if (result.errors.isNotEmpty()) {
-                println("Ошибки:")
-                result.errors.forEach { error ->
-                    println("  - $error")
-                }
-            }
+            action.run(RunListTestsRequest(listOf(testName), properties))
         }
     }
 

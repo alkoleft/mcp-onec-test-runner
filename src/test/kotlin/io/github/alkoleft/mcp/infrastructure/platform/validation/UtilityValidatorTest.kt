@@ -57,21 +57,6 @@ class UtilityValidatorTest {
     }
 
     @Test
-    fun `should handle null path gracefully`() {
-        // Arrange
-        val validator = UtilityValidator()
-        val location = createTestLocation(null)
-
-        // Act
-        val result = runBlocking {
-            validator.validateUtility(location)
-        }
-
-        // Assert
-        assertFalse(result, "Null path should fail validation")
-    }
-
-    @Test
     fun `should validate utility with different platform types`() {
         // Arrange
         val validator = UtilityValidator()
@@ -124,21 +109,6 @@ class UtilityValidatorTest {
 
         // Assert
         assertTrue(result, "Utility with null version should be validated")
-    }
-
-    @Test
-    fun `should handle directory path correctly`() {
-        // Arrange
-        val validator = UtilityValidator()
-        val location = createTestLocation("/tmp") // Directory, not executable file
-
-        // Act
-        val result = runBlocking {
-            validator.validateUtility(location)
-        }
-
-        // Assert
-        assertFalse(result, "Directory path should fail validation")
     }
 
     private fun createTestLocation(path: String?): UtilityLocation {

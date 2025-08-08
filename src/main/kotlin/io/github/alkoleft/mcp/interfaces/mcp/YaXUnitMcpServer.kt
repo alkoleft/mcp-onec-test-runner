@@ -1,8 +1,10 @@
 package io.github.alkoleft.mcp.interfaces.mcp
 
-import io.github.alkoleft.mcp.application.services.TestLauncherService
+import io.github.alkoleft.mcp.application.services.LauncherService
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.core.modules.BuildService
+import io.github.alkoleft.mcp.core.modules.GenericTestCase
+import io.github.alkoleft.mcp.core.modules.GenericTestReport
 import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
@@ -21,7 +23,7 @@ private val logger = KotlinLogging.logger {  }
  */
 @Service
 class YaXUnitMcpServer(
-    private val testLauncherService: TestLauncherService,
+    private val launcherService: LauncherService,
     private val buildService: BuildService,
     private val properties: ApplicationProperties,
 ) {
@@ -40,7 +42,7 @@ class YaXUnitMcpServer(
         return runBlocking {
             try {
                 val request = RunAllTestsRequest(properties)
-                val result = testLauncherService.run(request)
+                val result = launcherService.run(request)
                 TestExecutionResult(
                     success = result.success,
                     message = if (result.success) "Все тесты выполнены успешно" else "Ошибка при выполнении тестов",
@@ -85,7 +87,7 @@ class YaXUnitMcpServer(
         return runBlocking {
             try {
                 val request = RunModuleTestsRequest(moduleName, properties)
-                val result = testLauncherService.run(request)
+                val result = launcherService.run(request)
                 TestExecutionResult(
                     success = result.success,
                     message = if (result.success) "Тесты модуля '$moduleName' выполнены" else "Ошибка при выполнении тестов модуля",
@@ -97,7 +99,8 @@ class YaXUnitMcpServer(
                         "duration" to result.duration.toString(),
                         "successRate" to result.report.summary.successRate.toString(),
                         "module" to moduleName
-                    )
+                    ),
+                    testDetail = collectTestDetails(result.report)
                 )
             } catch (e: Exception) {
                 logger.error(e) { "Ошибка при запуске тестов модуля: $moduleName" }
@@ -114,6 +117,8 @@ class YaXUnitMcpServer(
         }
     }
 
+    fun collectTestDetails(report: GenericTestReport) =
+        report.testSuites.flatMap { it.testCases }
     /**
      * Запускает тесты из списка указанных модулей
      * @param moduleNames Список имен модулей для тестирования
@@ -131,7 +136,7 @@ class YaXUnitMcpServer(
         return runBlocking {
             try {
                 val request = RunListTestsRequest(moduleNames, properties)
-                val result = testLauncherService.run(request)
+                val result = launcherService.run(request)
                 TestExecutionResult(
                     success = result.success,
                     message = if (result.success) "Тесты модулей выполнены: ${moduleNames.joinToString(", ")}" else "Ошибка при выполнении тестов модулей",
@@ -271,7 +276,8 @@ data class TestExecutionResult(
     val passedTests: Int,
     val failedTests: Int,
     val executionTime: Long,
-    val details: Map<String, Any>
+    val details: Map<String, Any>,
+    val testDetail: List<GenericTestCase> = emptyList()
 )
 
 /**

@@ -4,10 +4,10 @@ spring:
     mcp:
       server:
         # Информация о сервере
-        name: "1C Platform API Server"
+        name: "YaXUnit Test Runner MCP Server"
         version: "1.0.0"
-        description: "MCP сервер для поиска по API платформы 1С Предприятие"
-        instructions: "MCP сервер для поиска по API платформы 1С Предприятие. Выполняет поиск по свойствам, методам и типам."
+        description: "MCP сервер для запуска и управления тестами YaXUnit в проектах 1С Предприятие"
+        instructions: "MCP сервер для выполнения тестов YaXUnit. Поддерживает запуск всех тестов, тестирование отдельных модулей, сборку проекта, получение конфигурации и проверку статуса платформы 1С."
         type: SYNC
 
         # Возможности сервера
@@ -32,7 +32,7 @@ spring:
       - org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration
 # Настройки логирования
 logging:
-  #  config: classpath:logback-mcp.xml
+  config: classpath:logback-mcp.xml
   # Все остальные настройки логгирования теперь берутся из logback-mcp.xml
   level:
     root: INFO

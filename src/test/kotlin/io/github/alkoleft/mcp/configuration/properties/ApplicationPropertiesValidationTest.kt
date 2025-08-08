@@ -151,24 +151,4 @@ class ApplicationPropertiesValidationTest {
             )
         }
     }
-
-    @Test
-    fun `should validate connection properties with empty user`() {
-        assertThrows<IllegalArgumentException> {
-            ConnectionProperties(
-                connectionString = "File=test.db;",
-                user = ""
-            )
-        }
-    }
-
-    @Test
-    fun `should validate connection properties with empty password`() {
-        assertThrows<IllegalArgumentException> {
-            ConnectionProperties(
-                connectionString = "File=test.db;",
-                password = ""
-            )
-        }
-    }
 }

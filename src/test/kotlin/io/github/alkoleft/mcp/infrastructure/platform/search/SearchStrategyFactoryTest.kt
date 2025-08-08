@@ -12,15 +12,14 @@ class SearchStrategyFactoryTest {
     @Test
     fun `should create correct strategy for current platform`() {
         // Arrange
-        val detector = PlatformDetector()
-        val factory = SearchStrategyFactory(detector)
+        val factory = SearchStrategyFactory()
 
         // Act
         val strategy = factory.createSearchStrategy()
 
         // Assert
         assertNotNull(strategy, "Strategy should not be null")
-        when (detector.current) {
+        when (PlatformDetector.current) {
             PlatformType.WINDOWS -> {
                 assertTrue(strategy is WindowsSearchStrategy, "Should create WindowsSearchStrategy for Windows platform")
             }
@@ -33,11 +32,10 @@ class SearchStrategyFactoryTest {
     @Test
     fun `should create Windows strategy for Windows platform`() {
         // Arrange
-        val detector = PlatformDetector()
-        val factory = SearchStrategyFactory(detector)
+        val factory = SearchStrategyFactory()
 
         // Act & Assert
-        if (detector.current == PlatformType.WINDOWS) {
+        if (PlatformDetector.current == PlatformType.WINDOWS) {
             val strategy = factory.createSearchStrategy()
             assertTrue(strategy is WindowsSearchStrategy, "Should create WindowsSearchStrategy for Windows platform")
         } else {
@@ -49,11 +47,10 @@ class SearchStrategyFactoryTest {
     @Test
     fun `should create Linux strategy for Linux platform`() {
         // Arrange
-        val detector = PlatformDetector()
-        val factory = SearchStrategyFactory(detector)
+        val factory = SearchStrategyFactory()
 
         // Act & Assert
-        if (detector.current == PlatformType.LINUX) {
+        if (PlatformDetector.current == PlatformType.LINUX) {
             val strategy = factory.createSearchStrategy()
             assertTrue(strategy is LinuxSearchStrategy, "Should create LinuxSearchStrategy for Linux platform")
         } else {
@@ -65,11 +62,10 @@ class SearchStrategyFactoryTest {
     @Test
     fun `should create Linux strategy for MacOS platform`() {
         // Arrange
-        val detector = PlatformDetector()
-        val factory = SearchStrategyFactory(detector)
+        val factory = SearchStrategyFactory()
 
         // Act & Assert
-        if (detector.current == PlatformType.MACOS) {
+        if (PlatformDetector.current == PlatformType.MACOS) {
             val strategy = factory.createSearchStrategy()
             assertTrue(strategy is LinuxSearchStrategy, "Should create LinuxSearchStrategy for MacOS platform")
         } else {
@@ -81,8 +77,7 @@ class SearchStrategyFactoryTest {
     @Test
     fun `should create strategy with correct tier structure`() {
         // Arrange
-        val detector = PlatformDetector()
-        val factory = SearchStrategyFactory(detector)
+        val factory = SearchStrategyFactory()
 
         // Act
         val strategy = factory.createSearchStrategy()
@@ -96,10 +91,8 @@ class SearchStrategyFactoryTest {
     @Test
     fun `should create consistent strategies for same platform`() {
         // Arrange
-        val detector1 = PlatformDetector()
-        val detector2 = PlatformDetector()
-        val factory1 = SearchStrategyFactory(detector1)
-        val factory2 = SearchStrategyFactory(detector2)
+        val factory1 = SearchStrategyFactory()
+        val factory2 = SearchStrategyFactory()
 
         // Act
         val strategy1 = factory1.createSearchStrategy()
@@ -116,8 +109,7 @@ class SearchStrategyFactoryTest {
     @Test
     fun `should handle all supported platform types`() {
         // Arrange
-        val detector = PlatformDetector()
-        val factory = SearchStrategyFactory(detector)
+        val factory = SearchStrategyFactory()
 
         // Act
         val strategy = factory.createSearchStrategy()

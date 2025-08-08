@@ -27,44 +27,6 @@ class CrossPlatformUtilLocatorTest {
     }
 
     @Test
-    fun `should detect current platform correctly`() {
-        // Arrange
-        val locator = CrossPlatformUtilLocator()
-
-        // Act
-        val platformDetector = locator.javaClass.getDeclaredField("platformDetector")
-            .apply { isAccessible = true }
-            .get(locator) as PlatformDetector
-        val platform = platformDetector.current
-
-        // Assert
-        assertNotNull(platform, "Platform should not be null")
-        assertTrue(
-            platform in listOf(PlatformType.WINDOWS, PlatformType.LINUX, PlatformType.MACOS),
-            "Platform should be one of the supported types"
-        )
-    }
-
-    @Test
-    fun `should have all required components initialized`() {
-        // Arrange
-        val locator = CrossPlatformUtilLocator()
-
-        // Act & Assert - check that all components are initialized
-        val pathCache = locator.javaClass.getDeclaredField("pathCache").apply { isAccessible = true }.get(locator)
-        val platformDetector = locator.javaClass.getDeclaredField("platformDetector").apply { isAccessible = true }.get(locator)
-        val searchStrategyFactory = locator.javaClass.getDeclaredField("searchStrategyFactory").apply { isAccessible = true }.get(locator)
-        val utilityValidator = locator.javaClass.getDeclaredField("utilityValidator").apply { isAccessible = true }.get(locator)
-        val versionExtractor = locator.javaClass.getDeclaredField("versionExtractor").apply { isAccessible = true }.get(locator)
-
-        assertNotNull(pathCache, "Path cache should be initialized")
-        assertNotNull(platformDetector, "Platform detector should be initialized")
-        assertNotNull(searchStrategyFactory, "Search strategy factory should be initialized")
-        assertNotNull(utilityValidator, "Utility validator should be initialized")
-        assertNotNull(versionExtractor, "Version extractor should be initialized")
-    }
-
-    @Test
     fun `should throw UtilNotFound when utility not found`() {
         // Arrange
         val locator = CrossPlatformUtilLocator()

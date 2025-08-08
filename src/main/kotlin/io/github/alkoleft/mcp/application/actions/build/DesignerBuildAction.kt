@@ -39,27 +39,30 @@ class DesignerBuildAction(
             disableStartupMessages()
 
             // Загружаем основную конфигурацию
-            logger.info { "Загружаю основную конфигурацию" }
-            val configuration = sourceSet.configuration!!
-            var result: ConfiguratorResult = loadConfigFromFiles {
-                fromPath(properties.basePath.resolve(configuration.path))
-                updateConfigDumpInfo()
+            sourceSet.configuration?.also { configuration ->
+                logger.info { "Загружаю основную конфигурацию" }
+                val result: ConfiguratorResult = loadConfigFromFiles {
+                    fromPath(properties.basePath.resolve(configuration.path))
+                    updateConfigDumpInfo()
+                    updateDBCfg = true
+                }
+                if (result.success) {
+                    logger.info { "Конфигурация загружена успешно" }
+                } else {
+                    logger.info { "Не удалось загрузить конфигурацию" }
+                }
+                results[configuration.name] = result
             }
-            if (result.success) {
-                logger.info { "Конфигурация загружена успешно" }
-            } else {
-                logger.info { "Не удалось загрузить конфигурацию" }
-            }
-            results[configuration.name] = result
 
             // Загружаем расширения
             val extensions = sourceSet.extensions
             logger.info { "Загружаю ${extensions.size} расширений: ${extensions.joinToString(", ")}" }
             extensions.forEach {
-                result = loadConfigFromFiles {
+                val result = loadConfigFromFiles {
                     fromPath(properties.basePath.resolve(it.path))
                     extension(it.name)
                     updateConfigDumpInfo()
+                    updateDBCfg = true
                 }
                 results[it.name] = result
                 if (result.success) {
@@ -71,7 +74,7 @@ class DesignerBuildAction(
 
             // Обновляем конфигурацию в базе данных
             logger.info { "Обновляю конфигурацию в базе данных" }
-            val updateResult = updateDBCfg {}
+            val updateResult = updateDBCfg { }
 
             if (!updateResult.success) {
                 logger.error { "Ошибка обновления конфигурации: ${updateResult.error}" }

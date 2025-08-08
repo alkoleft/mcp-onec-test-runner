@@ -76,7 +76,6 @@ kotlin = [
     "kotlin-logging-jvm",
     "kotlinx-cli",
     "picocli",
-    "picocli-spring-boot-starter",
     "kotlinx-serialization-json"
 ]
 
@@ -94,9 +93,7 @@ jackson = [
 spring-boot = [
     "spring-boot-starter",
     "spring-boot-starter-cache",
-    "spring-ai-starter-mcp-server",
-    "spring-ai-starter-mcp-server-webflux",
-    "spring-webflux"
+    "spring-ai-starter-mcp-server"
 ]
 
 # Logging bundle
