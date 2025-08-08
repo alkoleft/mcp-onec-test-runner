@@ -3,6 +3,7 @@ package io.github.alkoleft.mcp.application.actions
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
 import io.github.alkoleft.mcp.core.modules.ChangeType
+import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.configurator.ConfiguratorResult
 import java.nio.file.Path
 import java.time.Duration
@@ -28,7 +29,7 @@ interface ChangeAnalysisAction {
  * Интерфейс для запуска тестов
  */
 interface RunTestAction {
-    suspend fun run(properties: ApplicationProperties, filter: String? = null): TestExecutionResult
+    suspend fun run(request: TestExecutionRequest): TestExecutionResult
 }
 
 /**

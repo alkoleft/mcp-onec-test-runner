@@ -100,11 +100,11 @@ class CrossPlatformUtilLocatorTest {
         // Act & Assert
         val exception = assertFailsWith<TestExecutionError.UtilNotFound> {
             runBlocking {
-                locator.locateUtility(UtilityType.INFOBASE_MANAGER_IBCMD, "8.3.24")
+                locator.locateUtility(UtilityType.IBCMD, "8.3.24")
             }
         }
 
-        assertTrue(exception.utility.contains(UtilityType.INFOBASE_MANAGER_IBCMD.name), "Exception should contain correct utility type")
+        assertTrue(exception.utility.contains(UtilityType.IBCMD.name), "Exception should contain correct utility type")
     }
 
     @Test
@@ -164,12 +164,12 @@ class CrossPlatformUtilLocatorTest {
         // Act & Assert
         val exception = assertFailsWith<TestExecutionError.UtilNotFound> {
             runBlocking {
-                locator.locateUtility(UtilityType.ENTERPRISE, "8.3.24")
+                locator.locateUtility(UtilityType.THIN_CLIENT, "8.3.24")
             }
         }
 
         assertTrue(
-            exception.utility.contains(UtilityType.ENTERPRISE.name),
+            exception.utility.contains(UtilityType.THIN_CLIENT.name),
             "Exception should contain correct utility type"
         )
     }

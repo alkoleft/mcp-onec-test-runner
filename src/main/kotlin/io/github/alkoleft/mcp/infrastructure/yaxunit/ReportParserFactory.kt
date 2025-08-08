@@ -1,11 +1,10 @@
-package io.github.alkoleft.mcp.infrastructure.strategy
+package io.github.alkoleft.mcp.infrastructure.yaxunit
 
 import io.github.alkoleft.mcp.core.modules.ReportFormat
-import io.github.alkoleft.mcp.core.modules.strategy.ReportParserStrategy
-import io.github.alkoleft.mcp.infrastructure.strategy.parsers.JUnitXmlParserStrategy
-import io.github.alkoleft.mcp.infrastructure.strategy.parsers.JsonReportParserStrategy
-import io.github.alkoleft.mcp.infrastructure.strategy.parsers.PlainTextParserStrategy
-import io.github.alkoleft.mcp.infrastructure.strategy.parsers.YaXUnitJsonParserStrategy
+import io.github.alkoleft.mcp.infrastructure.yaxunit.parsers.JUnitXmlParserStrategy
+import io.github.alkoleft.mcp.infrastructure.yaxunit.parsers.JsonReportParserStrategy
+import io.github.alkoleft.mcp.infrastructure.yaxunit.parsers.PlainTextParserStrategy
+import io.github.alkoleft.mcp.infrastructure.yaxunit.parsers.YaXUnitJsonParserStrategy
 import io.github.oshai.kotlinlogging.KotlinLogging
 
 private val logger = KotlinLogging.logger { }

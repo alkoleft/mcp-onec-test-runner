@@ -1,12 +1,13 @@
 package io.github.alkoleft.mcp.core.modules.strategy
 
+import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
 import java.time.Duration
 
 /**
  * Обработчик ошибок с поддержкой Chain of Responsibility
  * Обеспечивает детальную обработку различных типов ошибок
  */
-interface IErrorHandler {
+interface ErrorHandler {
     /**
      * Проверяет, может ли обработчик обработать указанную ошибку
      */
@@ -20,19 +21,19 @@ interface IErrorHandler {
     /**
      * Устанавливает следующий обработчик в цепочке
      */
-    fun setNext(handler: IErrorHandler): IErrorHandler
+    fun setNext(handler: ErrorHandler): ErrorHandler
 
     /**
      * Возвращает следующий обработчик в цепочке
      */
-    fun getNext(): IErrorHandler?
+    fun getNext(): ErrorHandler?
 }
 
 /**
  * Контекст ошибки для передачи дополнительной информации
  */
 data class ErrorContext(
-    val request: String? = null,
+    val request: TestExecutionRequest? = null,
     val utilityLocation: String? = null,
     val configPath: String? = null,
     val attempt: Int = 1,

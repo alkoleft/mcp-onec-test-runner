@@ -1,7 +1,11 @@
 package io.github.alkoleft.mcp.interfaces.mcp
 
 import io.github.alkoleft.mcp.application.services.TestLauncherService
+import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.core.modules.BuildService
+import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
+import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
+import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
 import io.github.alkoleft.mcp.infrastructure.config.ProjectConfiguration
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
@@ -21,6 +25,7 @@ class YaXUnitMcpServer(
     private val testLauncherService: TestLauncherService,
     private val buildService: BuildService,
     private val projectConfiguration: ProjectConfiguration,
+    private val properties: ApplicationProperties,
 ) {
 
     /**
@@ -36,11 +41,8 @@ class YaXUnitMcpServer(
         
         return runBlocking {
             try {
-                val request = io.github.alkoleft.mcp.core.modules.RunAllTestsRequest(
-                    projectPath = Paths.get("."),
-                    ibConnection = projectConfiguration.informationBase?.connection ?: ""
-                )
-                val result = testLauncherService.runAll(request)
+                val request = RunAllTestsRequest(properties)
+                val result = testLauncherService.run(request)
                 TestExecutionResult(
                     success = result.success,
                     message = if (result.success) "Все тесты выполнены успешно" else "Ошибка при выполнении тестов",
@@ -84,12 +86,8 @@ class YaXUnitMcpServer(
         
         return runBlocking {
             try {
-                val request = io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest(
-                    moduleName = moduleName,
-                    projectPath = Paths.get("."),
-                    ibConnection = projectConfiguration.informationBase?.connection ?: ""
-                )
-                val result = testLauncherService.runModule(request)
+                val request = RunModuleTestsRequest(moduleName, properties)
+                val result = testLauncherService.run(request)
                 TestExecutionResult(
                     success = result.success,
                     message = if (result.success) "Тесты модуля '$moduleName' выполнены" else "Ошибка при выполнении тестов модуля",
@@ -134,12 +132,8 @@ class YaXUnitMcpServer(
         
         return runBlocking {
             try {
-                val request = io.github.alkoleft.mcp.core.modules.RunListTestsRequest(
-                    testNames = moduleNames,
-                    projectPath = Paths.get("."),
-                    ibConnection = projectConfiguration.informationBase?.connection ?: ""
-                )
-                val result = testLauncherService.runList(request)
+                val request = RunListTestsRequest(moduleNames, properties)
+                val result = testLauncherService.run(request)
                 TestExecutionResult(
                     success = result.success,
                     message = if (result.success) "Тесты модулей выполнены: ${moduleNames.joinToString(", ")}" else "Ошибка при выполнении тестов модулей",

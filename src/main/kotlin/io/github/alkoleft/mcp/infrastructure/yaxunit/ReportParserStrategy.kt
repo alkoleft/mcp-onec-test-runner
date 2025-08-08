@@ -1,4 +1,4 @@
-package io.github.alkoleft.mcp.core.modules.strategy
+package io.github.alkoleft.mcp.infrastructure.yaxunit
 
 import io.github.alkoleft.mcp.core.modules.GenericTestReport
 import io.github.alkoleft.mcp.core.modules.ReportFormat

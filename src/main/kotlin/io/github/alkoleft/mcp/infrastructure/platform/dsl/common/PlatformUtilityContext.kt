@@ -4,15 +4,16 @@ import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.CrossPlatformUtilLocator
 import kotlinx.coroutines.runBlocking
+import org.springframework.stereotype.Component
 
 /**
  * Контекст для работы с утилитами платформы 1С
  */
+@Component
 class PlatformUtilityContext(
     private val utilLocator: CrossPlatformUtilLocator,
     val version: String?
 ) {
-    private var utilityLocation: UtilityLocation? = null
     private var lastError: String? = null
     private var lastOutput: String = ""
     private var lastExitCode: Int = 0
@@ -100,7 +101,7 @@ class PlatformUtilityContext(
      * Получает путь к утилите ibcmd
      */
     fun getUtilityPath(): String {
-        return getUtilityPath(UtilityType.INFOBASE_MANAGER_IBCMD)
+        return getUtilityPath(UtilityType.IBCMD)
     }
 }
 

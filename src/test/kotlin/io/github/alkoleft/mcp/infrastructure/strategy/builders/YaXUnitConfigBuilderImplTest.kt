@@ -3,8 +3,9 @@ package io.github.alkoleft.mcp.infrastructure.strategy.builders
 import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
-import io.github.alkoleft.mcp.core.modules.strategy.ConnectionConfig
-import io.github.alkoleft.mcp.core.modules.strategy.LoggingConfig
+import io.github.alkoleft.mcp.infrastructure.yaxunit.ConnectionConfig
+import io.github.alkoleft.mcp.infrastructure.yaxunit.LoggingConfig
+import io.github.alkoleft.mcp.infrastructure.yaxunit.YaXUnitConfigBuilderImpl
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.test.assertEquals

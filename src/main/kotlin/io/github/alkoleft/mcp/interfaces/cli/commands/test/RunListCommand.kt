@@ -1,17 +1,16 @@
 package io.github.alkoleft.mcp.interfaces.cli.commands.test
 
 import io.github.alkoleft.mcp.application.services.TestLauncherService
+import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
 import io.github.alkoleft.mcp.core.modules.TestExecutionResult
 import io.github.alkoleft.mcp.core.modules.TestStatus
-import io.github.alkoleft.mcp.interfaces.cli.commands.TestCommand
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
-import picocli.CommandLine.ParentCommand
 import java.util.concurrent.Callable
 
 private val logger = KotlinLogging.logger { }
@@ -26,9 +25,6 @@ private val logger = KotlinLogging.logger { }
     mixinStandardHelpOptions = true,
 )
 class RunListCommand : Callable<Int> {
-    @ParentCommand
-    private lateinit var testCommand: TestCommand
-
     @Option(
         names = ["--tests"],
         description = ["Список тестов для выполнения (например: m1.t1 m2.t2)"],
@@ -40,70 +36,47 @@ class RunListCommand : Callable<Int> {
     @Autowired
     private lateinit var testLauncher: TestLauncherService
 
+    @Autowired
+    private lateinit var properties: ApplicationProperties
+
     override fun call(): Int =
         runBlocking {
             return@runBlocking try {
                 logger.info { "Running specific tests: ${testNames.joinToString(", ")}" }
 
-                // Get configuration from parent commands
-                val parentCli =
-                    testCommand.javaClass
-                        .getDeclaredField("parent")
-                        .apply {
-                            isAccessible = true
-                        }.get(testCommand) as io.github.alkoleft.mcp.interfaces.cli.RunnerCli
+                val request = RunListTestsRequest(testNames.toList(), properties)
 
-                val config = parentCli.createConfiguration()
-                val errors = config.validate()
-
-                if (errors.isNotEmpty()) {
-                    logger.error("Configuration validation failed:")
-                    errors.forEach { logger.error("  - $it") }
-                    return@runBlocking 1
-                }
-
-                val request =
-                    RunListTestsRequest(
-                        projectPath = config.projectPath,
-                        testsPath = config.testsPath,
-                        ibConnection = config.ibConnection,
-                        platformVersion = config.platformVersion,
-                        testNames = testNames.toList(),
-                    )
-
-                logger.info { "Executing test list with configuration:" }
-                logger.info { "  Project: ${config.projectPath}" }
-                logger.info { "  Tests: ${config.testsPath}" }
+                logger.info { "Executing test list using centralized ApplicationProperties:" }
+                logger.info { "  Project: ${request.projectPath}" }
+                logger.info { "  Tests: ${request.testsPath}" }
                 logger.info { "  Test Names: ${testNames.joinToString(", ")}" }
-                logger.info { "  Platform: ${config.platformVersion ?: "auto-detect"}" }
+                logger.info { "  Platform: ${request.platformVersion ?: "auto-detect"}" }
 
-                val result = testLauncher.runList(request)
+                val result = testLauncher.run(request)
 
                 // Print results
-                printTestResults(result, testNames.toList())
+                printTestResults(result)
 
                 if (result.success) {
                     logger.info { "Test list completed successfully" }
                     0
                 } else {
-                    logger.error("Test list failed: ${result.error?.message ?: "Unknown error"}")
+                    logger.error { "Test list failed: ${result.error?.message ?: "Unknown error"}" }
                     1
                 }
             } catch (e: Exception) {
-                logger.error(e) { "${"Failed to run test list"}" }
+                logger.error(e) { "Failed to run test list" }
                 1
             }
         }
 
     private fun printTestResults(
-        result: TestExecutionResult,
-        testNames: List<String>,
+        result: TestExecutionResult
     ) {
         val report = result.report
         val summary = report.summary
 
         println("\n=== TEST LIST RESULTS ===")
-        println("Requested Tests: ${testNames.joinToString(", ")}")
         println("Duration: ${result.duration}")
         println("Total Tests: ${summary.totalTests}")
         println("Passed: ${summary.passed}")
@@ -120,18 +93,9 @@ class RunListCommand : Callable<Int> {
             }
         }
 
-        println("\n=== EXECUTED TESTS ===")
+        println("\n=== TEST SUITES ===")
         report.testSuites.forEach { suite ->
-            suite.testCases.forEach { testCase ->
-                val status =
-                    when (testCase.status) {
-                        TestStatus.PASSED -> "✓"
-                        TestStatus.FAILED -> "✗"
-                        TestStatus.SKIPPED -> "○"
-                        TestStatus.ERROR -> "!"
-                    }
-                println("$status ${suite.name}.${testCase.name} (${testCase.duration})")
-            }
+            println("${suite.name}: ${suite.passed}/${suite.tests} passed (${suite.duration})")
         }
     }
 }

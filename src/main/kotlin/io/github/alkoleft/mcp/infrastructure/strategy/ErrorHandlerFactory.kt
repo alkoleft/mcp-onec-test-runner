@@ -1,6 +1,6 @@
 package io.github.alkoleft.mcp.infrastructure.strategy
 
-import io.github.alkoleft.mcp.core.modules.strategy.IErrorHandler
+import io.github.alkoleft.mcp.core.modules.strategy.ErrorHandler
 import io.github.alkoleft.mcp.infrastructure.strategy.handlers.ConfigurationErrorHandler
 import io.github.alkoleft.mcp.infrastructure.strategy.handlers.ConnectionErrorHandler
 import io.github.alkoleft.mcp.infrastructure.strategy.handlers.DefaultErrorHandler
@@ -18,7 +18,7 @@ class ErrorHandlerFactory {
     /**
      * Создает цепочку обработчиков ошибок
      */
-    fun createErrorHandlerChain(): IErrorHandler {
+    fun createErrorHandlerChain(): ErrorHandler {
         logger.debug { "Creating error handler chain" }
 
         // Создаем специализированные обработчики
@@ -39,7 +39,7 @@ class ErrorHandlerFactory {
     /**
      * Создает обработчик для конкретного типа ошибки
      */
-    fun createHandlerForError(error: Throwable): IErrorHandler {
+    fun createHandlerForError(error: Throwable): ErrorHandler {
         return when {
             error.message?.contains("connection", ignoreCase = true) == true -> ConnectionErrorHandler()
             error.message?.contains("config", ignoreCase = true) == true -> ConfigurationErrorHandler()
@@ -51,7 +51,7 @@ class ErrorHandlerFactory {
     /**
      * Создает минимальную цепочку обработчиков
      */
-    fun createMinimalChain(): IErrorHandler {
+    fun createMinimalChain(): ErrorHandler {
         logger.debug { "Creating minimal error handler chain" }
 
         val processHandler = ProcessErrorHandler()

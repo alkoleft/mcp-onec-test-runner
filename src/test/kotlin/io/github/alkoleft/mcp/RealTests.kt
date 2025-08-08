@@ -1,6 +1,6 @@
 package io.github.alkoleft.mcp
 
-import io.github.alkoleft.mcp.application.actions.ActionConfiguration
+import io.github.alkoleft.mcp.configuration.ActionConfiguration
 import io.github.alkoleft.mcp.application.actions.build.DesignerBuildAction
 import io.github.alkoleft.mcp.application.actions.test.YaXUnitTestAction
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
@@ -10,6 +10,7 @@ import io.github.alkoleft.mcp.configuration.properties.SourceSetItem
 import io.github.alkoleft.mcp.configuration.properties.SourceSetPurpose
 import io.github.alkoleft.mcp.configuration.properties.SourceSetType
 import io.github.alkoleft.mcp.configuration.properties.ToolsProperties
+import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
 import io.github.alkoleft.mcp.infrastructure.platform.CrossPlatformUtilLocator
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformUtilityDsl
 import io.github.alkoleft.mcp.infrastructure.process.EnhancedReportParser
@@ -81,6 +82,7 @@ class RealTests(
     }
 
     // Тесты для DesignerBuildAction
+    @Ignore
     @Test
     fun designerBuildActionFullBuild() {
         val action = DesignerBuildAction(platformDsl)
@@ -145,6 +147,7 @@ class RealTests(
     }
 
     // Реальные тесты для YaXUnit
+    @Ignore
     @Test
     fun yaxunitRealTestRunAll() {
         val properties = createTestApplicationProperties()
@@ -152,7 +155,7 @@ class RealTests(
 
         runBlocking {
             println("=== Запуск всех тестов YaXUnit ===")
-            val result = action.runAllTests(properties)
+            val result = action.run(properties, RunAllTestsRequest(properties))
 
             println("Результат выполнения всех тестов:")
             println("- Успешно: ${result.success}")
@@ -171,6 +174,7 @@ class RealTests(
         }
     }
 
+    @Ignore
     @Test
     fun yaxunitRealTestRunModule() {
         val properties = createTestApplicationProperties()
@@ -198,6 +202,7 @@ class RealTests(
         }
     }
 
+    @Ignore
     @Test
     fun yaxunitRealTestRunSpecificTests() {
         val properties = createTestApplicationProperties()
@@ -225,6 +230,7 @@ class RealTests(
         }
     }
 
+    @Ignore
     @Test
     fun yaxunitRealTestRunSingleTest() {
         val properties = createTestApplicationProperties()

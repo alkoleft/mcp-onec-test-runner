@@ -1,14 +1,17 @@
 package io.github.alkoleft.mcp.interfaces.cli
 
+import io.github.alkoleft.mcp.McpYaxUnitRunnerApplication
 import io.github.alkoleft.mcp.interfaces.cli.commands.McpCommand
 import io.github.alkoleft.mcp.interfaces.cli.commands.TestCommand
-import io.github.alkoleft.mcp.interfaces.cli.config.CliConfiguration
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.boot.SpringApplication
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.stereotype.Component
 import picocli.CommandLine
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
-import java.nio.file.Paths
+import java.util.concurrent.Callable
 
 private val logger = KotlinLogging.logger { }
 
@@ -21,16 +24,15 @@ private val logger = KotlinLogging.logger { }
     name = "mcp-yaxunit-runner",
     description = ["MCP Server для работы с модульными тестами решений на платформе 1С:Предприятие"],
     subcommands = [McpCommand::class, TestCommand::class],
-    version = ["1.0-SNAPSHOT"],
     mixinStandardHelpOptions = true,
 )
-class RunnerCli {
+class RunnerCli : Callable<Int> {
     @Option(
         names = ["--project"],
         description = ["Путь к проекту 1С:Предприятие (обязательно)"],
-        required = true,
+        required = false
     )
-    lateinit var projectPath: String
+    var projectPath: String? = null
 
     @Option(
         names = ["--tests"],
@@ -42,9 +44,9 @@ class RunnerCli {
     @Option(
         names = ["--ib-conn"],
         description = ["Строка подключения к информационной базе (Srvr=...;Ref=...; или /F...)"],
-        required = true,
+        required = false,
     )
-    lateinit var ibConnection: String
+    var ibConnection: String? = null
 
     @Option(
         names = ["--ib-user"],
@@ -74,40 +76,51 @@ class RunnerCli {
         names = ["--config"],
         description = ["Путь к файлу конфигурации YAML/JSON"],
     )
-    var configFile: String? = null
 
-    /**
-     * Creates CLI configuration from command line arguments
-     */
-    fun createConfiguration(): CliConfiguration =
-        CliConfiguration(
-            projectPath = Paths.get(projectPath),
-            testsPath = Paths.get(testsPath),
-            ibConnection = ibConnection,
-            ibUser = ibUser,
-            ibPassword = ibPassword,
-            platformVersion = platformVersion,
-            logFile = logFile?.let { Paths.get(it) },
-            configFile = configFile?.let { Paths.get(it) },
-        )
+    private var applicationContext: ApplicationContext? = null
+
+    fun setApplicationContext(context: ApplicationContext) {
+        this.applicationContext = context
+    }
+
+    fun getApplicationContext(): ApplicationContext? = applicationContext
+
+    override fun call(): Int {
+        logger.info { "MCP YaXUnit Runner CLI initialized" }
+        return 0
+    }
 
     companion object {
         /**
-         * Parse and execute CLI commands
+         * Parse and execute CLI commands with Spring context
          */
         fun parseAndExecute(args: Array<String>): Int {
-            val cli = RunnerCli()
-            val commandLine = CommandLine(cli)
-
-            // Configure command line options
-            commandLine.isCaseInsensitiveEnumValuesAllowed = true
-            commandLine.isAbbreviatedSubcommandsAllowed = true
-            commandLine.isAbbreviatedOptionsAllowed = true
-
             return try {
-                commandLine.execute(*args)
+                // Start Spring application context to get beans
+                val app = SpringApplication(McpYaxUnitRunnerApplication::class.java)
+                val context: ConfigurableApplicationContext = app.run(*args)
+
+                // Get RunnerCli bean from Spring context
+                val runnerCli = context.getBean(RunnerCli::class.java)
+
+                // Set application context for commands
+                runnerCli.setApplicationContext(context)
+
+                val commandLine = CommandLine(runnerCli)
+
+                // Configure command line options
+                commandLine.isCaseInsensitiveEnumValuesAllowed = true
+                commandLine.isAbbreviatedSubcommandsAllowed = true
+                commandLine.isAbbreviatedOptionsAllowed = true
+
+                val exitCode = commandLine.execute(*args)
+
+                // Close Spring context
+                context.close()
+
+                exitCode
             } catch (e: Exception) {
-                logger.error(e) { "${"CLI execution failed"}" }
+                logger.error(e) { "CLI execution failed" }
                 1
             }
         }

@@ -10,7 +10,7 @@ import io.github.alkoleft.mcp.core.modules.ReportParser
 import io.github.alkoleft.mcp.core.modules.TestMetadata
 import io.github.alkoleft.mcp.core.modules.TestStatus
 import io.github.alkoleft.mcp.core.modules.TestSummary
-import io.github.alkoleft.mcp.infrastructure.strategy.ReportParserFactory
+import io.github.alkoleft.mcp.infrastructure.yaxunit.ReportParserFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.w3c.dom.Element

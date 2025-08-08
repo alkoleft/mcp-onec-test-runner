@@ -10,6 +10,7 @@ import io.github.alkoleft.mcp.infrastructure.platform.search.SearchLocation
 import io.github.alkoleft.mcp.infrastructure.platform.search.SearchStrategy
 import io.github.alkoleft.mcp.infrastructure.platform.search.SearchStrategyFactory
 import io.github.alkoleft.mcp.infrastructure.platform.validation.UtilityValidator
+import io.github.alkoleft.mcp.infrastructure.platform.version.VersionExtractor
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -30,6 +31,7 @@ class CrossPlatformUtilLocator : UtilLocator {
     private val platformDetector = PlatformDetector()
     private val searchStrategyFactory = SearchStrategyFactory(platformDetector)
     private val utilityValidator = UtilityValidator()
+    private val versionExtractor = VersionExtractor()
 
     override suspend fun locateUtility(
         utility: UtilityType,

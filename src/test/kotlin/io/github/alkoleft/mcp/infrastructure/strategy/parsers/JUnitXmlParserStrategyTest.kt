@@ -2,6 +2,7 @@ package io.github.alkoleft.mcp.infrastructure.strategy.parsers
 
 import io.github.alkoleft.mcp.core.modules.ReportFormat
 import io.github.alkoleft.mcp.core.modules.TestStatus
+import io.github.alkoleft.mcp.infrastructure.yaxunit.parsers.JUnitXmlParserStrategy
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows

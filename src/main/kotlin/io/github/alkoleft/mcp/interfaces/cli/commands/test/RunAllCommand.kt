@@ -1,17 +1,14 @@
 package io.github.alkoleft.mcp.interfaces.cli.commands.test
 
 import io.github.alkoleft.mcp.application.services.TestLauncherService
+import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
 import io.github.alkoleft.mcp.core.modules.TestExecutionResult
 import io.github.alkoleft.mcp.core.modules.TestStatus
-import io.github.alkoleft.mcp.interfaces.cli.RunnerCli
-import io.github.alkoleft.mcp.interfaces.cli.commands.TestCommand
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import picocli.CommandLine.Command
-import picocli.CommandLine.ParentCommand
 import java.util.concurrent.Callable
 
 private val logger = KotlinLogging.logger { }
@@ -25,49 +22,23 @@ private val logger = KotlinLogging.logger { }
     description = ["Запуск всех тестов проекта"],
     mixinStandardHelpOptions = true,
 )
-class RunAllCommand : Callable<Int> {
-    @ParentCommand
-    private lateinit var testCommand: TestCommand
-
-    @Autowired
-    private lateinit var testLauncher: TestLauncherService
+class RunAllCommand(private val properties: ApplicationProperties, private val testLauncher: TestLauncherService) :
+    Callable<Int> {
+    // Beans will be obtained from Spring ApplicationContext via parent CLI
 
     override fun call(): Int =
         runBlocking {
             return@runBlocking try {
                 logger.info { "Running all tests..." }
 
-                // Get configuration from parent commands
-                val parentCli =
-                    testCommand.javaClass
-                        .getDeclaredField("parent")
-                        .apply {
-                            isAccessible = true
-                        }.get(testCommand) as RunnerCli
+                val request = RunAllTestsRequest(properties)
 
-                val config = parentCli.createConfiguration()
-                val errors = config.validate()
+                logger.info { "Executing all tests using centralized ApplicationProperties:" }
+                logger.info { "  Project: ${request.projectPath}" }
+                logger.info { "  Tests: ${request.testsPath}" }
+                logger.info { "  Platform: ${request.platformVersion ?: "auto-detect"}" }
 
-                if (errors.isNotEmpty()) {
-                    logger.error("Configuration validation failed:")
-                    errors.forEach { logger.error("  - $it") }
-                    return@runBlocking 1
-                }
-
-                val request =
-                    RunAllTestsRequest(
-                        projectPath = config.projectPath,
-                        testsPath = config.testsPath,
-                        ibConnection = config.ibConnection,
-                        platformVersion = config.platformVersion,
-                    )
-
-                logger.info { "Executing all tests with configuration:" }
-                logger.info { "  Project: ${config.projectPath}" }
-                logger.info { "  Tests: ${config.testsPath}" }
-                logger.info { "  Platform: ${config.platformVersion ?: "auto-detect"}" }
-
-                val result = testLauncher.runAll(request)
+                val result = testLauncher.run(request)
 
                 // Print results
                 printTestResults(result)
@@ -76,11 +47,11 @@ class RunAllCommand : Callable<Int> {
                     logger.info { "All tests completed successfully" }
                     0
                 } else {
-                    logger.error("Tests failed: ${result.error?.message ?: "Unknown error"}")
+                    logger.error { "Tests failed: ${result.error?.message ?: "Unknown error"}" }
                     1
                 }
             } catch (e: Exception) {
-                logger.error(e) { "${"Failed to run tests"}" }
+                logger.error(e) { "Failed to run tests" }
                 1
             }
         }

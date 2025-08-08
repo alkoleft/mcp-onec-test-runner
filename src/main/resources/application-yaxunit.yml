@@ -34,14 +34,12 @@ app:
   
   # Настройки подключения к информационной базе
   connection:
-    infobase-connection: "File='/home/common/develop/file-data-base/YAxUnit/';"
-    user: ""
-    password: ""
+    connection-string: "File='/home/common/develop/file-data-base/YAxUnit/';"
   
   # Версия платформы из v8config.json
-  platform-version: "8.3.10.2309"
+  platform-version: "8.3.22.1709"
   
   # Настройки инструментов
   tools-properties:
     # Тип сборщика: DESIGNER или IBMCMD
-    builder: "DESIGNER"
+    builder: DESIGNER

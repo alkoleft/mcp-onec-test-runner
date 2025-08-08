@@ -73,7 +73,7 @@ class UtilPathCacheTest {
         val location2 = createTestLocation()
 
         cache.store(UtilityType.DESIGNER, "8.3.24", location1)
-        cache.store(UtilityType.INFOBASE_MANAGER_IBCMD, "8.3.25", location2)
+        cache.store(UtilityType.IBCMD, "8.3.25", location2)
         
         assertEquals(2, cache.getCacheSize(), "Cache should contain 2 entries before clearing")
 
@@ -82,7 +82,7 @@ class UtilPathCacheTest {
 
         // Assert
         val retrieved1 = cache.getCachedLocation(UtilityType.DESIGNER, "8.3.24")
-        val retrieved2 = cache.getCachedLocation(UtilityType.INFOBASE_MANAGER_IBCMD, "8.3.25")
+        val retrieved2 = cache.getCachedLocation(UtilityType.IBCMD, "8.3.25")
         
         assertNull(retrieved1, "First cache entry should be cleared")
         assertNull(retrieved2, "Second cache entry should be cleared")
@@ -115,7 +115,7 @@ class UtilPathCacheTest {
         cache.store(UtilityType.DESIGNER, "8.3.24", location)
         assertEquals(1, cache.getCacheSize(), "Cache should contain 1 entry after first store")
         
-        cache.store(UtilityType.INFOBASE_MANAGER_IBCMD, "8.3.25", location)
+        cache.store(UtilityType.IBCMD, "8.3.25", location)
         val finalSize = cache.getCacheSize()
 
         // Assert
@@ -131,11 +131,11 @@ class UtilPathCacheTest {
 
         // Act
         cache.store(UtilityType.DESIGNER, "8.3.24", location1)
-        cache.store(UtilityType.INFOBASE_MANAGER_IBCMD, "8.3.24", location2)
+        cache.store(UtilityType.IBCMD, "8.3.24", location2)
 
         // Assert
         val retrieved1 = cache.getCachedLocation(UtilityType.DESIGNER, "8.3.24")
-        val retrieved2 = cache.getCachedLocation(UtilityType.INFOBASE_MANAGER_IBCMD, "8.3.24")
+        val retrieved2 = cache.getCachedLocation(UtilityType.IBCMD, "8.3.24")
         
         assertNotNull(retrieved1, "First utility should be cached")
         assertNotNull(retrieved2, "Second utility should be cached")

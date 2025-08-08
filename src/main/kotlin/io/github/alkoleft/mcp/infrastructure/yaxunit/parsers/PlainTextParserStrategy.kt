@@ -1,4 +1,4 @@
-package io.github.alkoleft.mcp.infrastructure.strategy.parsers
+package io.github.alkoleft.mcp.infrastructure.yaxunit.parsers
 
 import io.github.alkoleft.mcp.core.modules.GenericTestCase
 import io.github.alkoleft.mcp.core.modules.GenericTestReport
@@ -7,7 +7,7 @@ import io.github.alkoleft.mcp.core.modules.ReportFormat
 import io.github.alkoleft.mcp.core.modules.TestMetadata
 import io.github.alkoleft.mcp.core.modules.TestStatus
 import io.github.alkoleft.mcp.core.modules.TestSummary
-import io.github.alkoleft.mcp.core.modules.strategy.ReportParserStrategy
+import io.github.alkoleft.mcp.infrastructure.yaxunit.ReportParserStrategy
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

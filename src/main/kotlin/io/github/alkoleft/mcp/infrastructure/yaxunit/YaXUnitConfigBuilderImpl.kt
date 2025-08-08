@@ -1,15 +1,9 @@
-package io.github.alkoleft.mcp.infrastructure.strategy.builders
+package io.github.alkoleft.mcp.infrastructure.yaxunit
 
 import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
 import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
-import io.github.alkoleft.mcp.core.modules.strategy.ConnectionConfig
-import io.github.alkoleft.mcp.core.modules.strategy.LoggingConfig
-import io.github.alkoleft.mcp.core.modules.strategy.TestFilter
-import io.github.alkoleft.mcp.core.modules.strategy.ValidationResult
-import io.github.alkoleft.mcp.core.modules.strategy.YaXUnitConfig
-import io.github.alkoleft.mcp.core.modules.strategy.YaXUnitConfigBuilder
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Path
 
@@ -26,8 +20,6 @@ class YaXUnitConfigBuilderImpl : YaXUnitConfigBuilder {
     private var reportFormat: String = "jUnit"
     private var reportPath: Path? = null
     private var logging: LoggingConfig = LoggingConfig()
-    private var connection: ConnectionConfig? = null
-    private var additionalParameters: MutableMap<String, Any> = mutableMapOf()
 
     override fun withModuleFilter(modules: List<String>): YaXUnitConfigBuilder {
         this.modules = modules
@@ -59,18 +51,6 @@ class YaXUnitConfigBuilderImpl : YaXUnitConfigBuilder {
         return this
     }
 
-    override fun withParameter(key: String, value: Any): YaXUnitConfigBuilder {
-        this.additionalParameters[key] = value
-        logger.debug { "Added parameter: $key = $value" }
-        return this
-    }
-
-    override fun withConnection(connection: ConnectionConfig): YaXUnitConfigBuilder {
-        this.connection = connection
-        logger.debug { "Set connection configuration" }
-        return this
-    }
-
     override fun build(): YaXUnitConfig {
         logger.debug { "Building YaXUnit configuration" }
 
@@ -83,12 +63,10 @@ class YaXUnitConfigBuilderImpl : YaXUnitConfigBuilder {
         val config = YaXUnitConfig(
             filter = filter,
             reportFormat = reportFormat,
-            reportPath = finalReportPath,
+            reportPath = finalReportPath.toString(),
             closeAfterTests = true,
             showReport = false,
-            logging = logging,
-            connection = connection,
-            additionalParameters = additionalParameters.toMap()
+            logging = logging
         )
 
         logger.info { "YaXUnit configuration built successfully" }
@@ -158,18 +136,9 @@ class YaXUnitConfigBuilderImpl : YaXUnitConfigBuilder {
 
         // Настраиваем фильтры в зависимости от типа запроса
         when (request) {
-            is RunAllTestsRequest -> {
-                // Для запуска всех тестов фильтр не нужен
-                logger.debug { "No filter needed for RunAllTestsRequest" }
-            }
-
-            is RunModuleTestsRequest -> {
-                withModuleFilter(listOf(request.moduleName))
-            }
-
-            is RunListTestsRequest -> {
-                withTestFilter(request.testNames)
-            }
+            is RunAllTestsRequest -> {}
+            is RunModuleTestsRequest -> withModuleFilter(listOf(request.moduleName))
+            is RunListTestsRequest -> withTestFilter(request.testNames)
         }
 
         // Устанавливаем путь к отчету
@@ -180,7 +149,7 @@ class YaXUnitConfigBuilderImpl : YaXUnitConfigBuilder {
         val logPath = request.testsPath.resolve("logs").resolve("tests.log")
         withLogging(
             LoggingConfig(
-                file = logPath,
+                file = logPath.toString(),
                 console = false,
                 level = "info"
             )

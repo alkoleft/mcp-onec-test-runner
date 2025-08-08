@@ -3,11 +3,8 @@ package io.github.alkoleft.mcp.application.actions.test
 import io.github.alkoleft.mcp.application.actions.RunTestAction
 import io.github.alkoleft.mcp.application.actions.TestExecutionResult
 import io.github.alkoleft.mcp.application.actions.exceptions.TestExecuteException
-import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.core.modules.GenericTestReport
-import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
-import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
-import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
+import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
 import io.github.alkoleft.mcp.core.modules.TestStatus
 import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult
@@ -42,23 +39,19 @@ class YaXUnitTestAction(
 
     private val errorHandlerFactory = ErrorHandlerFactory()
 
-    override suspend fun run(properties: ApplicationProperties, filter: String?): TestExecutionResult {
+    override suspend fun run(request: TestExecutionRequest): TestExecutionResult {
         val startTime = Instant.now()
-        logger.info { "Starting YaXUnit test execution with filter: $filter" }
+        logger.info { "Starting YaXUnit test execution with filter: $request" }
 
         return withContext(Dispatchers.IO) {
             try {
-                // Создаем запрос на выполнение тестов на основе фильтра
-                val request = createTestRequest(properties, filter)
-                logger.debug { "Created test request: ${request.javaClass.simpleName}" }
-                
                 // Локализуем утилиту 1С:Предприятие
-                logger.debug { "Locating ENTERPRISE utility for version: ${properties.platformVersion}" }
-                val utilityLocation = utilLocator.locateUtility(UtilityType.ENTERPRISE, properties.platformVersion)
+                logger.debug { "Locating ENTERPRISE utility for version: ${request.platformVersion}" }
+                val utilityLocation = utilLocator.locateUtility(UtilityType.THIN_CLIENT, request.platformVersion)
                 logger.info { "Found ENTERPRISE utility at: ${utilityLocation.executablePath}" }
                 
                 // Создаем runner и выполняем тесты
-                val runner = YaXUnitRunner(properties, platformUtilityDsl, configWriter)
+                val runner = YaXUnitRunner(platformUtilityDsl, configWriter)
                 logger.info { "Executing tests via ProcessYaXUnitRunner" }
                 val executionResult = runner.executeTests(utilityLocation, request)
                 
@@ -93,8 +86,8 @@ class YaXUnitTestAction(
                 // Обрабатываем ошибку с помощью цепочки обработчиков
                 val errorHandler = errorHandlerFactory.createErrorHandlerChain()
                 val errorContext = ErrorContext(
-                    request = filter,
-                    utilityLocation = properties.platformVersion,
+                    request = request,
+                    utilityLocation = request.platformVersion,
                     configPath = null,
                     attempt = 1,
                     maxAttempts = 3
@@ -175,104 +168,5 @@ class YaXUnitTestAction(
         }
         
         return errors
-    }
-    
-    /**
-     * Создает запрос на выполнение тестов на основе фильтра
-     */
-    private fun createTestRequest(
-        properties: ApplicationProperties,
-        filter: String?
-    ): io.github.alkoleft.mcp.core.modules.TestExecutionRequest {
-        val testsPath = properties.testsPath ?: properties.basePath.resolve("tests")
-        
-        return when {
-            filter == null || filter.isBlank() -> {
-                logger.debug { "Creating RunAllTestsRequest" }
-                RunAllTestsRequest(
-                    projectPath = properties.basePath,
-                    testsPath = testsPath,
-                    ibConnection = properties.connection.connectionString,
-                    platformVersion = properties.platformVersion
-                )
-            }
-            filter.startsWith("module:") -> {
-                val moduleName = filter.substringAfter("module:").trim()
-                logger.debug { "Creating RunModuleTestsRequest for module: $moduleName" }
-                createModuleTestRequest(properties, moduleName)
-            }
-            filter.contains(",") -> {
-                val testNames = filter.split(",").map { it.trim() }
-                logger.debug { "Creating RunListTestsRequest for tests: ${testNames.joinToString(", ")}" }
-                createListTestRequest(properties, testNames)
-            }
-            else -> {
-                // Одиночный тест
-                logger.debug { "Creating RunListTestsRequest for single test: $filter" }
-                createListTestRequest(properties, listOf(filter))
-            }
-        }
-    }
-    
-    /**
-     * Создает запрос для запуска тестов конкретного модуля
-     */
-    private fun createModuleTestRequest(properties: ApplicationProperties, moduleName: String): RunModuleTestsRequest {
-        val testsPath = properties.testsPath ?: properties.basePath.resolve("tests")
-        
-        return RunModuleTestsRequest(
-            projectPath = properties.basePath,
-            testsPath = testsPath,
-            ibConnection = properties.connection.connectionString,
-            platformVersion = properties.platformVersion,
-            moduleName = moduleName
-        )
-    }
-    
-    /**
-     * Создает запрос для запуска конкретных тестов
-     */
-    private fun createListTestRequest(properties: ApplicationProperties, testNames: List<String>): RunListTestsRequest {
-        val testsPath = properties.testsPath ?: properties.basePath.resolve("tests")
-        
-        return RunListTestsRequest(
-            projectPath = properties.basePath,
-            testsPath = testsPath,
-            ibConnection = properties.connection.connectionString,
-            platformVersion = properties.platformVersion,
-            testNames = testNames
-        )
-    }
-    
-    /**
-     * Запускает все тесты в проекте
-     */
-    suspend fun runAllTests(properties: ApplicationProperties): TestExecutionResult {
-        logger.info { "Running all tests in project" }
-        return run(properties, null)
-    }
-    
-    /**
-     * Запускает тесты конкретного модуля
-     */
-    suspend fun runModuleTests(properties: ApplicationProperties, moduleName: String): TestExecutionResult {
-        logger.info { "Running tests for module: $moduleName" }
-        return run(properties, "module:$moduleName")
-    }
-    
-    /**
-     * Запускает конкретные тесты
-     */
-    suspend fun runSpecificTests(properties: ApplicationProperties, testNames: List<String>): TestExecutionResult {
-        logger.info { "Running specific tests: ${testNames.joinToString(", ")}" }
-        return run(properties, testNames.joinToString(","))
-    }
-    
-    /**
-     * Запускает один тест
-     */
-    suspend fun runSingleTest(properties: ApplicationProperties, testName: String): TestExecutionResult {
-        logger.info { "Running single test: $testName" }
-        return run(properties, testName)
     }
 } 

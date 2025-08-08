@@ -94,13 +94,13 @@ abstract class BasePlatformContext(
         args.add(location.executablePath.toString())
         args.add(mode)
 
-        if (connectionString.isNotEmpty()) {
+        connectionString.ifNoBlank {
             args.add("/IBConnectionString")
             args.add(connectionString)
         }
 
-        user?.let { args.add("/N$it") }
-        password?.let { args.add("/P$it") }
+        user?.ifNoBlank { args.add("/N\"$it\"") }
+        password?.ifNoBlank { args.add("/P\"$it\"") }
 
         outputPath?.let {
             args.add("/Out$it")
@@ -108,8 +108,8 @@ abstract class BasePlatformContext(
                 args.add("-NoTruncate")
             }
         }
-        language?.let { args.add("/L$it") }
-        localization?.let { args.add("/VL$it") }
+        language?.ifNoBlank { args.add("/L$it") }
+        localization?.ifNoBlank { args.add("/VL$it") }
 
         if (disableStartupDialogs) args.add("/DisableStartupDialogs")
         if (disableStartupMessages) args.add("/DisableStartupMessages")

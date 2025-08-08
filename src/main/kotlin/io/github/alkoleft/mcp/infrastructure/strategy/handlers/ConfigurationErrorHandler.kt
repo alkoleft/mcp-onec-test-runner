@@ -1,8 +1,8 @@
 package io.github.alkoleft.mcp.infrastructure.strategy.handlers
 
 import io.github.alkoleft.mcp.core.modules.strategy.ErrorContext
+import io.github.alkoleft.mcp.core.modules.strategy.ErrorHandler
 import io.github.alkoleft.mcp.core.modules.strategy.ErrorResolution
-import io.github.alkoleft.mcp.core.modules.strategy.IErrorHandler
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.time.Duration
 
@@ -12,9 +12,9 @@ private val logger = KotlinLogging.logger { }
  * Обработчик ошибок конфигурации
  * Обрабатывает ошибки в конфигурации YaXUnit и предлагает решения
  */
-class ConfigurationErrorHandler : IErrorHandler {
+class ConfigurationErrorHandler : ErrorHandler {
 
-    private var nextHandler: IErrorHandler? = null
+    private var nextHandler: ErrorHandler? = null
 
     override fun canHandle(error: Throwable): Boolean {
         val message = error.message?.lowercase() ?: ""
@@ -74,10 +74,10 @@ class ConfigurationErrorHandler : IErrorHandler {
         }
     }
 
-    override fun setNext(handler: IErrorHandler): IErrorHandler {
+    override fun setNext(handler: ErrorHandler): ErrorHandler {
         nextHandler = handler
         return this
     }
 
-    override fun getNext(): IErrorHandler? = nextHandler
+    override fun getNext(): ErrorHandler? = nextHandler
 }

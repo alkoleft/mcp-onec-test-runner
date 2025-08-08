@@ -101,7 +101,7 @@ class SearchStrategyTest {
 
         // Act
         val compilerPaths = standardLocation.generatePaths(UtilityType.DESIGNER, null)
-        val ibcmdPaths = standardLocation.generatePaths(UtilityType.INFOBASE_MANAGER_IBCMD, null)
+        val ibcmdPaths = standardLocation.generatePaths(UtilityType.IBCMD, null)
 
         // Assert
         assertNotNull(compilerPaths, "Compiler paths should not be null")

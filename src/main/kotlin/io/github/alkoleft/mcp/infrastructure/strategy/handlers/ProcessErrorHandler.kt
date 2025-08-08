@@ -1,8 +1,8 @@
 package io.github.alkoleft.mcp.infrastructure.strategy.handlers
 
 import io.github.alkoleft.mcp.core.modules.strategy.ErrorContext
+import io.github.alkoleft.mcp.core.modules.strategy.ErrorHandler
 import io.github.alkoleft.mcp.core.modules.strategy.ErrorResolution
-import io.github.alkoleft.mcp.core.modules.strategy.IErrorHandler
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.time.Duration
 
@@ -12,9 +12,9 @@ private val logger = KotlinLogging.logger { }
  * Обработчик ошибок выполнения процессов
  * Обрабатывает ошибки запуска и выполнения процессов 1С:Предприятие
  */
-class ProcessErrorHandler : IErrorHandler {
+class ProcessErrorHandler : ErrorHandler {
 
-    private var nextHandler: IErrorHandler? = null
+    private var nextHandler: ErrorHandler? = null
 
     override fun canHandle(error: Throwable): Boolean {
         val message = error.message?.lowercase() ?: ""
@@ -75,10 +75,10 @@ class ProcessErrorHandler : IErrorHandler {
         }
     }
 
-    override fun setNext(handler: IErrorHandler): IErrorHandler {
+    override fun setNext(handler: ErrorHandler): ErrorHandler {
         nextHandler = handler
         return this
     }
 
-    override fun getNext(): IErrorHandler? = nextHandler
+    override fun getNext(): ErrorHandler? = nextHandler
 }

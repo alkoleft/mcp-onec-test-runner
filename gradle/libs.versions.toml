@@ -15,6 +15,7 @@ assertj = "3.8.0"
 slf4j-log4j12 = "1.7.30"
 kotlinx-cli = "0.3.6"
 picocli = "4.7.5"
+picocli-spring-boot-starter = "4.7.5"
 kotlinx-serialization = "1.6.3"
 
 springAi = "1.0.0"
@@ -30,6 +31,7 @@ kotlin-logging-jvm = { group = "io.github.oshai", name = "kotlin-logging-jvm", v
 
 # CLI
 picocli = { group = "info.picocli", name = "picocli", version.ref = "picocli" }
+picocli-spring-boot-starter = { group = "info.picocli", name = "picocli-spring-boot-starter", version.ref = "picocli-spring-boot-starter" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 
 # Spring Boot
@@ -74,6 +76,7 @@ kotlin = [
     "kotlin-logging-jvm",
     "kotlinx-cli",
     "picocli",
+    "picocli-spring-boot-starter",
     "kotlinx-serialization-json"
 ]
 

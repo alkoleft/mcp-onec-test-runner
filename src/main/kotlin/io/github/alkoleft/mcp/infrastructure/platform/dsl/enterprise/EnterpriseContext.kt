@@ -15,7 +15,7 @@ class EnterpriseContext(
      * Строит аргументы для запуска 1С:Предприятие
      */
     suspend fun buildBaseArgs(): List<String> =
-        buildCommonArgs(UtilityType.ENTERPRISE, "ENTERPRISE")
+        buildCommonArgs(UtilityType.THIN_CLIENT, "ENTERPRISE")
             .also { args ->
                 runArguments?.let {
                     args.add("/C")

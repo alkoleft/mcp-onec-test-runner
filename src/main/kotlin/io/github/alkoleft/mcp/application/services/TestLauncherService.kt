@@ -7,6 +7,7 @@ import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
 import io.github.alkoleft.mcp.core.modules.TestExecutionError
+import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
 import io.github.alkoleft.mcp.core.modules.TestExecutionResult
 import io.github.alkoleft.mcp.core.modules.TestLauncher
 import io.github.alkoleft.mcp.core.modules.TestMetadata
@@ -28,39 +29,15 @@ class TestLauncherService(
     private val properties: ApplicationProperties
 ) : TestLauncher {
 
-    override suspend fun runAll(request: RunAllTestsRequest): TestExecutionResult {
-        logger.info { "Starting full test execution for project: ${request.projectPath}" }
+    override suspend fun run(request: TestExecutionRequest): TestExecutionResult {
+        when (request) {
+            is RunAllTestsRequest -> logger.info { "Starting full test execution for project: ${request.projectPath}" }
+            is RunListTestsRequest -> logger.info { "Starting specific tests execution for: ${request.testNames} in project: ${request.projectPath}" }
+            is RunModuleTestsRequest -> logger.info { "Starting module test execution for: ${request.moduleName} in project: ${request.projectPath}" }
+        }
 
         val testAction = actionFactory.createRunTestAction()
-        val result = testAction.run(properties, null)
-
-        return TestExecutionResult(
-            success = result.success,
-            report = createEmptyReport(),
-            duration = result.duration,
-            error = if (result.errors.isNotEmpty()) TestExecutionError.TestRunFailed(result.errors.joinToString("; ")) else null
-        )
-    }
-
-    override suspend fun runModule(request: RunModuleTestsRequest): TestExecutionResult {
-        logger.info { "Starting module test execution for: ${request.moduleName} in project: ${request.projectPath}" }
-
-        val testAction = actionFactory.createRunTestAction()
-        val result = testAction.run(properties, request.moduleName)
-
-        return TestExecutionResult(
-            success = result.success,
-            report = createEmptyReport(),
-            duration = result.duration,
-            error = if (result.errors.isNotEmpty()) TestExecutionError.TestRunFailed(result.errors.joinToString("; ")) else null
-        )
-    }
-
-    override suspend fun runList(request: RunListTestsRequest): TestExecutionResult {
-        logger.info { "Starting specific tests execution for: ${request.testNames} in project: ${request.projectPath}" }
-
-        val testAction = actionFactory.createRunTestAction()
-        val result = testAction.run(properties, request.testNames.firstOrNull())
+        val result = testAction.run(request)
 
         return TestExecutionResult(
             success = result.success,

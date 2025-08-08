@@ -5,10 +5,37 @@ spring:
   application:
     name: mcp-yaxunit-runner
   profiles:
-    active: default
+    active: yaxunit
   main:
-    banner-mode: console
-    web-application-type: servlet
+    banner-mode: off
+    web-application-type: none
+
+# Базовые настройки приложения
+app:
+  # Базовый путь к проекту (будет переопределен в профиле yaxunit)
+  base-path: "./demo_edt"
+  
+  # Набор исходного кода проекта
+  source-set:
+    # Демонстрационная конфигурация
+    - path: "."
+      name: demo
+      type: "CONFIGURATION"
+      purpose: [ "TESTS" ]
+  
+  # Настройки подключения к информационной базе
+  connection:
+    connection-string: "File='./demo_edt';"
+    user: ""
+    password: ""
+  
+  # Версия платформы
+  platform-version: "8.3.10.2309"
+  
+  # Настройки инструментов
+  tools-properties:
+    # Тип сборщика: DESIGNER или IBMCMD
+    builder: "DESIGNER"
 
 # Настройки проекта
 project:

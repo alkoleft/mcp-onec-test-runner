@@ -1,5 +1,6 @@
 package io.github.alkoleft.mcp.core.modules
 
+import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
@@ -10,34 +11,36 @@ import java.time.Instant
 
 // Test execution requests
 sealed class TestExecutionRequest {
-    abstract val projectPath: Path
-    abstract val testsPath: Path
-    abstract val ibConnection: String
-    abstract val platformVersion: String?
+    val projectPath: Path
+    val testsPath: Path
+    val ibConnection: String
+    val platformVersion: String?
+    val user: String?
+    val password: String?
+
+    constructor(properties: ApplicationProperties) {
+        projectPath = properties.basePath
+        testsPath = properties.testsPath
+        platformVersion = properties.platformVersion
+        ibConnection = properties.connection.connectionString
+        user = properties.connection.user
+        password = properties.connection.password
+    }
 }
 
-data class RunAllTestsRequest(
-    override val projectPath: Path,
-    override val testsPath: Path = projectPath.resolve("tests"),
-    override val ibConnection: String,
-    override val platformVersion: String? = null,
-) : TestExecutionRequest()
+class RunAllTestsRequest(properties: ApplicationProperties) : TestExecutionRequest(properties) {
+}
 
-data class RunModuleTestsRequest(
-    override val projectPath: Path,
-    override val testsPath: Path = projectPath.resolve("tests"),
-    override val ibConnection: String,
-    override val platformVersion: String? = null,
-    val moduleName: String,
-) : TestExecutionRequest()
+class RunModuleTestsRequest(
+    val moduleName: String, properties: ApplicationProperties
+) : TestExecutionRequest(properties) {
+}
 
 data class RunListTestsRequest(
-    override val projectPath: Path,
-    override val testsPath: Path = projectPath.resolve("tests"),
-    override val ibConnection: String,
-    override val platformVersion: String? = null,
     val testNames: List<String>,
-) : TestExecutionRequest()
+    val properties: ApplicationProperties,
+) : TestExecutionRequest(properties) {
+}
 
 // Test execution results
 data class TestExecutionResult(
@@ -145,26 +148,6 @@ enum class BuildType {
     SKIP,
 }
 
-// Platform utilities
-data class UtilityLocation(
-    val executablePath: Path,
-    val version: String?,
-    val platformType: PlatformType,
-)
-
-enum class PlatformType {
-    WINDOWS,
-    LINUX,
-    MACOS,
-}
-
-enum class UtilityType(val fileName: String) {
-    DESIGNER("1cv8"),
-    INFOBASE_MANAGER_IBCMD("ibcmd"),
-    IBSRV("ibsrv"),
-    THINK_CLIENT("1cv8c"),
-    ENTERPRISE("1cv8c"),
-}
 
 // File change detection
 data class FileChangeEvent(

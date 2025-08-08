@@ -1,7 +1,7 @@
-package io.github.alkoleft.mcp.infrastructure.strategy.parsers
+package io.github.alkoleft.mcp.infrastructure.yaxunit.parsers
 
 import io.github.alkoleft.mcp.core.modules.ReportFormat
-import io.github.alkoleft.mcp.core.modules.strategy.ReportParserStrategy
+import io.github.alkoleft.mcp.infrastructure.yaxunit.ReportParserStrategy
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.InputStream
 

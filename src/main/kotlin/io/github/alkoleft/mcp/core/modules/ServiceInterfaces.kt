@@ -9,11 +9,7 @@ import java.nio.file.Path
 
 // Test execution facade
 interface TestLauncher {
-    suspend fun runAll(request: RunAllTestsRequest): TestExecutionResult
-
-    suspend fun runModule(request: RunModuleTestsRequest): TestExecutionResult
-
-    suspend fun runList(request: RunListTestsRequest): TestExecutionResult
+    suspend fun run(request: TestExecutionRequest): TestExecutionResult
 }
 
 // Build orchestration service

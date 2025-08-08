@@ -1,17 +1,15 @@
 package io.github.alkoleft.mcp.interfaces.cli.commands.test
 
 import io.github.alkoleft.mcp.application.services.TestLauncherService
+import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
 import io.github.alkoleft.mcp.core.modules.TestExecutionResult
 import io.github.alkoleft.mcp.core.modules.TestStatus
-import io.github.alkoleft.mcp.interfaces.cli.commands.TestCommand
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
-import picocli.CommandLine.ParentCommand
 import java.util.concurrent.Callable
 
 private val logger = KotlinLogging.logger { }
@@ -25,10 +23,7 @@ private val logger = KotlinLogging.logger { }
     description = ["Запуск тестов конкретного модуля"],
     mixinStandardHelpOptions = true,
 )
-class RunModuleCommand : Callable<Int> {
-    @ParentCommand
-    private lateinit var testCommand: TestCommand
-
+class RunModuleCommand(var properties: ApplicationProperties, var testLauncher: TestLauncherService) : Callable<Int> {
     @Option(
         names = ["--module"],
         description = ["Имя модуля для тестирования"],
@@ -36,47 +31,20 @@ class RunModuleCommand : Callable<Int> {
     )
     lateinit var moduleName: String
 
-    @Autowired
-    private lateinit var testLauncher: TestLauncherService
-
     override fun call(): Int =
         runBlocking {
             return@runBlocking try {
                 logger.info { "Running tests for module: $moduleName" }
 
-                // Get configuration from parent commands
-                val parentCli =
-                    testCommand.javaClass
-                        .getDeclaredField("parent")
-                        .apply {
-                            isAccessible = true
-                        }.get(testCommand) as io.github.alkoleft.mcp.interfaces.cli.RunnerCli
-
-                val config = parentCli.createConfiguration()
-                val errors = config.validate()
-
-                if (errors.isNotEmpty()) {
-                    logger.error("Configuration validation failed:")
-                    errors.forEach { logger.error("  - $it") }
-                    return@runBlocking 1
-                }
-
-                val request =
-                    RunModuleTestsRequest(
-                        projectPath = config.projectPath,
-                        testsPath = config.testsPath,
-                        ibConnection = config.ibConnection,
-                        platformVersion = config.platformVersion,
-                        moduleName = moduleName,
-                    )
+                val request = RunModuleTestsRequest(moduleName, properties)
 
                 logger.info { "Executing module tests with configuration:" }
-                logger.info { "  Project: ${config.projectPath}" }
-                logger.info { "  Tests: ${config.testsPath}" }
+                logger.info { "  Project: ${request.projectPath}" }
+                logger.info { "  Tests: ${request.testsPath}" }
                 logger.info { "  Module: $moduleName" }
-                logger.info { "  Platform: ${config.platformVersion ?: "auto-detect"}" }
+                logger.info { "  Platform: ${request.platformVersion ?: "auto-detect"}" }
 
-                val result = testLauncher.runModule(request)
+                val result = testLauncher.run(request)
 
                 // Print results
                 printTestResults(result, moduleName)
@@ -85,11 +53,11 @@ class RunModuleCommand : Callable<Int> {
                     logger.info { "Module tests completed successfully" }
                     0
                 } else {
-                    logger.error("Module tests failed: ${result.error?.message ?: "Unknown error"}")
+                    logger.error { "Module tests failed: ${result.error?.message ?: "Unknown error"}" }
                     1
                 }
             } catch (e: Exception) {
-                logger.error(e) { "${"Failed to run module tests"}" }
+                logger.error(e) { "Failed to run module tests" }
                 1
             }
         }
