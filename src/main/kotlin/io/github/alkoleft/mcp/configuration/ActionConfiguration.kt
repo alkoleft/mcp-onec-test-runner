@@ -5,10 +5,11 @@ import io.github.alkoleft.mcp.application.actions.ActionFactoryImpl
 import io.github.alkoleft.mcp.application.actions.BuildAction
 import io.github.alkoleft.mcp.application.actions.build.DesignerBuildAction
 import io.github.alkoleft.mcp.application.actions.build.IbcmdBuildAction
-import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
+import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
 import io.github.alkoleft.mcp.infrastructure.process.EnhancedReportParser
 import io.github.alkoleft.mcp.infrastructure.process.JsonYaXUnitConfigWriter
+import io.github.alkoleft.mcp.infrastructure.storage.FileBuildStateManager
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -30,8 +31,9 @@ class ActionConfiguration {
         platformDsl: PlatformDsl,
         utilLocator: CrossPlatformUtilLocator,
         configWriter: JsonYaXUnitConfigWriter,
-        reportParser: EnhancedReportParser
-    ): ActionFactory = ActionFactoryImpl(platformDsl, utilLocator, configWriter, reportParser)
+        reportParser: EnhancedReportParser,
+        buildStateManager: FileBuildStateManager
+    ): ActionFactory = ActionFactoryImpl(platformDsl, utilLocator, configWriter, reportParser, buildStateManager)
 
     /**
      * Создает DesignerBuildAction при использовании DESIGNER в качестве сборщика

@@ -6,7 +6,7 @@ package io.github.alkoleft.mcp.infrastructure.yaxunit
 data class YaXUnitConfig(
     val filter: TestFilter? = null,
     val reportFormat: String = "jUnit",
-    val reportPath: String? = null,
+    val reportPath: String,
     val closeAfterTests: Boolean = true,
     val showReport: Boolean = false,
     val logging: LoggingConfig = LoggingConfig(),

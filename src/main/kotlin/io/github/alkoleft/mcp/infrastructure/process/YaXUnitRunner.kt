@@ -6,8 +6,8 @@ import io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult
 import io.github.alkoleft.mcp.core.modules.YaXUnitRunner
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityResult
-import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
 import io.github.alkoleft.mcp.infrastructure.strategy.ErrorHandlerFactory
+import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -15,6 +15,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
+import kotlin.io.path.Path
 
 private val logger = KotlinLogging.logger { }
 
@@ -37,9 +38,8 @@ class YaXUnitRunner(
         logger.info { "Starting YaXUnit test execution for ${request.javaClass.simpleName}" }
 
         // Создаем временную конфигурацию
-        logger.debug { "Creating temporary configuration" }
-        val configPath = configWriter.createTempConfig(request)
-        logger.debug { "Configuration created at: $configPath" }
+        val config = configWriter.createConfig(request)
+        val configPath = configWriter.writeConfig(config)
 
         try {
             // Запускаем тесты через EnterpriseDsl
@@ -55,8 +55,8 @@ class YaXUnitRunner(
             logger.info { "Test execution completed in ${duration.toSeconds()}s" }
 
             // Определяем путь к отчету
-            val reportPath = determineReportPath(request, configPath)
-            if (reportPath != null && Files.exists(reportPath)) {
+            val reportPath = Path(config.reportPath)
+            if (Files.exists(reportPath)) {
                 logger.info { "Test report found at: $reportPath" }
             } else {
                 logger.warn { "Test report not found at expected location" }

@@ -1,11 +1,11 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl
 
-import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.DesignerDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.enterprise.EnterpriseDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdPlan
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdPlanDsl
+import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
 import org.springframework.stereotype.Component
 
 /**

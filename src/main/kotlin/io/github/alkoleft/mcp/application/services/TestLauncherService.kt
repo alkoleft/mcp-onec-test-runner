@@ -1,21 +1,14 @@
 package io.github.alkoleft.mcp.application.services
 
 import io.github.alkoleft.mcp.application.actions.ActionFactory
-import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
-import io.github.alkoleft.mcp.core.modules.GenericTestReport
 import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
-import io.github.alkoleft.mcp.core.modules.TestExecutionError
 import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
 import io.github.alkoleft.mcp.core.modules.TestExecutionResult
 import io.github.alkoleft.mcp.core.modules.TestLauncher
-import io.github.alkoleft.mcp.core.modules.TestMetadata
-import io.github.alkoleft.mcp.core.modules.TestSummary
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
-import java.time.Duration
-import java.time.Instant
 
 private val logger = KotlinLogging.logger { }
 

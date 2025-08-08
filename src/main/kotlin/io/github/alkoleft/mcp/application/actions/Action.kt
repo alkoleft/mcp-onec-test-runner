@@ -1,14 +1,16 @@
 package io.github.alkoleft.mcp.application.actions
 
+import io.github.alkoleft.mcp.application.actions.change.ChangesSet
+import io.github.alkoleft.mcp.application.actions.change.SourceSetChanges
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
-import io.github.alkoleft.mcp.core.modules.ChangeType
 import io.github.alkoleft.mcp.core.modules.GenericTestReport
 import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
 import io.github.alkoleft.mcp.core.modules.TestExecutionResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.ConfiguratorResult
 import java.nio.file.Path
 import java.time.Duration
+import java.time.Instant
 
 /**
  * Интерфейс для сборки конфигурации и расширений
@@ -25,6 +27,25 @@ interface BuildAction {
  */
 interface ChangeAnalysisAction {
     suspend fun analyze(properties: ApplicationProperties): ChangeAnalysisResult
+
+    /**
+     * Анализирует изменения с группировкой по source set для оптимизированной сборки
+     */
+    suspend fun analyzeBySourceSet(properties: ApplicationProperties): FileSystemChangeAnalysisResult {
+        val basic = analyze(properties)
+        return FileSystemChangeAnalysisResult(
+            hasChangesFlag = basic.hasChanges,
+            changedFilesSet = basic.changedFiles,
+            sourceSetChanges = emptyMap(),
+            changeTypesMap = basic.changeTypes,
+            analysisTimestamp = Instant.now()
+        )
+    }
+
+    /**
+     * Сохраняет состояние source set для инкрементальной сборки
+     */
+    suspend fun saveSourceSetState(properties: ApplicationProperties, sourceSetChanges: SourceSetChanges): Boolean
 }
 
 /**
@@ -48,12 +69,32 @@ data class BuildResult(
 /**
  * Результат анализа изменений
  */
-data class ChangeAnalysisResult(
+open class ChangeAnalysisResult(
     val hasChanges: Boolean,
     val changedFiles: Set<Path> = emptySet(),
     val affectedModules: Set<String> = emptySet(),
-    val changeTypes: Map<Path, ChangeType> = emptyMap()
+    val changeTypes: ChangesSet = emptyMap()
 )
+
+/**
+ * Расширенный результат анализа изменений с группировкой по source set
+ */
+data class FileSystemChangeAnalysisResult(
+    val hasChangesFlag: Boolean,
+    val changedFilesSet: Set<Path>,
+    val sourceSetChanges: Map<String, SourceSetChanges>,
+    val changeTypesMap: ChangesSet,
+    val analysisTimestamp: Instant
+) : ChangeAnalysisResult(
+    hasChanges = hasChangesFlag,
+    changedFiles = changedFilesSet,
+    affectedModules = sourceSetChanges.keys,
+    changeTypes = changeTypesMap
+) {
+    val affectedSourceSets: Set<String> get() = sourceSetChanges.keys
+    val totalChangedFiles: Int get() = changedFiles.size
+    val sourceSetCount: Int get() = sourceSetChanges.size
+}
 
 /**
  * Результат выполнения тестов

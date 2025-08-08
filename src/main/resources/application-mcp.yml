@@ -1,118 +1,41 @@
-# MCP Server Configuration для YaXUnit Runner
-# Профиль для работы как MCP сервер через STDIO
-
+# Профиль для STDIO режима (по умолчанию)
 spring:
-  application:
-    name: yaxunit-mcp-server
+  ai:
+    mcp:
+      server:
+        # Информация о сервере
+        name: "1C Platform API Server"
+        version: "1.0.0"
+        description: "MCP сервер для поиска по API платформы 1С Предприятие"
+        instructions: "MCP сервер для поиска по API платформы 1С Предприятие. Выполняет поиск по свойствам, методам и типам."
+        type: SYNC
+
+        # Возможности сервера
+        capabilities:
+          tools:
+            # Поддержка инструментов
+            enabled: true
+          resources:
+            # Поддержка ресурсов (отключено для простоты)
+            enabled: false
+          prompts:
+            # Поддержка промптов (отключено для простоты)
+            enabled: false
   main:
-    web-application-type: none  # Отключаем веб-сервер для STDIO
+    web-application-type: none
     banner-mode: off
-  profiles:
-    active: mcp
 
-# MCP Server настройки
-spring.ai.mcp.server:
-  name: yaxunit-runner
-  version: 1.0.0
-  description: "MCP server for YaXUnit test execution and project management"
-  stdio:
-    enabled: true
-    root-change-notification: true
-
-# Отключаем логирование в консоль для STDIO
-logging:
-  level:
-    root: WARN
-    io.github.alkoleft.mcp: INFO
-    org.springframework.ai: WARN
-  pattern:
-    console: ""
-
-# Настройки проекта для MCP
-project:
-  tests_path: "./tests"
-  build_timeout: 300000
-  test_timeout: 600000
-
-# Настройки платформы 1С
-platform:
-  version: null
-  auto_detect_version: true
-  search_paths:
-    - "/opt/1cv8"
-    - "/usr/local/1cv8"
-    - "C:\\Program Files\\1cv8"
-    - "C:\\Program Files (x86)\\1cv8"
-
-# Настройки сборки
-build:
-  incremental_enabled: true
-  hash_storage_size: 10000
-  parallel_build: true
-
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration
+      - org.springframework.boot.autoconfigure.web.servlet.DispatcherServletAutoConfiguration
+      - org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration
 # Настройки логирования
 logging:
-  level: INFO
-  enable_file_logging: false
-  file_path: null
+  #  config: classpath:logback-mcp.xml
+  # Все остальные настройки логгирования теперь берутся из logback-mcp.xml
+  level:
+    root: INFO
 
-# Отключаем сервер для MCP режима
 server:
-  port: 0
-  enable_websocket: false
-
-# Отключаем WebSocket для MCP режима
-websocket:
-  enabled: false
-
-# Отключаем мониторинг для MCP режима
-management:
-  endpoints:
-    web:
-      exposure:
-        include: none
-  endpoint:
-    health:
-      show-details: never
-
-# Отключаем метрики для MCP режима
-metrics:
-  enabled: false
-  export:
-    prometheus:
-      enabled: false
-
-# Отключаем кэширование для MCP режима
-cache:
-  enabled: false
-
-# Отключаем уведомления для MCP режима
-notifications:
-  enabled: false
-
-# Отключаем отчеты для MCP режима
-reports:
-  enabled: false
-
-# Отключаем параллельное выполнение для MCP режима
-parallel:
-  enabled: false
-  max_threads: 1
-  queue_size: 1
-
-# Настройки таймаутов для MCP
-timeouts:
-  connection: 30000
-  read: 60000
-  write: 60000
-  process: 300000
-
-# Отключаем резервное копирование для MCP режима
-backup:
-  enabled: false
-
-# Настройки разработки для MCP
-development:
-  debug: false
-  hot_reload: false
-  profile: false 
+  port: -1

@@ -1,6 +1,6 @@
 package io.github.alkoleft.mcp.infrastructure.storage
 
-import io.github.alkoleft.mcp.core.modules.HashStorage
+import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
 import kotlinx.coroutines.Dispatchers
@@ -11,7 +11,6 @@ import kotlinx.coroutines.withContext
 import org.mapdb.DB
 import org.mapdb.DBMaker
 import org.mapdb.Serializer
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.nio.file.Files
 import java.nio.file.Path
@@ -25,7 +24,7 @@ import java.util.concurrent.ConcurrentMap
 private val logger = KotlinLogging.logger {  }
 
 @Component
-class MapDbHashStorage : HashStorage {
+class MapDbHashStorage {
     private val mutex = Mutex()
 
     private lateinit var db: DB
@@ -74,7 +73,9 @@ class MapDbHashStorage : HashStorage {
         }
     }
 
-    override suspend fun getHash(file: Path): String? =
+    fun isEmpty() = hashMap.isEmpty() || timestampMap.isEmpty()
+
+    suspend fun getHash(file: Path): String? =
         withContext(Dispatchers.IO) {
             mutex.withLock {
                 try {
@@ -87,7 +88,7 @@ class MapDbHashStorage : HashStorage {
             }
         }
 
-    override suspend fun storeHash(
+    suspend fun storeHash(
         file: Path,
         hash: String,
     ) = withContext(Dispatchers.IO) {
@@ -110,7 +111,7 @@ class MapDbHashStorage : HashStorage {
         }
     }
 
-    override suspend fun batchUpdate(updates: Map<Path, String>) =
+    suspend fun batchUpdate(updates: Map<Path, String>) =
         withContext(Dispatchers.IO) {
             if (updates.isEmpty()) return@withContext
 
@@ -142,7 +143,7 @@ class MapDbHashStorage : HashStorage {
             }
         }
 
-    override suspend fun removeHash(file: Path) =
+    suspend fun removeHash(file: Path) =
         withContext(Dispatchers.IO) {
             mutex.withLock {
                 try {
@@ -162,7 +163,7 @@ class MapDbHashStorage : HashStorage {
             }
         }
 
-    override suspend fun getAllHashes(): Map<String, String> =
+    suspend fun getAllHashes(): Map<String, String> =
         withContext(Dispatchers.IO) {
             mutex.withLock {
                 try {
@@ -268,7 +269,7 @@ class MapDbHashStorage : HashStorage {
      */
     private fun normalizeKey(file: Path): String = file.toAbsolutePath().normalize().toString()
 
-    override suspend fun close() =
+    suspend fun close() =
         withContext(Dispatchers.IO) {
             mutex.withLock {
                 try {

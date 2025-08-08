@@ -1,5 +1,7 @@
 package io.github.alkoleft.mcp
 
+import io.github.alkoleft.mcp.infrastructure.utility.PlatformDetector
+import io.github.alkoleft.mcp.interfaces.cli.BootstrapCli
 import io.github.alkoleft.mcp.interfaces.cli.RunnerCli
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.ExitCodeGenerator
@@ -19,10 +21,13 @@ import picocli.CommandLine.IFactory
 class McpYaxUnitRunnerApplication
 
 fun main(args: Array<String>) {
-    val profile = io.github.alkoleft.mcp.interfaces.cli.BootstrapCli.detectProfile(args)
-    val app = org.springframework.boot.SpringApplication(McpYaxUnitRunnerApplication::class.java)
-    app.setAdditionalProfiles(profile)
-    app.run(*args)
+    if (PlatformDetector.isWindows) {
+        System.setProperty("file.encoding", "UTF-8")
+    }
+    val profile = BootstrapCli.detectProfile(args)
+    runApplication<McpYaxUnitRunnerApplication>(*args) {
+        setAdditionalProfiles(profile)
+    }
 }
 
 @Profile("cli")
@@ -41,6 +46,7 @@ class ApplicationRunner(private val runner: RunnerCli, private val factory: IFac
 }
 
 @Primary
+@Profile("cli")
 @Component
 class SpringPicocliFactory(private val applicationContext: ApplicationContext) : IFactory {
     override fun <K> create(cls: Class<K?>): K? {

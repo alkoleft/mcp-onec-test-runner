@@ -1,17 +1,17 @@
 package io.github.alkoleft.mcp.infrastructure.storage
 
+import io.github.alkoleft.mcp.application.actions.change.ChangesSet
 import io.github.alkoleft.mcp.core.modules.BuildStateManager
 import io.github.alkoleft.mcp.core.modules.ChangeType
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.nio.file.Files
 import java.nio.file.Path
-import java.security.MessageDigest
 import java.time.Instant
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.walk
@@ -32,9 +32,8 @@ class FileBuildStateManager(
 
     // Performance tuning parameters
     private val maxConcurrentHashCalculations = 4
-    private val hashCacheSize = 1000
 
-    override suspend fun checkChanges(projectPath: Path): Map<Path, ChangeType> =
+    override suspend fun checkChanges(projectPath: Path): ChangesSet =
         coroutineScope {
             val startTime = Instant.now()
             logger.debug { "Starting Enhanced Hybrid Hash Detection for project: $projectPath" }
@@ -59,12 +58,11 @@ class FileBuildStateManager(
             } catch (e: Exception) {
                 logger.error(e) { "Error during change detection" }
                 // Fallback: treat all source files as changed
-                getAllSourceFiles(projectPath).associateWith { ChangeType.MODIFIED }
+                getAllSourceFiles(projectPath).associateWith { Pair(ChangeType.MODIFIED, "") }
             }
         }
 
     override suspend fun updateHashes(
-        projectPath: Path,
         files: Map<Path, String>,
     ) {
         logger.debug { "Updating hashes for ${files.size} files" }
@@ -148,13 +146,13 @@ class FileBuildStateManager(
     /**
      * Phase 2: Hash verification for potential changes with parallel processing
      */
-    private suspend fun verifyChangesWithHashes(candidates: Set<Path>): Map<Path, ChangeType> =
+    private suspend fun verifyChangesWithHashes(candidates: Set<Path>): ChangesSet =
         coroutineScope {
             logger.debug { "Verifying ${candidates.size} potential changes with hash calculation" }
 
             // Process files in batches to avoid overwhelming the system
             val batchSize = maxConcurrentHashCalculations
-            val results = mutableMapOf<Path, ChangeType>()
+            val results = mutableMapOf<Path, Pair<ChangeType, String>>()
 
             candidates.chunked(batchSize).forEach { batch ->
                 val batchResults =
@@ -166,9 +164,9 @@ class FileBuildStateManager(
                         }.awaitAll()
 
                 // Collect results
-                batch.zip(batchResults).forEach { (file, changeType) ->
-                    if (changeType != ChangeType.UNCHANGED) {
-                        results[file] = changeType
+                batch.zip(batchResults).forEach { (file, result) ->
+                    if (result.first != ChangeType.UNCHANGED) {
+                        results[file] = result
                     }
                 }
             }
@@ -180,13 +178,13 @@ class FileBuildStateManager(
     /**
      * Verifies if a single file has actually changed by comparing content hashes
      */
-    private suspend fun verifyFileChange(file: Path): ChangeType =
+    private suspend fun verifyFileChange(file: Path): Pair<ChangeType, String> =
         withContext(Dispatchers.IO) {
             try {
                 val currentHash = calculateFileHash(file)
                 val storedHash = hashStorage.getHash(file)
 
-                when {
+                val type = when {
                     storedHash == null -> {
                         logger.trace { "New file confirmed: $file" }
                         ChangeType.NEW
@@ -202,34 +200,14 @@ class FileBuildStateManager(
                         ChangeType.UNCHANGED
                     }
                 }
+                return@withContext Pair(type, currentHash)
             } catch (e: Exception) {
                 logger.debug(e) { "Error verifying file change: $file" }
-                ChangeType.MODIFIED // Assume modified if we can't verify
+                Pair(ChangeType.MODIFIED, "") // Assume modified if we can't verify
             }
         }
 
-    /**
-     * Calculates SHA-256 hash of file content with optimized buffering
-     */
-    private suspend fun calculateFileHash(file: Path): String =
-        withContext(Dispatchers.IO) {
-            try {
-                val digest = MessageDigest.getInstance("SHA-256")
-                val buffer = ByteArray(8192) // 8KB buffer for optimal I/O performance
 
-                Files.newInputStream(file).use { inputStream ->
-                    var bytesRead: Int
-                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                        digest.update(buffer, 0, bytesRead)
-                    }
-                }
-
-                digest.digest().joinToString("") { "%02x".format(it) }
-            } catch (e: Exception) {
-                logger.debug(e) { "Failed to calculate hash for file: $file" }
-                throw e
-            }
-        }
 
     /**
      * Gets all source files in the project that should be tracked for changes
@@ -280,46 +258,11 @@ class FileBuildStateManager(
                 ".gradle/",
                 "temp/",
                 "tmp/",
+                "ConfigDumpInfo.xml"
             )
 
         return ignoredPatterns.any { pattern ->
             relativePath.startsWith(pattern) || relativePath.contains("/$pattern")
         }
     }
-
-    /**
-     * Utility method to get change statistics
-     */
-    suspend fun getChangeStatistics(projectPath: Path): ChangeStatistics =
-        coroutineScope {
-            try {
-                val allFiles = getAllSourceFiles(projectPath)
-                val changes = checkChanges(projectPath)
-
-                ChangeStatistics(
-                    totalSourceFiles = allFiles.size,
-                    newFiles = changes.count { it.value == ChangeType.NEW },
-                    modifiedFiles = changes.count { it.value == ChangeType.MODIFIED },
-                    deletedFiles = changes.count { it.value == ChangeType.DELETED },
-                    unchangedFiles = allFiles.size - changes.size,
-                )
-            } catch (e: Exception) {
-                logger.error(e) { "Error calculating change statistics" }
-                ChangeStatistics(0, 0, 0, 0, 0)
-            }
-        }
-}
-
-/**
- * Statistics about project changes
- */
-data class ChangeStatistics(
-    val totalSourceFiles: Int,
-    val newFiles: Int,
-    val modifiedFiles: Int,
-    val deletedFiles: Int,
-    val unchangedFiles: Int,
-) {
-    val totalChanges: Int get() = newFiles + modifiedFiles + deletedFiles
-    val changePercentage: Double get() = if (totalSourceFiles > 0) (totalChanges.toDouble() / totalSourceFiles) * 100 else 0.0
 }

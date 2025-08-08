@@ -20,15 +20,18 @@ import javax.xml.parsers.DocumentBuilderFactory
  * Minimal JUnit-only report parser
  */
 class EnhancedReportParser : ReportParser {
-    override suspend fun parseReport(input: InputStream, format: ReportFormat): GenericTestReport = withContext(Dispatchers.IO) {
-        require(format == ReportFormat.JUNIT_XML) { "Only JUNIT_XML format is supported" }
-        parseJUnitXml(input)
+    override suspend fun parseReport(input: InputStream, format: ReportFormat): GenericTestReport =
+        withContext(Dispatchers.IO) {
+            require(format == ReportFormat.JUNIT_XML) { "Only JUNIT_XML format is supported" }
+            parseJUnitXml(input)
     }
 
     override suspend fun detectFormat(input: InputStream): ReportFormat = withContext(Dispatchers.IO) {
         val bytes = input.readAllBytes()
         val content = String(bytes)
-        if (content.trim().startsWith("<?xml") && content.contains("testsuite")) ReportFormat.JUNIT_XML else ReportFormat.JUNIT_XML
+        if (content.trim()
+                .startsWith("<?xml") && content.contains("testsuite")
+        ) ReportFormat.JUNIT_XML else ReportFormat.JUNIT_XML
     }
 
     override fun getSupportedFormats(): Set<ReportFormat> = setOf(ReportFormat.JUNIT_XML)
@@ -121,6 +124,7 @@ class EnhancedReportParser : ReportParser {
         val errorMessage = when (status) {
             TestStatus.FAILED -> (element.getElementsByTagName("failure").item(0) as? Element)?.getAttribute("message")
                 ?: (element.getElementsByTagName("failure").item(0) as? Element)?.textContent
+
             TestStatus.ERROR -> (element.getElementsByTagName("error").item(0) as? Element)?.getAttribute("message")
                 ?: (element.getElementsByTagName("error").item(0) as? Element)?.textContent
             else -> null

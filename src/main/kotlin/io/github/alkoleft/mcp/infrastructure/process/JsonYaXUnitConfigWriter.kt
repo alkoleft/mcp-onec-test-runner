@@ -2,7 +2,6 @@ package io.github.alkoleft.mcp.infrastructure.process
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
-import io.github.alkoleft.mcp.core.modules.YaXUnitConfigWriter
 import io.github.alkoleft.mcp.infrastructure.yaxunit.YaXUnitConfig
 import io.github.alkoleft.mcp.infrastructure.yaxunit.YaXUnitConfigBuilderImpl
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -19,18 +18,17 @@ private val logger = KotlinLogging.logger { }
  * Поддерживает все параметры из документации YaXUnit
  * Интегрирован с построителем конфигурации
  */
-class JsonYaXUnitConfigWriter : YaXUnitConfigWriter {
+class JsonYaXUnitConfigWriter {
     
     private val objectMapper = ObjectMapper()
     private val configBuilder = YaXUnitConfigBuilderImpl()
-    
-    override suspend fun writeConfig(
-        request: TestExecutionRequest,
-        outputPath: Path
+
+    suspend fun writeConfig(
+        config: YaXUnitConfig,
+        outputPath: Path = defaultConfigPath()
     ): Path = withContext(Dispatchers.IO) {
         logger.debug { "Writing YaXUnit configuration to: $outputPath" }
         
-        val config = createConfig(request)
         val jsonConfig = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(config)
         
         // Создаем директорию если не существует
@@ -42,17 +40,18 @@ class JsonYaXUnitConfigWriter : YaXUnitConfigWriter {
         logger.info { "YaXUnit configuration written successfully" }
         outputPath
     }
-    
-    override suspend fun createTempConfig(request: TestExecutionRequest): Path = withContext(Dispatchers.IO) {
-        logger.debug { "Creating temporary YaXUnit configuration" }
-        val tempFile = Files.createTempFile("yaxunit-config-", ".json")
-        writeConfig(request, tempFile)
+
+    suspend fun createTempConfig(request: TestExecutionRequest): Path = withContext(Dispatchers.IO) {
+        val config = createConfig(request)
+        writeConfig(config)
     }
+
+    private fun defaultConfigPath() = Files.createTempFile("yaxunit-config-", ".json")
     
     /**
      * Создает конфигурацию для запуска тестов
      */
-    private fun createConfig(request: TestExecutionRequest): YaXUnitConfig {
+    fun createConfig(request: TestExecutionRequest): YaXUnitConfig {
         logger.debug { "Creating configuration for request type: ${request.javaClass.simpleName}" }
 
         // Создаем конфигурацию с помощью построителя

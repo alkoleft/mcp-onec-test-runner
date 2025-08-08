@@ -1,7 +1,7 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd
 
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.IbcmdCommand
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlin.time.Duration
 

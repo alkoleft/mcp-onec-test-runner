@@ -5,6 +5,7 @@ import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
 import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.nio.file.Files
 import java.nio.file.Path
 
 private val logger = KotlinLogging.logger { }
@@ -142,14 +143,12 @@ class YaXUnitConfigBuilderImpl : YaXUnitConfigBuilder {
         }
 
         // Устанавливаем путь к отчету
-        val defaultReportPath = request.testsPath.resolve("reports").resolve("junit.xml")
-        withReportPath(defaultReportPath)
+        withReportPath(Files.createTempFile("yaxunit-report-", ".xml"))
 
         // Настраиваем логирование
-        val logPath = request.testsPath.resolve("logs").resolve("tests.log")
         withLogging(
             LoggingConfig(
-                file = logPath.toString(),
+                file = Files.createTempFile("yaxunit-launch-", ".log").toString(),
                 console = false,
                 level = "info"
             )

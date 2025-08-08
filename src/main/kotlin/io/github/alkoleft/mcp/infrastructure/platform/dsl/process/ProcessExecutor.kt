@@ -121,9 +121,9 @@ class ProcessExecutor {
         processType: String = "процесс",
         workingDirectory: Path? = null
     ) {
-        logger.info { "Процесс завершен: PID: ${process.pid()}, Код завершения: $exitCode, Время выполнения: ${duration.inWholeMilliseconds}ms" }
+        logger.debug { "Процесс завершен: PID: ${process.pid()}, Код завершения: $exitCode, Время выполнения: ${duration.inWholeMilliseconds}ms" }
 
-        workingDirectory?.let { logger.info { "Рабочий каталог: $workingDirectory" } }
+        workingDirectory?.let { logger.debug { "Рабочий каталог: $workingDirectory" } }
 
         if (exitCode != 0) {
             logger.warn { "Код ошибки: $exitCode" }
@@ -145,9 +145,9 @@ class ProcessExecutor {
 //                logger.warn { "STDERR вывод (предупреждения): ${streamData.stderr.toString().trim()}" }
 //            }
             if (logContent.isNotBlank()) {
-                logger.info { "Логи 1С: $logContent" }
+                logger.debug { "Логи 1С: $logContent" }
             }
-            logger.info { "=== ${processType.uppercase()} ВЫПОЛНЕН УСПЕШНО ===" }
+            logger.debug { "=== ${processType.uppercase()} ВЫПОЛНЕН УСПЕШНО ===" }
         }
     }
 
@@ -208,7 +208,7 @@ class ProcessExecutor {
                 val processBuilder = createProcessBuilder(enhancedArgs, params.workingDirectory)
                 val process = processBuilder.start()
 
-                logger.info { "Процесс запущен с PID: ${process.pid()}" }
+                logger.debug { "Процесс запущен с PID: ${process.pid()}" }
 
                 val result = if (params.timeoutMs != null) {
                     executeWithTimeoutLogic(process, params, startTime, actualLogPath)
@@ -229,22 +229,22 @@ class ProcessExecutor {
      * Логирует начало выполнения процесса
      */
     private fun logStartProcess(params: ExecutionParams, logPath: Path?, commandString: String) {
-        logger.info { "=== ЗАПУСК ${params.processType.uppercase()} ===" }
-        logger.info { "Команда: $commandString /Out $logPath" }
+        logger.debug { "=== ЗАПУСК ${params.processType.uppercase()} ===" }
+        logger.debug { "Команда: $commandString /Out $logPath" }
 
         if (logPath != null) {
-            logger.info { "Файл логов: $logPath" }
+            logger.debug { "Файл логов: $logPath" }
         }
 
         if (params.timeoutMs != null) {
-            logger.info { "Таймаут: ${params.timeoutMs}ms" }
+            logger.debug { "Таймаут: ${params.timeoutMs}ms" }
         }
 
         if (params.workingDirectory != null) {
-            logger.info { "Рабочий каталог: ${params.workingDirectory}" }
-            logger.info { "Текущий каталог: ${System.getProperty("user.dir")}" }
+            logger.debug { "Рабочий каталог: ${params.workingDirectory}" }
+            logger.debug { "Текущий каталог: ${System.getProperty("user.dir")}" }
         } else {
-            logger.info { "Рабочий каталог: ${System.getProperty("user.dir")}" }
+            logger.debug { "Рабочий каталог: ${System.getProperty("user.dir")}" }
         }
     }
 
@@ -310,7 +310,7 @@ class ProcessExecutor {
                 logger.debug { "Ожидание завершения процесса в отдельном потоке" }
                 process.waitFor()
                 logger.debug { "Процесс завершился в отдельном потоке" }
-            } catch (e: InterruptedException) {
+            } catch (_: InterruptedException) {
                 logger.debug { "Поток процесса прерван, принудительное завершение" }
                 process.destroyForcibly()
             }
@@ -413,22 +413,6 @@ class ProcessExecutor {
                 commandArgs = commandArgs,
                 timeoutMs = timeoutMs,
                 processType = "процесс с таймаутом"
-            )
-        )
-    }
-
-    /**
-     * Выполняет команду с рабочим каталогом
-     */
-    suspend fun executeInDirectory(
-        commandArgs: List<String>,
-        workingDirectory: Path
-    ): ProcessResult {
-        return executeProcess(
-            ExecutionParams(
-                commandArgs = commandArgs,
-                workingDirectory = workingDirectory,
-                processType = "процесс в каталоге"
             )
         )
     }

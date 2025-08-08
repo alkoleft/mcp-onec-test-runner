@@ -3,14 +3,14 @@ package io.github.alkoleft.mcp.application.actions
 import io.github.alkoleft.mcp.application.actions.build.DesignerBuildAction
 import io.github.alkoleft.mcp.application.actions.build.IbcmdBuildAction
 import io.github.alkoleft.mcp.application.actions.change.FileSystemChangeAnalysisAction
+import io.github.alkoleft.mcp.application.actions.change.SourceSetChangeAnalyzer
 import io.github.alkoleft.mcp.application.actions.test.YaXUnitTestAction
 import io.github.alkoleft.mcp.configuration.properties.BuilderType
-import io.github.alkoleft.mcp.core.modules.FileWatcher
-import io.github.alkoleft.mcp.core.modules.FileWatcherImpl
-import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
+import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
 import io.github.alkoleft.mcp.infrastructure.process.EnhancedReportParser
 import io.github.alkoleft.mcp.infrastructure.process.JsonYaXUnitConfigWriter
+import io.github.alkoleft.mcp.infrastructure.storage.FileBuildStateManager
 
 /**
  * Фабрика для создания Actions
@@ -28,9 +28,10 @@ class ActionFactoryImpl(
     private val platformDsl: PlatformDsl,
     private val utilLocator: CrossPlatformUtilLocator,
     private val configWriter: JsonYaXUnitConfigWriter,
-    private val reportParser: EnhancedReportParser
+    private val reportParser: EnhancedReportParser,
+    private val buildStateManager: FileBuildStateManager
 ) : ActionFactory {
-    private val fileWatcher: FileWatcher = FileWatcherImpl()
+    private val sourceSetAnalyzer: SourceSetChangeAnalyzer = SourceSetChangeAnalyzer()
     override fun createBuildAction(type: BuilderType): BuildAction {
         return when (type) {
             BuilderType.DESIGNER -> DesignerBuildAction(platformDsl)
@@ -39,7 +40,7 @@ class ActionFactoryImpl(
     }
 
     override fun createChangeAnalysisAction(): ChangeAnalysisAction {
-        return FileSystemChangeAnalysisAction(fileWatcher)
+        return FileSystemChangeAnalysisAction(buildStateManager, sourceSetAnalyzer)
     }
 
     override fun createRunTestAction(): RunTestAction {

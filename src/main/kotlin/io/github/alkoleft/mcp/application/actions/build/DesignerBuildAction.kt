@@ -23,7 +23,7 @@ class DesignerBuildAction(
      * Выполняет единый DSL для полной сборки проекта
      */
     override suspend fun executeBuildDsl(properties: ApplicationProperties, sourceSet: SourceSet): BuildResult {
-        logger.info { "Формирую единый DSL для сборки проекта" }
+        logger.debug { "Формирую единый DSL для сборки проекта" }
 
         val results = mutableMapOf<String, ConfiguratorResult>()
         sourceSet.associateTo(results) { it.name to ConfiguratorResult.EMPTY }
@@ -41,21 +41,32 @@ class DesignerBuildAction(
             // Загружаем основную конфигурацию
             logger.info { "Загружаю основную конфигурацию" }
             val configuration = sourceSet.configuration!!
-            results[configuration.name] = loadConfigFromFiles {
+            var result: ConfiguratorResult = loadConfigFromFiles {
                 fromPath(properties.basePath.resolve(configuration.path))
                 updateConfigDumpInfo()
             }
+            if (result.success) {
+                logger.info { "Конфигурация загружена успешно" }
+            } else {
+                logger.info { "Не удалось загрузить конфигурацию" }
+            }
+            results[configuration.name] = result
 
             // Загружаем расширения
             val extensions = sourceSet.extensions
             logger.info { "Загружаю ${extensions.size} расширений: ${extensions.joinToString(", ")}" }
             extensions.forEach {
-                results[it.name] = loadConfigFromFiles {
+                result = loadConfigFromFiles {
                     fromPath(properties.basePath.resolve(it.path))
                     extension(it.name)
                     updateConfigDumpInfo()
                 }
-                logger.info { "Расширение ${it.name} загружено успешно" }
+                results[it.name] = result
+                if (result.success) {
+                    logger.info { "Расширение ${it.name} загружено успешно" }
+                } else {
+                    logger.info { "Не удалось загрузить расширение ${it.name}" }
+                }
             }
 
             // Обновляем конфигурацию в базе данных
