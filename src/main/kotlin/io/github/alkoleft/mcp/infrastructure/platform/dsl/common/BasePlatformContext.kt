@@ -10,7 +10,7 @@ import kotlin.time.Duration
  * Base context with common configuration for platform utilities (Enterprise/Designer)
  */
 abstract class BasePlatformContext(
-    protected val platformContext: PlatformUtilityContext
+    protected val platformContext: PlatformUtilityContext,
 ) {
     protected var connectionString: String = ""
     protected var user: String? = null
@@ -28,7 +28,10 @@ abstract class BasePlatformContext(
         this.connectionString = "\"${connectionString.replace("\"", "\"\"")}\""
     }
 
-    fun connectToServer(serverName: String, dbName: String) {
+    fun connectToServer(
+        serverName: String,
+        dbName: String,
+    ) {
         this.connectionString = "Srvr=\"$serverName\";Ref=\"$dbName\";"
     }
 
@@ -69,9 +72,6 @@ abstract class BasePlatformContext(
     }
 
     /**
-     * Устанавливает строку подключения к информационной базе
-     */
-    /**
      * Устанавливает скорость соединения
      */
     fun connectionSpeed(speed: ConnectionSpeed) {
@@ -85,10 +85,9 @@ abstract class BasePlatformContext(
         this.noTruncate = true
     }
 
-
     protected suspend fun buildCommonArgs(
         utilityType: UtilityType,
-        mode: String
+        mode: String,
     ): MutableList<String> {
         val args = mutableListOf<String>()
         val location = platformContext.locateUtility(utilityType)
@@ -126,12 +125,10 @@ abstract class BasePlatformContext(
         output: String,
         error: String?,
         exitCode: Int,
-        duration: Duration
+        duration: Duration,
     ) {
         platformContext.setResult(success, output, error, exitCode, duration)
     }
 
     fun buildResult() = platformContext.buildResult()
 }
-
-

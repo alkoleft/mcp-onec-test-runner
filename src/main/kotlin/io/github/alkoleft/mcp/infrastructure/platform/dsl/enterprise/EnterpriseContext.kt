@@ -8,9 +8,10 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtility
  * Контекст для работы с 1С:Предприятие
  */
 class EnterpriseContext(
-    platformContext: PlatformUtilityContext
+    platformContext: PlatformUtilityContext,
 ) : BasePlatformContext(platformContext) {
     var runArguments: String? = null
+
     /**
      * Строит аргументы для запуска 1С:Предприятие
      */

@@ -3,8 +3,8 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd
 import io.github.alkoleft.mcp.core.modules.PlatformType
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
-import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
+import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertNotNull
@@ -14,7 +14,6 @@ import kotlin.test.assertTrue
  * Тесты для DSL ibcmd
  */
 class IbcmdDslTest {
-
     @Test
     fun `test ibcmd plan creation`() {
         val plan = createBasicTestPlan()
@@ -149,7 +148,6 @@ class IbcmdDslTest {
             // Экспорт для резервного копирования
             export("/backup/config_backup.cf")
         }
-
 
         // Управление сеансами
         planDsl.session {
@@ -358,15 +356,18 @@ class IbcmdDslTest {
     }
 
     private fun mockPlatformContext(): PlatformUtilityContext {
-        val mockUtilLocator = object : CrossPlatformUtilLocator() {
-            override suspend fun locateUtility(utility: UtilityType, version: String?): UtilityLocation {
-                return UtilityLocation(
-                    executablePath = Path.of("/path/to/ibcmd"),
-                    version = "8.3.24.1761",
-                    platformType = PlatformType.LINUX
-                )
+        val mockUtilLocator =
+            object : UtilityLocator() {
+                override suspend fun locateUtility(
+                    utility: UtilityType,
+                    version: String?,
+                ): UtilityLocation =
+                    UtilityLocation(
+                        executablePath = Path.of("/path/to/ibcmd"),
+                        version = "8.3.24.1761",
+                        platformType = PlatformType.LINUX,
+                    )
             }
-        }
         return PlatformUtilityContext(mockUtilLocator, "8.3.24.1761")
     }
-} 
+}

@@ -15,74 +15,62 @@ data class ConfigExtensionCommand(
      * (create, info, list, update, delete)
      */
     var extensionSubCommand: String,
-
     /**
      * Имя расширения
      * --name=<name>
      */
     var name: String? = null,
-
     /**
      * Префикс имен
      * --name-prefix=<prefix>
      */
     var namePrefix: String? = null,
-
     /**
      * Синоним
      * --synonym=<synonym>
      */
     var synonym: String? = null,
-
     /**
      * Назначение (customization|add-on|patch)
      * --purpose=<customization|add-on|patch>
      */
     var purpose: String? = null,
-
     /**
      * Активность (yes|no)
      * --active=<yes|no>
      */
     var active: Boolean? = null,
-
     /**
      * Безопасный режим (yes|no)
      * --safe-mode=<yes|no>
      */
     var safeMode: Boolean? = null,
-
     /**
      * Профиль безопасности (yes|no)
      * --security-profile-name=<yes|no>
      */
     var securityProfileName: Boolean? = null,
-
     /**
      * Защита от опасных действий (yes|no)
      * --unsafe-action-protection=<yes|no>
      */
     var unsafeActionProtection: Boolean? = null,
-
     /**
      * Используется в распределённой ИБ (yes|no)
      * --used-in-distributed-infobase=<yes|no>
      */
     var usedInDistributedInfobase: Boolean? = null,
-
     /**
      * Область действия (infobase|data-separation)
      * --scope=<infobase|data-separation>
      */
     var scope: String? = null,
-
     /**
      * Удалить все расширения (только для delete)
      * --all
      */
-    var all: Boolean = false
+    var all: Boolean = false,
 ) : IbcmdCommand {
-
     override val mode: String = "config"
     override val subCommand: String = "extension $extensionSubCommand"
     override val commandName: String = "config extension $extensionSubCommand"

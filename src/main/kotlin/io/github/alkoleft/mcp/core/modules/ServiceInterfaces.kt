@@ -5,35 +5,19 @@ import java.io.InputStream
 import java.nio.file.Path
 
 /**
- * Core service interfaces defining contracts for the application layer
+ * Test execution facade
  */
-
-// Test execution facade
 interface TestLauncher {
     suspend fun run(request: TestExecutionRequest): TestExecutionResult
 }
 
-// Build orchestration service
-interface BuildService {
-    suspend fun ensureBuild(projectPath: Path): BuildResult
-
-    suspend fun determineBuildStrategy(projectPath: Path): BuildDecision
-
-    suspend fun performFullBuild(projectPath: Path): BuildResult
-
-    suspend fun performIncrementalBuild(
-        projectPath: Path,
-        changedModules: Set<String>,
-    ): BuildResult
-}
-
-// Build state management
+/**
+ * Build state management
+ */
 interface BuildStateManager {
     suspend fun checkChanges(projectPath: Path): ChangesSet
 
-    suspend fun updateHashes(
-        files: Map<Path, String>,
-    )
+    suspend fun updateHashes(files: Map<Path, String>)
 
     suspend fun getLastBuildTime(projectPath: Path): Long?
 
@@ -43,19 +27,9 @@ interface BuildStateManager {
     )
 }
 
-// Platform utility location
-interface UtilLocator {
-    suspend fun locateUtility(
-        utility: UtilityType,
-        version: String? = null,
-    ): UtilityLocation
-
-    suspend fun validateUtility(location: UtilityLocation): Boolean
-
-    fun clearCache()
-}
-
-// YAXUnit test runner
+/**
+ * YAXUnit test runner
+ */
 interface YaXUnitRunner {
     suspend fun executeTests(
         utilityLocation: UtilityLocation,
@@ -72,7 +46,9 @@ data class YaXUnitExecutionResult(
     val duration: java.time.Duration,
 )
 
-// Report parsing
+/**
+ * Report parsing
+ */
 interface ReportParser {
     suspend fun parseReport(
         input: InputStream,

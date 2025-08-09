@@ -39,8 +39,11 @@ class StandardLocation(
     ): List<Path> {
         val executableName = getExecutableName(utility)
 
-        return if (PlatformDetector.isWindows) listOf(Paths.get(basePath, "bin", executableName))
-        else listOf(Paths.get(basePath, executableName))
+        return if (PlatformDetector.isWindows) {
+            listOf(Paths.get(basePath, "bin", executableName))
+        } else {
+            listOf(Paths.get(basePath, executableName))
+        }
     }
 }
 
@@ -58,8 +61,11 @@ class VersionLocation(
 
         val executableName = getExecutableName(utility)
 
-        return if (PlatformDetector.isWindows) listOf(Paths.get(basePath, version, "bin", executableName))
-        else listOf(Paths.get(basePath, version, executableName))
+        return if (PlatformDetector.isWindows) {
+            listOf(Paths.get(basePath, version, "bin", executableName))
+        } else {
+            listOf(Paths.get(basePath, version, executableName))
+        }
     }
 }
 

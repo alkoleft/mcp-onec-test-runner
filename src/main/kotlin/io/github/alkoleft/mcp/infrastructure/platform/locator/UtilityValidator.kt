@@ -11,7 +11,6 @@ private val logger = KotlinLogging.logger { }
  * Utility validation service for checking executable existence and functionality
  */
 class UtilityValidator {
-    
     /**
      * Validates utility location by checking existence, permissions and basic functionality
      */

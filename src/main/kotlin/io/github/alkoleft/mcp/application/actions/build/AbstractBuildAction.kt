@@ -19,17 +19,17 @@ private val logger = KotlinLogging.logger { }
  * для измерения времени выполнения, обработки ошибок и логирования
  */
 abstract class AbstractBuildAction(
-    protected val dsl: PlatformDsl
+    protected val dsl: PlatformDsl,
 ) : BuildAction {
-
     /**
      * Выполняет полную сборку проекта с измерением времени
      */
-    override suspend fun build(properties: ApplicationProperties): BuildResult =
-        build(properties, properties.sourceSet)
+    override suspend fun build(properties: ApplicationProperties): BuildResult = build(properties, properties.sourceSet)
 
-    override suspend fun build(properties: ApplicationProperties, sourceSet: SourceSet): BuildResult =
-        measureExecutionTime("build") { executeBuildDsl(properties, sourceSet) }
+    override suspend fun build(
+        properties: ApplicationProperties,
+        sourceSet: SourceSet,
+    ): BuildResult = measureExecutionTime("build") { executeBuildDsl(properties, sourceSet) }
 
     /**
      * Выполняет сборку только конфигурации с измерением времени
@@ -40,13 +40,18 @@ abstract class AbstractBuildAction(
     /**
      * Выполняет сборку расширения с измерением времени
      */
-    override suspend fun buildExtension(name: String, properties: ApplicationProperties): BuildResult =
-        measureExecutionTime("buildExtension") { executeExtensionBuildDsl(name, properties) }
+    override suspend fun buildExtension(
+        name: String,
+        properties: ApplicationProperties,
+    ): BuildResult = measureExecutionTime("buildExtension") { executeExtensionBuildDsl(name, properties) }
 
     /**
      * Измеряет время выполнения операции с обработкой ошибок
      */
-    private suspend fun <T> measureExecutionTime(operation: String, block: suspend () -> T): T {
+    private suspend fun <T> measureExecutionTime(
+        operation: String,
+        block: suspend () -> T,
+    ): T {
         val startTime = Instant.now()
         logger.info { "Начинаю операцию: $operation" }
 
@@ -67,7 +72,10 @@ abstract class AbstractBuildAction(
     /**
      * Абстрактный метод для выполнения DSL полной сборки
      */
-    protected abstract suspend fun executeBuildDsl(properties: ApplicationProperties, sourceSet: SourceSet): BuildResult
+    protected abstract suspend fun executeBuildDsl(
+        properties: ApplicationProperties,
+        sourceSet: SourceSet,
+    ): BuildResult
 
     /**
      * Абстрактный метод для выполнения DSL сборки конфигурации
@@ -79,6 +87,6 @@ abstract class AbstractBuildAction(
      */
     protected abstract suspend fun executeExtensionBuildDsl(
         extensionName: String,
-        properties: ApplicationProperties
+        properties: ApplicationProperties,
     ): BuildResult
-} 
+}

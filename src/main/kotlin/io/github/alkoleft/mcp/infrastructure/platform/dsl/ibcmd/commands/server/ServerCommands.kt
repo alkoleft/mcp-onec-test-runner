@@ -13,56 +13,47 @@ data class ServerConfigInitCommand(
      * --out=<file>, -o <file>
      */
     val out: String? = null,
-
     /**
      * IP адрес сервера (localhost, any, IPv4, IPv6)
      * --http-address=<address>, --address=<address>, -a <address>
      */
     val httpAddress: String? = null,
-
     /**
      * TCP порт (по умолчанию: 8314)
      * --http-port=<number>, --port=<number>, -p <number>
      */
     val httpPort: Int? = null,
-
     /**
      * Базовый путь публикации (по умолчанию: /)
      * --http-base=<location>, --base=<location>, -b <location>
      */
     val httpBase: String? = null,
-
     /**
      * Имя информационной базы
      * --name=<name>, -n <name>
      */
     val name: String? = null,
-
     /**
      * Идентификатор ИБ (UUID или auto)
      * --id=<uuid>
      */
     val id: String? = null,
-
     /**
      * Выдача клиентских лицензий (allow/deny)
      * --distribute-licenses=<flag>
      */
     val distributeLicenses: String? = null,
-
     /**
      * Планирование регламентных заданий (allow/deny)
      * --schedule-jobs=<flag>
      */
     val scheduleJobs: String? = null,
-
     /**
      * Запрет локального распознавания речи (yes/no)
      * --disable-local-speech-to-text=<flag>
      */
-    val disableLocalSpeechToText: String? = null
+    val disableLocalSpeechToText: String? = null,
 ) : IbcmdCommand {
-
     override val mode: String = "server"
     override val subCommand: String = "config init"
     override val commandName: String = "server config init"
@@ -94,7 +85,7 @@ data class ServerConfigInitCommand(
         httpBase?.let { details.add("базовый путь: $it") }
 
         return "Инициализация конфигурации автономного сервера" +
-                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }
 
@@ -109,50 +100,42 @@ data class ServerConfigImportCommand(
      * --cluster-data=<path>
      */
     val clusterData: String? = null,
-
     /**
      * Порт менеджера кластера (по умолчанию: 1541)
      * --manager-port=<port>
      */
     val managerPort: Int? = null,
-
     /**
      * Имя информационной базы (обязательно)
      * --name=<name>, -n <name>
      */
     val name: String? = null,
-
     /**
      * Путь к файлу для записи конфигурации
      * --out=<file>, -o <file>
      */
     val out: String? = null,
-
     /**
      * IP адрес сервера
      * --address=<address>, -a <address>
      */
     val address: String? = null,
-
     /**
      * TCP порт
      * --port=<number>
      */
     val port: Int? = null,
-
     /**
      * Базовый путь публикации
      * --base=<location>, -b <location>
      */
     val base: String? = null,
-
     /**
      * Путь к файлу дескриптора публикации
      * --publication=<path>, -p <path>
      */
-    val publication: String? = null
+    val publication: String? = null,
 ) : IbcmdCommand {
-
     override val mode: String = "server"
     override val subCommand: String = "config import"
     override val commandName: String = "server config import"
@@ -182,6 +165,6 @@ data class ServerConfigImportCommand(
         managerPort?.let { details.add("порт менеджера: $it") }
 
         return "Импорт конфигурации из кластера серверов 1С" +
-                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
-} 
+}

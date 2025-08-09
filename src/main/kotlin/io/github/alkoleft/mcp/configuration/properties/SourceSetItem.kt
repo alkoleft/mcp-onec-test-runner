@@ -7,7 +7,7 @@ data class SourceSetItem(
     val path: String,
     val name: String,
     val type: SourceSetType,
-    val purpose: Set<SourceSetPurpose> = emptySet()
+    val purpose: Set<SourceSetPurpose> = emptySet(),
 ) {
     init {
         validateSourceSetItem()

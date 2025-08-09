@@ -23,12 +23,12 @@ import java.util.concurrent.ConcurrentMap
  * MapDB-based persistent storage for file hashes.
  * Implements thread-safe operations with atomic transactions and efficient batch updates.
  */
-private val logger = KotlinLogging.logger {  }
+private val logger = KotlinLogging.logger { }
 
 @Component
 class MapDbHashStorage(
     private val properties: ApplicationProperties,
-    @Value("\${spring.application.name}") private val applicationName: String
+    @Value("\${spring.application.name}") private val applicationName: String,
 ) {
     private val mutex = Mutex()
 
@@ -304,7 +304,7 @@ class MapDbHashStorage(
             properties.id
         } else {
             calculateStringHash(properties.basePath.toString())
-        }.let { Paths.get(".$applicationName-${it}-storage", "file-hashes.db") }
+        }.let { Paths.get(".$applicationName-$it-storage", "file-hashes.db") }
 }
 
 /**

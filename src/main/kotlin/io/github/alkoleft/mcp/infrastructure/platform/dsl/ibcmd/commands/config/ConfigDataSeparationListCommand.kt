@@ -7,16 +7,12 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.
  *
  * Выводит список разделителей информационной базы.
  */
-class ConfigDataSeparationListCommand(
-) : IbcmdCommand {
-
+class ConfigDataSeparationListCommand : IbcmdCommand {
     override val mode: String = "config"
     override val subCommand: String = "data-separation list"
     override val commandName: String = "config data-separation list"
 
     override val arguments = emptyList<String>()
 
-    override fun getFullDescription(): String {
-        return "Список разделителей информационной базы"
-    }
+    override fun getFullDescription(): String = "Список разделителей информационной базы"
 }

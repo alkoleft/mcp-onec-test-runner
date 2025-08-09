@@ -26,88 +26,74 @@ import kotlin.time.measureTime
  * через fluent API и DSL синтаксис с немедленным выполнением команд.
  */
 class DesignerDsl(
-    utilityContext: PlatformUtilityContext
+    utilityContext: PlatformUtilityContext,
 ) : BasePlatformDsl<DesignerContext>(DesignerContext(utilityContext)) {
-    fun loadCfg(block: LoadCfgCommand.() -> Unit) =
-        configureAndExecute(LoadCfgCommand(), block)
+    fun loadCfg(block: LoadCfgCommand.() -> Unit) = configureAndExecute(LoadCfgCommand(), block)
 
-    fun loadConfigFromFiles(block: LoadConfigFromFilesCommand.() -> Unit) =
-        configureAndExecute(LoadConfigFromFilesCommand(), block)
+    fun loadConfigFromFiles(block: LoadConfigFromFilesCommand.() -> Unit) = configureAndExecute(LoadConfigFromFilesCommand(), block)
 
-    fun updateDBCfg(block: UpdateDBCfgCommand.() -> Unit) =
-        configureAndExecute(UpdateDBCfgCommand(), block)
+    fun updateDBCfg(block: UpdateDBCfgCommand.() -> Unit) = configureAndExecute(UpdateDBCfgCommand(), block)
 
     fun checkCanApplyConfigurationExtensions(block: CheckCanApplyConfigurationExtensionsCommand.() -> Unit) =
         configureAndExecute(CheckCanApplyConfigurationExtensionsCommand(), block)
 
-    fun checkConfig(block: CheckConfigCommand.() -> Unit) =
-        configureAndExecute(CheckConfigCommand(), block)
+    fun checkConfig(block: CheckConfigCommand.() -> Unit) = configureAndExecute(CheckConfigCommand(), block)
 
-    fun checkModules(block: CheckModulesCommand.() -> Unit) =
-        configureAndExecute(CheckModulesCommand(), block)
+    fun checkModules(block: CheckModulesCommand.() -> Unit) = configureAndExecute(CheckModulesCommand(), block)
 
-    fun dumpConfigToFiles(block: DumpConfigToFilesCommand.() -> Unit) =
-        configureAndExecute(DumpConfigToFilesCommand(), block)
+    fun dumpConfigToFiles(block: DumpConfigToFilesCommand.() -> Unit) = configureAndExecute(DumpConfigToFilesCommand(), block)
 
-    fun dumpExtensionToFiles(block: DumpExtensionToFilesCommand.() -> Unit) =
-        configureAndExecute(DumpExtensionToFilesCommand(), block)
+    fun dumpExtensionToFiles(block: DumpExtensionToFilesCommand.() -> Unit) = configureAndExecute(DumpExtensionToFilesCommand(), block)
 
-    fun applyCfg(block: ApplyCfgCommand.() -> Unit) =
-        configureAndExecute(ApplyCfgCommand(), block)
+    fun applyCfg(block: ApplyCfgCommand.() -> Unit) = configureAndExecute(ApplyCfgCommand(), block)
 
-    fun createCfg(block: CreateCfgCommand.() -> Unit) =
-        configureAndExecute(CreateCfgCommand(), block)
+    fun createCfg(block: CreateCfgCommand.() -> Unit) = configureAndExecute(CreateCfgCommand(), block)
 
-    fun deleteExtension(block: DeleteCfgCommand.() -> Unit) =
-        configureAndExecute(DeleteCfgCommand(), block)
+    fun deleteExtension(block: DeleteCfgCommand.() -> Unit) = configureAndExecute(DeleteCfgCommand(), block)
 
     /**
      * Выполняет команду конфигуратора с произвольными аргументами
      */
-    private suspend fun executeCommand(
-        command: ConfiguratorCommand
-    ): ConfiguratorResult {
-        val duration = measureTime {
-            try {
-                val executor = ProcessExecutor()
+    private suspend fun executeCommand(command: ConfiguratorCommand): ConfiguratorResult {
+        val duration =
+            measureTime {
+                try {
+                    val executor = ProcessExecutor()
 
-                val args = buildCommandArgsWithArgs(command.arguments)
-                val result = executor.executeWithLogging(args)
+                    val args = buildCommandArgsWithArgs(command.arguments)
+                    val result = executor.executeWithLogging(args)
 
-                context.setResult(
-                    success = result.exitCode == 0,
-                    output = result.output,
-                    error = result.error,
-                    exitCode = result.exitCode,
-                    duration = result.duration
-                )
-
-            } catch (e: Exception) {
-                context.setResult(
-                    success = false,
-                    output = "",
-                    error = e.message ?: "Unknown error",
-                    exitCode = -1,
-                    duration = Duration.ZERO
-                )
+                    context.setResult(
+                        success = result.exitCode == 0,
+                        output = result.output,
+                        error = result.error,
+                        exitCode = result.exitCode,
+                        duration = result.duration,
+                    )
+                } catch (e: Exception) {
+                    context.setResult(
+                        success = false,
+                        output = "",
+                        error = e.message ?: "Unknown error",
+                        exitCode = -1,
+                        duration = Duration.ZERO,
+                    )
+                }
             }
-        }
 
         return ConfiguratorResult(
             success = context.buildResult().success,
             output = context.buildResult().output,
             error = context.buildResult().error,
             exitCode = context.buildResult().exitCode,
-            duration = duration
+            duration = duration,
         )
     }
 
     /**
      * Строит аргументы команды для конфигуратора с произвольными аргументами
      */
-    private suspend fun buildCommandArgsWithArgs(
-        commandArgs: List<String>
-    ): List<String> {
+    private suspend fun buildCommandArgsWithArgs(commandArgs: List<String>): List<String> {
         val args = mutableListOf<String>()
 
         // Базовые аргументы конфигуратора
@@ -121,7 +107,7 @@ class DesignerDsl(
 
     private fun <C : ConfiguratorCommand> configureAndExecute(
         command: C,
-        configure: (C.() -> Unit)
+        configure: (C.() -> Unit),
     ): ConfiguratorResult {
         command.configure()
         return runBlocking {
@@ -133,9 +119,11 @@ class DesignerDsl(
 /**
  * Скорость соединения
  */
-enum class ConnectionSpeed(val value: String) {
+enum class ConnectionSpeed(
+    val value: String,
+) {
     NORMAL("Normal"),
-    LOW("Low")
+    LOW("Low"),
 }
 
 /**
@@ -146,11 +134,16 @@ data class ConfiguratorResult(
     val output: String,
     val error: String?,
     val exitCode: Int,
-    val duration: Duration
+    val duration: Duration,
 ) {
     companion object {
-        val EMPTY = ConfiguratorResult(
-            false, "", "", -1, Duration.ZERO
-        )
+        val EMPTY =
+            ConfiguratorResult(
+                false,
+                "",
+                "",
+                -1,
+                Duration.ZERO,
+            )
     }
 }

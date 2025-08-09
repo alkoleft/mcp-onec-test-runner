@@ -20,7 +20,6 @@ private val logger = KotlinLogging.logger {}
  * и обработкой ошибок. Поддерживает логирование 1С через параметр /Out.
  */
 class ProcessExecutor {
-
     /**
      * Данные о потоках вывода процесса
      */
@@ -28,7 +27,7 @@ class ProcessExecutor {
         val stdout: StringBuilder,
         val stderr: StringBuilder,
         val stdoutLineCount: Int,
-        val stderrLineCount: Int
+        val stderrLineCount: Int,
     )
 
     /**
@@ -40,7 +39,7 @@ class ProcessExecutor {
         val timeoutMs: Long? = null,
         val logFilePath: Path? = null,
         val includeStdout: Boolean = true,
-        val processType: String = "процесс"
+        val processType: String = "процесс",
     )
 
     /**
@@ -48,7 +47,7 @@ class ProcessExecutor {
      */
     private fun readProcessStreams(
         process: Process,
-        includeStdout: Boolean = true
+        includeStdout: Boolean = true,
     ): ProcessStreamData {
         val stdout = StringBuilder()
         val stderr = StringBuilder()
@@ -90,7 +89,7 @@ class ProcessExecutor {
     private fun buildCombinedOutput(
         streamData: ProcessStreamData,
         logContent: String = "",
-        includeStdout: Boolean = true
+        includeStdout: Boolean = true,
     ): String {
         val combinedOutput = StringBuilder()
 
@@ -119,9 +118,11 @@ class ProcessExecutor {
         streamData: ProcessStreamData,
         logContent: String = "",
         processType: String = "процесс",
-        workingDirectory: Path? = null
+        workingDirectory: Path? = null,
     ) {
-        logger.debug { "Процесс завершен: PID: ${process.pid()}, Код завершения: $exitCode, Время выполнения: ${duration.inWholeMilliseconds}ms" }
+        logger.debug {
+            "Процесс завершен: PID: ${process.pid()}, Код завершения: $exitCode, Время выполнения: ${duration.inWholeMilliseconds}ms"
+        }
 
         workingDirectory?.let { logger.debug { "Рабочий каталог: $workingDirectory" } }
 
@@ -158,17 +159,16 @@ class ProcessExecutor {
         exitCode: Int,
         duration: Duration,
         combinedOutput: String,
-        logFilePath: Path? = null
-    ): ProcessResult {
-        return ProcessResult(
+        logFilePath: Path? = null,
+    ): ProcessResult =
+        ProcessResult(
             success = exitCode == 0,
             output = combinedOutput,
             error = if (exitCode != 0) "Process exited with code $exitCode" else null,
             exitCode = exitCode,
             duration = duration,
-            logFilePath = logFilePath
+            logFilePath = logFilePath,
         )
-    }
 
     /**
      * Создает результат для ошибки выполнения
@@ -177,7 +177,7 @@ class ProcessExecutor {
         exception: Exception,
         duration: Duration,
         command: String,
-        logFilePath: Path? = null
+        logFilePath: Path? = null,
     ): ProcessResult {
         logger.error(exception) { "Ошибка при выполнении процесса: $command" }
         return ProcessResult(
@@ -186,15 +186,15 @@ class ProcessExecutor {
             error = exception.message ?: "Unknown error",
             exitCode = -1,
             duration = duration,
-            logFilePath = logFilePath
+            logFilePath = logFilePath,
         )
     }
 
     /**
      * Базовый метод выполнения процесса с различными параметрами
      */
-    private suspend fun executeProcess(params: ExecutionParams): ProcessResult {
-        return withContext(Dispatchers.IO) {
+    private suspend fun executeProcess(params: ExecutionParams): ProcessResult =
+        withContext(Dispatchers.IO) {
             val startTime = System.currentTimeMillis()
             val commandString = params.commandArgs.joinToString(" ")
 
@@ -210,25 +210,28 @@ class ProcessExecutor {
 
                 logger.debug { "Процесс запущен с PID: ${process.pid()}" }
 
-                val result = if (params.timeoutMs != null) {
-                    executeWithTimeoutLogic(process, params, startTime, actualLogPath)
-                } else {
-                    executeNormalLogic(process, params, startTime, actualLogPath)
-                }
+                val result =
+                    if (params.timeoutMs != null) {
+                        executeWithTimeoutLogic(process, params, startTime, actualLogPath)
+                    } else {
+                        executeNormalLogic(process, params, startTime, actualLogPath)
+                    }
 
                 result
-
             } catch (e: Exception) {
                 val duration = (System.currentTimeMillis() - startTime).toDuration(kotlin.time.DurationUnit.MILLISECONDS)
                 createErrorResult(e, duration, commandString, actualLogPath)
             }
         }
-    }
 
     /**
      * Логирует начало выполнения процесса
      */
-    private fun logStartProcess(params: ExecutionParams, logPath: Path?, commandString: String) {
+    private fun logStartProcess(
+        params: ExecutionParams,
+        logPath: Path?,
+        commandString: String,
+    ) {
         logger.debug { "=== ЗАПУСК ${params.processType.uppercase()} ===" }
         logger.debug { "Команда: $commandString /Out $logPath" }
 
@@ -251,18 +254,23 @@ class ProcessExecutor {
     /**
      * Подготавливает аргументы команды, добавляя параметр /Out при необходимости
      */
-    private fun prepareCommandArgs(commandArgs: List<String>, logPath: Path?): List<String> {
-        return if (logPath != null && !commandArgs.any { it.startsWith("/Out") }) {
+    private fun prepareCommandArgs(
+        commandArgs: List<String>,
+        logPath: Path?,
+    ): List<String> =
+        if (logPath != null && !commandArgs.any { it.startsWith("/Out") }) {
             commandArgs + "/Out" + logPath.toString()
         } else {
             commandArgs
         }
-    }
 
     /**
      * Создает и настраивает ProcessBuilder
      */
-    private fun createProcessBuilder(commandArgs: List<String>, workingDirectory: Path?): ProcessBuilder {
+    private fun createProcessBuilder(
+        commandArgs: List<String>,
+        workingDirectory: Path?,
+    ): ProcessBuilder {
         val processBuilder = ProcessBuilder(commandArgs)
         processBuilder.redirectErrorStream(false)
 
@@ -280,7 +288,7 @@ class ProcessExecutor {
         process: Process,
         params: ExecutionParams,
         startTime: Long,
-        logPath: Path?
+        logPath: Path?,
     ): ProcessResult {
         val streamData = readProcessStreams(process, params.includeStdout)
         val exitCode = process.waitFor()
@@ -300,21 +308,22 @@ class ProcessExecutor {
         process: Process,
         params: ExecutionParams,
         startTime: Long,
-        logPath: Path?
+        logPath: Path?,
     ): ProcessResult {
         val timeoutMs = params.timeoutMs!!
 
         // Запускаем процесс в отдельном потоке с таймаутом
-        val processThread = Thread {
-            try {
-                logger.debug { "Ожидание завершения процесса в отдельном потоке" }
-                process.waitFor()
-                logger.debug { "Процесс завершился в отдельном потоке" }
-            } catch (_: InterruptedException) {
-                logger.debug { "Поток процесса прерван, принудительное завершение" }
-                process.destroyForcibly()
+        val processThread =
+            Thread {
+                try {
+                    logger.debug { "Ожидание завершения процесса в отдельном потоке" }
+                    process.waitFor()
+                    logger.debug { "Процесс завершился в отдельном потоке" }
+                } catch (_: InterruptedException) {
+                    logger.debug { "Поток процесса прерван, принудительное завершение" }
+                    process.destroyForcibly()
+                }
             }
-        }
 
         processThread.start()
         logger.debug { "Поток мониторинга процесса запущен" }
@@ -345,7 +354,10 @@ class ProcessExecutor {
     /**
      * Ожидает завершения процесса с таймаутом
      */
-    private fun waitForProcessWithTimeout(processThread: Thread, timeoutMs: Long): Boolean {
+    private fun waitForProcessWithTimeout(
+        processThread: Thread,
+        timeoutMs: Long,
+    ): Boolean {
         var finished = false
         val startJoin = System.currentTimeMillis()
         var checkCount = 0
@@ -369,14 +381,13 @@ class ProcessExecutor {
     /**
      * Выполняет команду с указанными аргументами
      */
-    suspend fun execute(commandArgs: List<String>): ProcessResult {
-        return executeProcess(
+    suspend fun execute(commandArgs: List<String>): ProcessResult =
+        executeProcess(
             ExecutionParams(
                 commandArgs = commandArgs,
-                processType = "процесс"
-            )
+                processType = "процесс",
+            ),
         )
-    }
 
     /**
      * Выполняет команду 1С с логированием в файл через параметр /Out
@@ -389,46 +400,42 @@ class ProcessExecutor {
     suspend fun executeWithLogging(
         commandArgs: List<String>,
         logFilePath: Path? = null,
-        includeStdout: Boolean = true
-    ): ProcessResult {
-        return executeProcess(
+        includeStdout: Boolean = true,
+    ): ProcessResult =
+        executeProcess(
             ExecutionParams(
                 commandArgs = commandArgs,
                 logFilePath = logFilePath ?: generateLogFilePath(),
                 includeStdout = includeStdout,
-                processType = "процесс 1С"
-            )
+                processType = "процесс 1С",
+            ),
         )
-    }
 
     /**
      * Выполняет команду с таймаутом
      */
     suspend fun executeWithTimeout(
         commandArgs: List<String>,
-        timeoutMs: Long = 300000 // 5 минут по умолчанию
-    ): ProcessResult {
-        return executeProcess(
+        timeoutMs: Long = 300000, // 5 минут по умолчанию
+    ): ProcessResult =
+        executeProcess(
             ExecutionParams(
                 commandArgs = commandArgs,
                 timeoutMs = timeoutMs,
-                processType = "процесс с таймаутом"
-            )
+                processType = "процесс с таймаутом",
+            ),
         )
-    }
 
     /**
      * Генерирует путь к файлу логов с временной меткой
      */
-    private fun generateLogFilePath(): Path {
-        return File.createTempFile("onec_log_", "log").toPath()
-    }
+    private fun generateLogFilePath(): Path = File.createTempFile("onec_log_", "log").toPath()
 
     /**
      * Читает содержимое файла логов
      */
-    private fun readLogFile(logPath: Path): String {
-        return try {
+    private fun readLogFile(logPath: Path): String =
+        try {
             if (Files.exists(logPath)) {
                 val content = Files.readString(logPath)
                 logger.debug { "Успешно прочитан файл логов: $logPath (${content.length} символов)" }
@@ -441,7 +448,6 @@ class ProcessExecutor {
             logger.error(e) { "Ошибка при чтении файла логов: $logPath" }
             ""
         }
-    }
 }
 
 /**
@@ -453,5 +459,5 @@ data class ProcessResult(
     val error: String?,
     val exitCode: Int,
     val duration: Duration,
-    val logFilePath: Path? = null
-) 
+    val logFilePath: Path? = null,
+)

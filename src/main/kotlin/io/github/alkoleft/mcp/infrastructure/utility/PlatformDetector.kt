@@ -6,7 +6,6 @@ import io.github.alkoleft.mcp.core.modules.PlatformType
  * Platform detection utility for determining current operating system
  */
 object PlatformDetector {
-
     val current: PlatformType by lazy {
         val osName = System.getProperty("os.name").lowercase()
         when {

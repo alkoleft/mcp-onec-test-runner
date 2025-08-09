@@ -6,5 +6,5 @@ package io.github.alkoleft.mcp.configuration.properties
 data class ConnectionProperties(
     val connectionString: String = "",
     val user: String? = null,
-    val password: String? = null
+    val password: String? = null,
 )

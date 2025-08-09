@@ -11,18 +11,15 @@ data class MobileClientExportCommand(
     /**
      * Путь для экспорта мобильного клиента
      */
-    val path: String
+    val path: String,
 ) : IbcmdCommand {
-
     override val mode: String = "mobile-client"
     override val subCommand: String = "export"
     override val commandName: String = "mobile-client export"
 
     override val arguments = listOf(path)
 
-    override fun getFullDescription(): String {
-        return "Экспорт мобильного клиента в: $path"
-    }
+    override fun getFullDescription(): String = "Экспорт мобильного клиента в: $path"
 }
 
 /**
@@ -35,9 +32,8 @@ data class MobileClientSignCommand(
      * Путь к приватному ключу (обязательно, формат .pem)
      * --key=<path>, -k <path>
      */
-    val key: String
+    val key: String,
 ) : IbcmdCommand {
-
     override val mode: String = "mobile-client"
     override val subCommand: String = "sign"
     override val commandName: String = "mobile-client sign"
@@ -51,7 +47,5 @@ data class MobileClientSignCommand(
             return args
         }
 
-    override fun getFullDescription(): String {
-        return "Цифровая подпись мобильного клиента (ключ: $key)"
-    }
-} 
+    override fun getFullDescription(): String = "Цифровая подпись мобильного клиента (ключ: $key)"
+}

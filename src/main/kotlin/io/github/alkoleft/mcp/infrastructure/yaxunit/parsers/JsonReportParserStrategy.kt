@@ -24,29 +24,59 @@ private val logger = KotlinLogging.logger { }
  * Поддерживает различные форматы JSON отчетов
  */
 class JsonReportParserStrategy : ReportParserStrategy {
-
     private val objectMapper = ObjectMapper()
 
-    override suspend fun parse(input: InputStream): GenericTestReport = withContext(Dispatchers.IO) {
-        logger.debug { "Parsing JSON report" }
+    override suspend fun parse(input: InputStream): GenericTestReport =
+        withContext(Dispatchers.IO) {
+            logger.debug { "Parsing JSON report" }
 
-        val rootNode = objectMapper.readTree(input)
+            val rootNode = objectMapper.readTree(input)
 
-        val testSuites = mutableListOf<GenericTestSuite>()
-        var totalTests = 0
-        var totalPassed = 0
-        var totalFailed = 0
-        var totalSkipped = 0
-        var totalErrors = 0
+            val testSuites = mutableListOf<GenericTestSuite>()
+            var totalTests = 0
+            var totalPassed = 0
+            var totalFailed = 0
+            var totalSkipped = 0
+            var totalErrors = 0
 
-        // Парсим в зависимости от структуры JSON
-        when {
-            rootNode.has("testResults") -> {
-                // YaXUnit формат
-                val testResults = rootNode.get("testResults")
-                if (testResults.isArray) {
-                    for (testResult in testResults) {
-                        val testSuite = parseYaXUnitTestResult(testResult)
+            // Парсим в зависимости от структуры JSON
+            when {
+                rootNode.has("testResults") -> {
+                    // YaXUnit формат
+                    val testResults = rootNode.get("testResults")
+                    if (testResults.isArray) {
+                        for (testResult in testResults) {
+                            val testSuite = parseYaXUnitTestResult(testResult)
+                            testSuites.add(testSuite)
+
+                            totalTests += testSuite.tests
+                            totalPassed += testSuite.passed
+                            totalFailed += testSuite.failed
+                            totalSkipped += testSuite.skipped
+                        }
+                    }
+                }
+
+                rootNode.has("testsuites") -> {
+                    // Стандартный формат с testsuites
+                    val testSuitesNode = rootNode.get("testsuites")
+                    if (testSuitesNode.isArray) {
+                        for (testSuiteNode in testSuitesNode) {
+                            val testSuite = parseJsonTestSuite(testSuiteNode)
+                            testSuites.add(testSuite)
+
+                            totalTests += testSuite.tests
+                            totalPassed += testSuite.passed
+                            totalFailed += testSuite.failed
+                            totalSkipped += testSuite.skipped
+                        }
+                    }
+                }
+
+                else -> {
+                    // Простой формат с массивом тестов
+                    if (rootNode.isArray) {
+                        val testSuite = parseJsonTestSuite(rootNode)
                         testSuites.add(testSuite)
 
                         totalTests += testSuite.tests
@@ -57,77 +87,46 @@ class JsonReportParserStrategy : ReportParserStrategy {
                 }
             }
 
-            rootNode.has("testsuites") -> {
-                // Стандартный формат с testsuites
-                val testSuitesNode = rootNode.get("testsuites")
-                if (testSuitesNode.isArray) {
-                    for (testSuiteNode in testSuitesNode) {
-                        val testSuite = parseJsonTestSuite(testSuiteNode)
-                        testSuites.add(testSuite)
+            val summary =
+                TestSummary(
+                    totalTests = totalTests,
+                    passed = totalPassed,
+                    failed = totalFailed,
+                    skipped = totalSkipped,
+                    errors = totalErrors,
+                )
 
-                        totalTests += testSuite.tests
-                        totalPassed += testSuite.passed
-                        totalFailed += testSuite.failed
-                        totalSkipped += testSuite.skipped
-                    }
-                }
-            }
+            val metadata =
+                TestMetadata(
+                    environment = mapOf("format" to "json"),
+                    configuration = emptyMap(),
+                    tags = emptySet(),
+                )
 
-            else -> {
-                // Простой формат с массивом тестов
-                if (rootNode.isArray) {
-                    val testSuite = parseJsonTestSuite(rootNode)
-                    testSuites.add(testSuite)
+            logger.info { "Parsed JSON report: $totalTests tests, $totalPassed passed, $totalFailed failed" }
 
-                    totalTests += testSuite.tests
-                    totalPassed += testSuite.passed
-                    totalFailed += testSuite.failed
-                    totalSkipped += testSuite.skipped
-                }
-            }
+            GenericTestReport(
+                metadata = metadata,
+                summary = summary,
+                testSuites = testSuites,
+                timestamp = Instant.now(),
+                duration = Duration.ZERO,
+            )
         }
 
-        val summary = TestSummary(
-            totalTests = totalTests,
-            passed = totalPassed,
-            failed = totalFailed,
-            skipped = totalSkipped,
-            errors = totalErrors
-        )
+    override fun canHandle(format: ReportFormat): Boolean = format == ReportFormat.JSON
 
-        val metadata = TestMetadata(
-            environment = mapOf("format" to "json"),
-            configuration = emptyMap(),
-            tags = emptySet()
-        )
+    override fun getSupportedFormats(): Set<ReportFormat> = setOf(ReportFormat.JSON)
 
-        logger.info { "Parsed JSON report: $totalTests tests, $totalPassed passed, $totalFailed failed" }
-
-        GenericTestReport(
-            metadata = metadata,
-            summary = summary,
-            testSuites = testSuites,
-            timestamp = Instant.now(),
-            duration = Duration.ZERO
-        )
-    }
-
-    override fun canHandle(format: ReportFormat): Boolean {
-        return format == ReportFormat.JSON
-    }
-
-    override fun getSupportedFormats(): Set<ReportFormat> {
-        return setOf(ReportFormat.JSON)
-    }
-
-    override suspend fun detectFormat(input: InputStream): ReportFormat = withContext(Dispatchers.IO) {
-        val content = String(input.readAllBytes())
-        if (content.trim().startsWith("{") && !content.contains("testResults")) {
-            ReportFormat.JSON
-        } else {
-            throw IllegalArgumentException("Content is not a valid JSON format")
+    override suspend fun detectFormat(input: InputStream): ReportFormat =
+        withContext(Dispatchers.IO) {
+            val content = String(input.readAllBytes())
+            if (content.trim().startsWith("{") && !content.contains("testResults")) {
+                ReportFormat.JSON
+            } else {
+                throw IllegalArgumentException("Content is not a valid JSON format")
+            }
         }
-    }
 
     /**
      * Парсит JSON testsuite
@@ -161,7 +160,7 @@ class JsonReportParserStrategy : ReportParserStrategy {
             failed = failures,
             skipped = skipped,
             duration = Duration.ofMillis((time * 1000).toLong()),
-            testCases = testCases
+            testCases = testCases,
         )
     }
 
@@ -173,18 +172,20 @@ class JsonReportParserStrategy : ReportParserStrategy {
         val className = node.get("classname")?.asText()
         val time = node.get("time")?.asDouble() ?: 0.0
 
-        val status = when {
-            node.has("failure") -> TestStatus.FAILED
-            node.has("error") -> TestStatus.ERROR
-            node.has("skipped") -> TestStatus.SKIPPED
-            else -> TestStatus.PASSED
-        }
+        val status =
+            when {
+                node.has("failure") -> TestStatus.FAILED
+                node.has("error") -> TestStatus.ERROR
+                node.has("skipped") -> TestStatus.SKIPPED
+                else -> TestStatus.PASSED
+            }
 
-        val errorMessage = when (status) {
-            TestStatus.FAILED -> node.get("failure")?.get("message")?.asText()
-            TestStatus.ERROR -> node.get("error")?.get("message")?.asText()
-            else -> null
-        }
+        val errorMessage =
+            when (status) {
+                TestStatus.FAILED -> node.get("failure")?.get("message")?.asText()
+                TestStatus.ERROR -> node.get("error")?.get("message")?.asText()
+                else -> null
+            }
 
         return GenericTestCase(
             name = name,
@@ -194,7 +195,7 @@ class JsonReportParserStrategy : ReportParserStrategy {
             errorMessage = errorMessage,
             stackTrace = null,
             systemOut = null,
-            systemErr = null
+            systemErr = null,
         )
     }
 
@@ -225,7 +226,7 @@ class JsonReportParserStrategy : ReportParserStrategy {
             failed = failed,
             skipped = skipped,
             duration = Duration.ZERO,
-            testCases = testCases
+            testCases = testCases,
         )
     }
 
@@ -234,16 +235,20 @@ class JsonReportParserStrategy : ReportParserStrategy {
      */
     private fun parseYaXUnitTestCase(node: JsonNode): GenericTestCase {
         val name = node.get("name")?.asText() ?: "Unknown Test"
-        val status = when (node.get("result")?.asText()) {
-            "PASSED" -> TestStatus.PASSED
-            "FAILED" -> TestStatus.FAILED
-            "SKIPPED" -> TestStatus.SKIPPED
-            else -> TestStatus.ERROR
-        }
+        val status =
+            when (node.get("result")?.asText()) {
+                "PASSED" -> TestStatus.PASSED
+                "FAILED" -> TestStatus.FAILED
+                "SKIPPED" -> TestStatus.SKIPPED
+                else -> TestStatus.ERROR
+            }
 
-        val errorMessage = if (status == TestStatus.FAILED) {
-            node.get("error")?.asText()
-        } else null
+        val errorMessage =
+            if (status == TestStatus.FAILED) {
+                node.get("error")?.asText()
+            } else {
+                null
+            }
 
         return GenericTestCase(
             name = name,
@@ -253,7 +258,7 @@ class JsonReportParserStrategy : ReportParserStrategy {
             errorMessage = errorMessage,
             stackTrace = null,
             systemOut = null,
-            systemErr = null
+            systemErr = null,
         )
     }
 }

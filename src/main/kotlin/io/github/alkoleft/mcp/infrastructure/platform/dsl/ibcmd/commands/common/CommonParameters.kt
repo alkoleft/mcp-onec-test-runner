@@ -4,7 +4,7 @@ data class CommonParameters(
     val root: RootParameters = RootParameters(),
     val connection: DatabaseConnectionParameters = DatabaseConnectionParameters(),
     val serverDirectory: ServerDirectoryParameters = ServerDirectoryParameters(),
-    val user: InfobaseUserParameters = InfobaseUserParameters()
+    val user: InfobaseUserParameters = InfobaseUserParameters(),
 )
 
 /**
@@ -17,12 +17,11 @@ data class RootParameters(
      * --pid=<pid>, -p <pid>
      */
     val pid: String? = null,
-
     /**
      * Сетевой адрес сервера
      * --remote=<url>, -r <url>
      */
-    val remote: String? = null
+    val remote: String? = null,
 ) : Parameters {
     override fun toArguments(): List<String> {
         val args = mutableListOf<String>()
@@ -44,13 +43,11 @@ data class DatabaseConnectionParameters(
      * --config=<path>, -c <path>
      */
     val config: String? = null,
-
     /**
      * Путь к системному конфигурационному файлу
      * --system=<path>
      */
     val system: String? = null,
-
     /**
      * Тип СУБД
      * --dbms=<kind>
@@ -62,7 +59,6 @@ data class DatabaseConnectionParameters(
      * Если параметр не указан, используется файловая база данных
      */
     val dbms: String? = null,
-
     /**
      * Имя сервера СУБД
      * --database-server=<server>, --db-server=<server>
@@ -76,38 +72,33 @@ data class DatabaseConnectionParameters(
      * - OracleDatabase: TNS-name (например: "//имя_сервера_БД/имя_сервиса")
      */
     val databaseServer: String? = null,
-
     /**
      * Имя базы данных
      * --database-name=<name>, --db-name=<name>
      */
     val databaseName: String? = null,
-
     /**
      * Имя пользователя СУБД
      * --database-user=<name>, --db-user=<name>
      */
     val databaseUser: String? = null,
-
     /**
      * Пароль пользователя СУБД
      * --database-password=<password>, --db-pwd=<password>
      */
     val databasePassword: String? = null,
-
     /**
      * Запрос пароля пользователя сервера СУБД через стандартный поток ввода (STDIN)
      * --request-database-password, --request-db-pwd, -W
      */
     val requestDatabasePassword: Boolean = false,
-
     /**
      * Путь к каталогу файловой базы данных 1С:Предприятия 8
      * --database-path=<path>, --db-path=<path>
      * В случае использования относительного пути, полный путь будет получен относительно каталога данных сервера.
      * По умолчанию используется подкаталог 'db-data' в каталоге данных сервера
      */
-    var databasePath: String? = null
+    var databasePath: String? = null,
 ) : Parameters {
     override fun toArguments(): List<String> {
         val args = mutableListOf<String>()
@@ -137,14 +128,12 @@ data class ServerDirectoryParameters(
      * По умолчанию используется значение: /home/alko/.1cv8/1C/1cv8/standalone-server/
      */
     val data: String? = null,
-
     /**
      * Путь к файлу блокировки каталога данных автономного сервера
      * --lock=<path>
      * По умолчанию используется файл lock.pid в каталоге данных сервера
      */
     val lock: String? = null,
-
     /**
      * Путь к каталогу временных файлов информационной базы
      * --temp=<path>, -t <path>
@@ -152,14 +141,12 @@ data class ServerDirectoryParameters(
      * По умолчанию используется подкаталог 'temp' в каталоге данных сервера
      */
     val temp: String? = null,
-
     /**
      * Путь к каталогу конфигурационных данных пользователей
      * --users-data=<path>
      * По умолчанию используется значение: users-data
      */
     val usersData: String? = null,
-
     /**
      * Путь к каталогу сеансовых данных
      * --session-data=<path>
@@ -167,7 +154,6 @@ data class ServerDirectoryParameters(
      * По умолчанию используется подкаталог 'session-data' в каталоге данных сервера
      */
     val sessionData: String? = null,
-
     /**
      * Путь к каталогу хранилища моделей распознавания речи
      * --stt-data=<path>
@@ -175,7 +161,6 @@ data class ServerDirectoryParameters(
      * По умолчанию используется подкаталог 'stt-data' в каталоге данных сервера
      */
     val sttData: String? = null,
-
     /**
      * Путь к каталогу данных журнала регистрации
      * --log-data=<path>
@@ -183,7 +168,6 @@ data class ServerDirectoryParameters(
      * По умолчанию используется подкаталог 'log-data' в каталоге данных сервера
      */
     val logData: String? = null,
-
     /**
      * Путь к каталогу данных полнотекстового поиска
      * --ftext-data=<path>
@@ -191,7 +175,6 @@ data class ServerDirectoryParameters(
      * По умолчанию используется подкаталог 'ftext-data' в каталоге данных сервера
      */
     val ftextData: String? = null,
-
     /**
      * Путь к каталогу данных полнотекстового поиска версии 2
      * --ftext2-data=<path>
@@ -199,7 +182,6 @@ data class ServerDirectoryParameters(
      * По умолчанию используется подкаталог 'ftext2-data' в каталоге данных сервера
      */
     val ftext2Data: String? = null,
-
     /**
      * Путь к каталогу данных OpenID-аутентификации
      * --openid-data=<path>
@@ -207,14 +189,13 @@ data class ServerDirectoryParameters(
      * По умолчанию используется подкаталог 'openid-data' в каталоге данных сервера
      */
     val openidData: String? = null,
-
     /**
      * Путь к каталогу хранилища двоичных данных
      * --bin-data-strg=<path>
      * В случае использования относительного пути, полный путь будет получен относительно каталога данных сервера.
      * По умолчанию используется подкаталог 'bin-data-strg' в каталоге данных сервера
      */
-    val binDataStrg: String? = null
+    val binDataStrg: String? = null,
 ) : Parameters {
     override fun toArguments(): List<String> {
         val args = mutableListOf<String>()
@@ -245,12 +226,11 @@ data class InfobaseUserParameters(
      * --user=<name>, -u <name>
      */
     var user: String? = null,
-
     /**
      * Пароль пользователя информационной базы
      * --password=<password>, -P <password>
      */
-    var password: String? = null
+    var password: String? = null,
 ) : Parameters {
     override fun toArguments(): List<String> {
         val args = mutableListOf<String>()
@@ -260,4 +240,4 @@ data class InfobaseUserParameters(
 
         return args
     }
-} 
+}

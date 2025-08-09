@@ -13,26 +13,22 @@ data class ConfigApplyCommand(
      * --extension=<extension>, -e <extension>
      */
     var extension: String? = null,
-
     /**
      * Подтверждение при наличии предупреждений
      * --force, -F
      */
     var force: Boolean = false,
-
     /**
      * Динамическое обновление
      * --dynamic=<auto|disable|prompt|force>
      */
     var dynamic: String? = null,
-
     /**
      * Завершение сеансов
      * --session-terminate=<disable|prompt|force>
      */
-    var sessionTerminate: String? = null
+    var sessionTerminate: String? = null,
 ) : IbcmdCommand {
-
     override val mode: String = "config"
     override val subCommand: String = "apply"
     override val commandName: String = "config apply"
@@ -56,6 +52,6 @@ data class ConfigApplyCommand(
         if (force) details.add("принудительно")
 
         return "Обновление конфигурации базы данных" +
-                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }

@@ -17,9 +17,18 @@ import java.time.Instant
  */
 interface BuildAction {
     suspend fun build(properties: ApplicationProperties): BuildResult
-    suspend fun build(properties: ApplicationProperties, sourceSet: SourceSet): BuildResult
+
+    suspend fun build(
+        properties: ApplicationProperties,
+        sourceSet: SourceSet,
+    ): BuildResult
+
     suspend fun buildConfiguration(properties: ApplicationProperties): BuildResult
-    suspend fun buildExtension(name: String, properties: ApplicationProperties): BuildResult
+
+    suspend fun buildExtension(
+        name: String,
+        properties: ApplicationProperties,
+    ): BuildResult
 }
 
 /**
@@ -38,14 +47,17 @@ interface ChangeAnalysisAction {
             changedFilesSet = basic.changedFiles,
             sourceSetChanges = emptyMap(),
             changeTypesMap = basic.changeTypes,
-            analysisTimestamp = Instant.now()
+            analysisTimestamp = Instant.now(),
         )
     }
 
     /**
      * Сохраняет состояние source set для инкрементальной сборки
      */
-    suspend fun saveSourceSetState(properties: ApplicationProperties, sourceSetChanges: SourceSetChanges): Boolean
+    suspend fun saveSourceSetState(
+        properties: ApplicationProperties,
+        sourceSetChanges: SourceSetChanges,
+    ): Boolean
 }
 
 /**
@@ -63,7 +75,7 @@ data class BuildResult(
     val configurationBuilt: Boolean = false,
     val errors: List<String> = emptyList(),
     val duration: Duration = Duration.ZERO,
-    val sourceSet: Map<String, ConfiguratorResult> = emptyMap()
+    val sourceSet: Map<String, ConfiguratorResult> = emptyMap(),
 )
 
 /**
@@ -73,7 +85,7 @@ open class ChangeAnalysisResult(
     val hasChanges: Boolean,
     val changedFiles: Set<Path> = emptySet(),
     val affectedModules: Set<String> = emptySet(),
-    val changeTypes: ChangesSet = emptyMap()
+    val changeTypes: ChangesSet = emptyMap(),
 )
 
 /**
@@ -84,13 +96,13 @@ data class FileSystemChangeAnalysisResult(
     val changedFilesSet: Set<Path>,
     val sourceSetChanges: Map<String, SourceSetChanges>,
     val changeTypesMap: ChangesSet,
-    val analysisTimestamp: Instant
+    val analysisTimestamp: Instant,
 ) : ChangeAnalysisResult(
-    hasChanges = hasChangesFlag,
-    changedFiles = changedFilesSet,
-    affectedModules = sourceSetChanges.keys,
-    changeTypes = changeTypesMap
-) {
+        hasChanges = hasChangesFlag,
+        changedFiles = changedFilesSet,
+        affectedModules = sourceSetChanges.keys,
+        changeTypes = changeTypesMap,
+    ) {
     val affectedSourceSets: Set<String> get() = sourceSetChanges.keys
     val totalChangedFiles: Int get() = changedFiles.size
     val sourceSetCount: Int get() = sourceSetChanges.size
@@ -102,8 +114,7 @@ data class FileSystemChangeAnalysisResult(
 data class TestExecutionResult(
     val success: Boolean,
     val report: GenericTestReport,
-
     val reportPath: Path? = null,
     val errors: List<String> = emptyList(),
-    val duration: Duration = Duration.ZERO
-) 
+    val duration: Duration = Duration.ZERO,
+)

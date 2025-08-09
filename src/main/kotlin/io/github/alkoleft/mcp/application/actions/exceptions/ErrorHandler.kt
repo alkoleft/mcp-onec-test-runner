@@ -81,7 +81,5 @@ object ErrorHandler {
     /**
      * Создает контекст ошибки с дополнительной информацией
      */
-    fun createErrorContext(vararg pairs: Pair<String, Any>): Map<String, Any> {
-        return mapOf(*pairs)
-    }
-} 
+    fun createErrorContext(vararg pairs: Pair<String, Any>): Map<String, Any> = mapOf(*pairs)
+}

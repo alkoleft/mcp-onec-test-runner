@@ -13,10 +13,12 @@ abstract class ConfiguratorCommand {
      * Полное описание команды для отображения в плане
      */
     fun getFullDescription(): String {
-        val params = if (parameters.isNotEmpty()) {
-            " (${parameters.entries.joinToString(", ") { "${it.key}=${it.value}" }})"
-        } else ""
+        val params =
+            if (parameters.isNotEmpty()) {
+                " (${parameters.entries.joinToString(", ") { "${it.key}=${it.value}" }})"
+            } else {
+                ""
+            }
         return "$name$params - $description"
     }
 }
-

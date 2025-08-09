@@ -3,12 +3,17 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.common
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.ConnectionSpeed
 import java.nio.file.Path
 
-abstract class BasePlatformDsl<T : BasePlatformContext>(protected val context: T) {
+abstract class BasePlatformDsl<T : BasePlatformContext>(
+    protected val context: T,
+) {
     fun connect(connectionString: String) {
         context.connect(connectionString)
     }
 
-    fun connectToServer(serverName: String, dbName: String) {
+    fun connectToServer(
+        serverName: String,
+        dbName: String,
+    ) {
         context.connectToServer(serverName, dbName)
     }
 

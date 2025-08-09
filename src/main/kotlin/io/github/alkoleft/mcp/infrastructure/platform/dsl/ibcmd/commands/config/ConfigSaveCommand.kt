@@ -13,19 +13,16 @@ data class ConfigSaveCommand(
      * --extension=<extension>, -e <extension>
      */
     var extension: String? = null,
-
     /**
      * Операция над конфигурацией базы данных
      * --db
      */
     var db: Boolean = false,
-
     /**
      * Путь к файлу конфигурации
      */
-    val path: String
+    val path: String,
 ) : IbcmdCommand {
-
     override val mode: String = "config"
     override val subCommand: String = "save"
     override val commandName: String = "config save"
@@ -47,6 +44,6 @@ data class ConfigSaveCommand(
         if (db) details.add("конфигурация БД")
 
         return "Выгрузка конфигурации в файл: $path" +
-                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }

@@ -1,7 +1,6 @@
 package io.github.alkoleft.mcp.infrastructure.platform.locator
 
 import io.github.alkoleft.mcp.core.modules.TestExecutionError
-import io.github.alkoleft.mcp.core.modules.UtilLocator
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.search.SearchLocation
@@ -23,42 +22,41 @@ private val logger = KotlinLogging.logger { }
  * Discovers 1C:Enterprise platform utilities across different operating systems.
  */
 @Component
-class CrossPlatformUtilLocator : UtilLocator {
-    private val pathCache = UtilPathCache()
+class UtilityLocator {
+    private val pathCache = UtilityCache()
     private val searchStrategyFactory = SearchStrategyFactory()
     private val utilityValidator = UtilityValidator()
 
-    override suspend fun locateUtility(
+    suspend fun locateUtility(
         utility: UtilityType,
         version: String?,
-    ): UtilityLocation = coroutineScope {
-        logger.debug { "Starting utility location for: $utility, version: $version" }
+    ): UtilityLocation =
+        coroutineScope {
+            logger.debug { "Starting utility location for: $utility, version: $version" }
 
-        // Phase 1: Check cache first
-        pathCache.getCachedLocation(utility, version)?.let { cached ->
-            if (utilityValidator.validateUtility(cached)) {
-                logger.debug { "Found cached utility location: ${cached.executablePath}" }
-                return@coroutineScope cached
-            } else {
-                pathCache.invalidate(utility, version)
+            // Phase 1: Check cache first
+            pathCache.getCachedLocation(utility, version)?.let { cached ->
+                if (utilityValidator.validateUtility(cached)) {
+                    logger.debug { "Found cached utility location: ${cached.executablePath}" }
+                    return@coroutineScope cached
+                } else {
+                    pathCache.invalidate(utility, version)
+                }
             }
+
+            // Phase 2: Simple hierarchical search
+            val searchStrategy = searchStrategyFactory.createSearchStrategy()
+            val location = executeSimpleSearch(searchStrategy, utility, version)
+
+            // Phase 3: Cache successful result
+            pathCache.store(utility, version, location)
+
+            location
         }
 
-        // Phase 2: Simple hierarchical search
-        val searchStrategy = searchStrategyFactory.createSearchStrategy()
-        val location = executeSimpleSearch(searchStrategy, utility, version)
+    suspend fun validateUtility(location: UtilityLocation): Boolean = utilityValidator.validateUtility(location)
 
-        // Phase 3: Cache successful result
-        pathCache.store(utility, version, location)
-
-        location
-    }
-
-    override suspend fun validateUtility(location: UtilityLocation): Boolean {
-        return utilityValidator.validateUtility(location)
-    }
-
-    override fun clearCache() {
+    fun clearCache() {
         pathCache.clear()
     }
 
@@ -69,15 +67,16 @@ class CrossPlatformUtilLocator : UtilLocator {
         strategy: SearchStrategy,
         utility: UtilityType,
         version: String?,
-    ): UtilityLocation = withContext(Dispatchers.IO) {
-        // Search Tier 1 locations (most common)
-        logger.debug { "Searching locations" }
-        for (location in strategy.locations) {
-            searchInLocation(location, utility, version)?.let { return@withContext it }
-        }
+    ): UtilityLocation =
+        withContext(Dispatchers.IO) {
+            // Search Tier 1 locations (most common)
+            logger.debug { "Searching locations" }
+            for (location in strategy.locations) {
+                searchInLocation(location, utility, version)?.let { return@withContext it }
+            }
 
-        throw TestExecutionError.UtilNotFound("$utility not found in any known location")
-    }
+            throw TestExecutionError.UtilNotFound("$utility not found in any known location")
+        }
 
     /**
      * Searches for utility in a specific location
@@ -92,11 +91,12 @@ class CrossPlatformUtilLocator : UtilLocator {
 
             for (path in paths) {
                 if (path.exists() && path.isExecutable()) {
-                    val utilityLocation = UtilityLocation(
-                        executablePath = path,
-                        version = version,
-                        platformType = PlatformDetector.current,
-                    )
+                    val utilityLocation =
+                        UtilityLocation(
+                            executablePath = path,
+                            version = version,
+                            platformType = PlatformDetector.current,
+                        )
 
                     logger.debug { "Found utility at: $path, version: $version" }
                     return utilityLocation

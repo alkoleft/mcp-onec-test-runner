@@ -13,31 +13,26 @@ data class ConfigSignCommand(
      * --key=<path>, -k <path>
      */
     var key: String? = null,
-
     /**
      * Имя расширения
      * --extension=<extension>, -e <extension>
      */
     var extension: String? = null,
-
     /**
      * Операция над конфигурацией базы данных
      * --db
      */
     var db: Boolean = false,
-
     /**
      * Путь для подписанной копии
      * --out=<path>, -o <path>
      */
     var out: String? = null,
-
     /**
      * Путь к файлу для подписи
      */
-    var path: String? = null
+    var path: String? = null,
 ) : IbcmdCommand {
-
     override val mode: String = "config"
     override val subCommand: String = "sign"
     override val commandName: String = "config sign"
@@ -65,6 +60,6 @@ data class ConfigSignCommand(
         path?.let { details.add("файл: $it") }
 
         return "Цифровая подпись конфигурации/расширения" +
-                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }

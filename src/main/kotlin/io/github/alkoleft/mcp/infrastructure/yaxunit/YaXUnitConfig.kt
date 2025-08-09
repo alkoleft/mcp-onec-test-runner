@@ -8,7 +8,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 
 private val logger = KotlinLogging.logger { }
 
-
 /**
  * Конфигурация YaXUnit
  */
@@ -29,7 +28,7 @@ data class LoggingConfig(
     val console: Boolean = false,
     val level: String = "info",
     val includeTimestamp: Boolean = true,
-    val includeTestDetails: Boolean = true
+    val includeTestDetails: Boolean = true,
 )
 
 /**
@@ -37,23 +36,23 @@ data class LoggingConfig(
  */
 data class TestFilter(
     val modules: List<String>? = null,
-    val tests: List<String>? = null
+    val tests: List<String>? = null,
 )
 
-fun TestExecutionRequest.toConfig(): YaXUnitConfig {
-    return YaXUnitConfig(
+fun TestExecutionRequest.toConfig(): YaXUnitConfig =
+    YaXUnitConfig(
         filter = filter(this),
         reportPath = reportPath(),
-        logging = LoggingConfig(
-            file = logPath(),
-            console = false,
-            level = "info"
-        ),
+        logging =
+            LoggingConfig(
+                file = logPath(),
+                console = false,
+                level = "info",
+            ),
         closeAfterTests = true,
         reportFormat = "jUnit",
-        showReport = false
+        showReport = false,
     )
-}
 
 fun filter(request: TestExecutionRequest) =
     when (request) {
@@ -106,9 +105,8 @@ fun YaXUnitConfig.validate(): ValidationResult {
     return ValidationResult(
         isValid = isValid,
         errors = errors,
-        warnings = warnings
+        warnings = warnings,
     )
-
 }
 
 /**
@@ -117,5 +115,5 @@ fun YaXUnitConfig.validate(): ValidationResult {
 data class ValidationResult(
     val isValid: Boolean,
     val errors: List<String> = emptyList(),
-    val warnings: List<String> = emptyList()
+    val warnings: List<String> = emptyList(),
 )

@@ -24,7 +24,6 @@ class FileSystemChangeAnalysisAction(
     private val buildStateManager: FileBuildStateManager,
     private val sourceSetAnalyzer: SourceSetChangeAnalyzer,
 ) : ChangeAnalysisAction {
-
     override suspend fun analyze(properties: ApplicationProperties): ChangeAnalysisResult {
         logger.info { "Analyzing changes for project: ${properties.basePath}" }
 
@@ -49,9 +48,8 @@ class FileSystemChangeAnalysisAction(
                     hasChanges = true,
                     changedFiles = changedFiles,
                     affectedModules = affectedModules,
-                    changeTypes = changes
+                    changeTypes = changes,
                 )
-
             } catch (e: Exception) {
                 logger.error(e) { "Change analysis failed" }
                 throw AnalyzeException("Change analysis failed: ${e.message}", e)
@@ -74,7 +72,7 @@ class FileSystemChangeAnalysisAction(
                         changedFilesSet = emptySet(),
                         sourceSetChanges = emptyMap(),
                         changeTypesMap = emptyMap(),
-                        analysisTimestamp = Instant.now()
+                        analysisTimestamp = Instant.now(),
                     )
                 }
 
@@ -90,9 +88,8 @@ class FileSystemChangeAnalysisAction(
                     changedFilesSet = changes.keys,
                     sourceSetChanges = sourceSetChanges,
                     changeTypesMap = changes,
-                    analysisTimestamp = Instant.now()
+                    analysisTimestamp = Instant.now(),
                 )
-
             } catch (e: Exception) {
                 logger.error(e) { "Source set change analysis failed" }
                 throw AnalyzeException("Source set change analysis failed: ${e.message}", e)
@@ -102,7 +99,7 @@ class FileSystemChangeAnalysisAction(
 
     override suspend fun saveSourceSetState(
         properties: ApplicationProperties,
-        sourceSetChanges: SourceSetChanges
+        sourceSetChanges: SourceSetChanges,
     ): Boolean {
         logger.debug { "Saving source set state for: ${sourceSetChanges.sourceSetName} in project: ${properties.basePath}" }
 
@@ -120,7 +117,6 @@ class FileSystemChangeAnalysisAction(
                 buildStateManager.setLastBuildTime(properties.basePath, System.currentTimeMillis())
 
                 true
-
             } catch (e: Exception) {
                 logger.error(e) { "Failed to save source set state for: ${sourceSetChanges.sourceSetName}" }
                 false
@@ -130,9 +126,9 @@ class FileSystemChangeAnalysisAction(
 
     private fun determineAffectedModules(
         changedFiles: Set<Path>,
-        properties: ApplicationProperties
-    ): Set<String> {
-        return properties.sourceSet
+        properties: ApplicationProperties,
+    ): Set<String> =
+        properties.sourceSet
             .filter { sourceItem ->
                 val sourcePath = properties.basePath.resolve(sourceItem.path)
                 changedFiles.any { changedFile ->
@@ -143,8 +139,6 @@ class FileSystemChangeAnalysisAction(
                         false
                     }
                 }
-            }
-            .map { it.path }
+            }.map { it.path }
             .toSet()
-    }
-} 
+}

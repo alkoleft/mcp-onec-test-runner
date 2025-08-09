@@ -13,20 +13,17 @@ data class ConfigRepairCommand(
      * --commit
      */
     var commit: Boolean = false,
-
     /**
      * Отменить незавершённую операцию
      * --rollback
      */
     var rollback: Boolean = false,
-
     /**
      * Восстановить структуру метаданных
      * --fix-metadata
      */
-    var fixMetadata: Boolean = false
+    var fixMetadata: Boolean = false,
 ) : IbcmdCommand {
-
     override val mode: String = "config"
     override val subCommand: String = "repair"
     override val commandName: String = "config repair"
@@ -49,6 +46,6 @@ data class ConfigRepairCommand(
         if (fixMetadata) details.add("восстановить метаданные")
 
         return "Восстановление конфигурации после незавершённой операции" +
-                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }

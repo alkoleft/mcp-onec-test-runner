@@ -24,76 +24,75 @@ private val logger = KotlinLogging.logger { }
  * Поддерживает множественные test suites и детальную обработку ошибок
  */
 class JUnitXmlParserStrategy : ReportParserStrategy {
+    override suspend fun parse(input: InputStream): GenericTestReport =
+        withContext(Dispatchers.IO) {
+            logger.debug { "Parsing jUnit XML report" }
 
-    override suspend fun parse(input: InputStream): GenericTestReport = withContext(Dispatchers.IO) {
-        logger.debug { "Parsing jUnit XML report" }
+            val factory = DocumentBuilderFactory.newInstance()
+            val builder = factory.newDocumentBuilder()
+            val document = builder.parse(input)
 
-        val factory = DocumentBuilderFactory.newInstance()
-        val builder = factory.newDocumentBuilder()
-        val document = builder.parse(input)
+            val testSuites = mutableListOf<GenericTestSuite>()
+            var totalTests = 0
+            var totalPassed = 0
+            var totalFailed = 0
+            var totalSkipped = 0
+            var totalErrors = 0
 
-        val testSuites = mutableListOf<GenericTestSuite>()
-        var totalTests = 0
-        var totalPassed = 0
-        var totalFailed = 0
-        var totalSkipped = 0
-        var totalErrors = 0
+            // Парсим testsuite элементы
+            val testSuiteNodes = document.getElementsByTagName("testsuite")
+            for (i in 0 until testSuiteNodes.length) {
+                val testSuiteElement = testSuiteNodes.item(i) as Element
+                val testSuite = parseTestSuite(testSuiteElement)
+                testSuites.add(testSuite)
 
-        // Парсим testsuite элементы
-        val testSuiteNodes = document.getElementsByTagName("testsuite")
-        for (i in 0 until testSuiteNodes.length) {
-            val testSuiteElement = testSuiteNodes.item(i) as Element
-            val testSuite = parseTestSuite(testSuiteElement)
-            testSuites.add(testSuite)
+                totalTests += testSuite.tests
+                totalPassed += testSuite.passed
+                totalFailed += testSuite.failed
+                totalSkipped += testSuite.skipped
+                totalErrors += testSuite.errors
+            }
 
-            totalTests += testSuite.tests
-            totalPassed += testSuite.passed
-            totalFailed += testSuite.failed
-            totalSkipped += testSuite.skipped
-            totalErrors += testSuite.errors
+            val summary =
+                TestSummary(
+                    totalTests = totalTests,
+                    passed = totalPassed,
+                    failed = totalFailed,
+                    skipped = totalSkipped,
+                    errors = totalErrors,
+                )
+
+            val metadata =
+                TestMetadata(
+                    environment = mapOf("format" to "junit_xml"),
+                    configuration = emptyMap(),
+                    tags = emptySet(),
+                )
+
+            logger.info { "Parsed jUnit XML report: $totalTests tests, $totalPassed passed, $totalFailed failed" }
+
+            GenericTestReport(
+                metadata = metadata,
+                summary = summary,
+                testSuites = testSuites,
+                timestamp = Instant.now(),
+                duration = Duration.ZERO, // TODO: Извлечь из XML
+            )
         }
 
-        val summary = TestSummary(
-            totalTests = totalTests,
-            passed = totalPassed,
-            failed = totalFailed,
-            skipped = totalSkipped,
-            errors = totalErrors
-        )
+    override fun canHandle(format: ReportFormat): Boolean = format == ReportFormat.JUNIT_XML
 
-        val metadata = TestMetadata(
-            environment = mapOf("format" to "junit_xml"),
-            configuration = emptyMap(),
-            tags = emptySet()
-        )
+    override fun getSupportedFormats(): Set<ReportFormat> = setOf(ReportFormat.JUNIT_XML)
 
-        logger.info { "Parsed jUnit XML report: $totalTests tests, $totalPassed passed, $totalFailed failed" }
-
-        GenericTestReport(
-            metadata = metadata,
-            summary = summary,
-            testSuites = testSuites,
-            timestamp = Instant.now(),
-            duration = Duration.ZERO // TODO: Извлечь из XML
-        )
-    }
-
-    override fun canHandle(format: ReportFormat): Boolean {
-        return format == ReportFormat.JUNIT_XML
-    }
-
-    override fun getSupportedFormats(): Set<ReportFormat> {
-        return setOf(ReportFormat.JUNIT_XML)
-    }
-
-    override suspend fun detectFormat(input: InputStream): ReportFormat = withContext(Dispatchers.IO) {
-        val content = String(input.readAllBytes())
-        if (content.trim().startsWith("<?xml") && content.contains("testsuite")) {
-            ReportFormat.JUNIT_XML
-        } else {
-            throw IllegalArgumentException("Content is not a valid jUnit XML format")
+    override suspend fun detectFormat(input: InputStream): ReportFormat =
+        withContext(Dispatchers.IO) {
+            val content = String(input.readAllBytes())
+            if (content.trim().startsWith("<?xml") && content.contains("testsuite")) {
+                ReportFormat.JUNIT_XML
+            } else {
+                throw IllegalArgumentException("Content is not a valid jUnit XML format")
+            }
         }
-    }
 
     /**
      * Парсит отдельный testsuite элемент
@@ -127,7 +126,7 @@ class JUnitXmlParserStrategy : ReportParserStrategy {
             skipped = skipped,
             errors = errors,
             duration = Duration.ofMillis((time * 1000).toLong()),
-            testCases = testCases
+            testCases = testCases,
         )
     }
 
@@ -140,42 +139,45 @@ class JUnitXmlParserStrategy : ReportParserStrategy {
         val time = element.getAttribute("time").toDoubleOrNull() ?: 0.0
 
         // Определяем статус теста
-        val status = when {
-            element.getElementsByTagName("failure").length > 0 -> TestStatus.FAILED
-            element.getElementsByTagName("error").length > 0 -> TestStatus.ERROR
-            element.getElementsByTagName("skipped").length > 0 -> TestStatus.SKIPPED
-            else -> TestStatus.PASSED
-        }
+        val status =
+            when {
+                element.getElementsByTagName("failure").length > 0 -> TestStatus.FAILED
+                element.getElementsByTagName("error").length > 0 -> TestStatus.ERROR
+                element.getElementsByTagName("skipped").length > 0 -> TestStatus.SKIPPED
+                else -> TestStatus.PASSED
+            }
 
         // Извлекаем сообщение об ошибке
-        val errorMessage = when (status) {
-            TestStatus.FAILED -> {
-                val failureElement = element.getElementsByTagName("failure").item(0) as? Element
-                failureElement?.getAttribute("message") ?: failureElement?.textContent
-            }
+        val errorMessage =
+            when (status) {
+                TestStatus.FAILED -> {
+                    val failureElement = element.getElementsByTagName("failure").item(0) as? Element
+                    failureElement?.getAttribute("message") ?: failureElement?.textContent
+                }
 
-            TestStatus.ERROR -> {
-                val errorElement = element.getElementsByTagName("error").item(0) as? Element
-                errorElement?.getAttribute("message") ?: errorElement?.textContent
-            }
+                TestStatus.ERROR -> {
+                    val errorElement = element.getElementsByTagName("error").item(0) as? Element
+                    errorElement?.getAttribute("message") ?: errorElement?.textContent
+                }
 
-            else -> null
-        }
+                else -> null
+            }
 
         // Извлекаем stack trace
-        val stackTrace = when (status) {
-            TestStatus.FAILED -> {
-                val failureElement = element.getElementsByTagName("failure").item(0) as? Element
-                failureElement?.textContent
-            }
+        val stackTrace =
+            when (status) {
+                TestStatus.FAILED -> {
+                    val failureElement = element.getElementsByTagName("failure").item(0) as? Element
+                    failureElement?.textContent
+                }
 
-            TestStatus.ERROR -> {
-                val errorElement = element.getElementsByTagName("error").item(0) as? Element
-                errorElement?.textContent
-            }
+                TestStatus.ERROR -> {
+                    val errorElement = element.getElementsByTagName("error").item(0) as? Element
+                    errorElement?.textContent
+                }
 
-            else -> null
-        }
+                else -> null
+            }
 
         return GenericTestCase(
             name = name,
@@ -185,7 +187,7 @@ class JUnitXmlParserStrategy : ReportParserStrategy {
             errorMessage = errorMessage,
             stackTrace = stackTrace,
             systemOut = null,
-            systemErr = null
+            systemErr = null,
         )
     }
 }

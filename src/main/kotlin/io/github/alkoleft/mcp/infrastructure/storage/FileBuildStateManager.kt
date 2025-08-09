@@ -20,13 +20,12 @@ import kotlin.io.path.walk
  * Build state manager implementing Enhanced Hybrid Hash Detection algorithm.
  * Combines fast timestamp pre-filtering with accurate hash verification for optimal performance.
  */
-private val logger = KotlinLogging.logger {  }
+private val logger = KotlinLogging.logger { }
 
 @Component
 class FileBuildStateManager(
     private val hashStorage: MapDbHashStorage,
 ) : BuildStateManager {
-
     // Supported source file extensions for 1C:Enterprise
     private val sourceFileExtensions = setOf("bsl", "os", "cf", "epf", "xml", "mdo")
 
@@ -52,7 +51,9 @@ class FileBuildStateManager(
                 val actualChanges = verifyChangesWithHashes(candidateFiles)
 
                 val duration = java.time.Duration.between(startTime, Instant.now())
-                logger.info { "Change detection completed in ${duration.toMillis()}ms: ${actualChanges.size} actual changes from ${candidateFiles.size} candidates" }
+                logger.info {
+                    "Change detection completed in ${duration.toMillis()}ms: ${actualChanges.size} actual changes from ${candidateFiles.size} candidates"
+                }
 
                 actualChanges
             } catch (e: Exception) {
@@ -62,9 +63,7 @@ class FileBuildStateManager(
             }
         }
 
-    override suspend fun updateHashes(
-        files: Map<Path, String>,
-    ) {
+    override suspend fun updateHashes(files: Map<Path, String>) {
         logger.debug { "Updating hashes for ${files.size} files" }
 
         try {
@@ -184,30 +183,29 @@ class FileBuildStateManager(
                 val currentHash = calculateFileHash(file)
                 val storedHash = hashStorage.getHash(file)
 
-                val type = when {
-                    storedHash == null -> {
-                        logger.trace { "New file confirmed: $file" }
-                        ChangeType.NEW
-                    }
+                val type =
+                    when {
+                        storedHash == null -> {
+                            logger.trace { "New file confirmed: $file" }
+                            ChangeType.NEW
+                        }
 
-                    currentHash != storedHash -> {
-                        logger.trace { "Modified file confirmed: $file" }
-                        ChangeType.MODIFIED
-                    }
+                        currentHash != storedHash -> {
+                            logger.trace { "Modified file confirmed: $file" }
+                            ChangeType.MODIFIED
+                        }
 
-                    else -> {
-                        logger.trace { "File unchanged: $file" }
-                        ChangeType.UNCHANGED
+                        else -> {
+                            logger.trace { "File unchanged: $file" }
+                            ChangeType.UNCHANGED
+                        }
                     }
-                }
                 return@withContext Pair(type, currentHash)
             } catch (e: Exception) {
                 logger.debug(e) { "Error verifying file change: $file" }
                 Pair(ChangeType.MODIFIED, "") // Assume modified if we can't verify
             }
         }
-
-
 
     /**
      * Gets all source files in the project that should be tracked for changes
@@ -258,7 +256,7 @@ class FileBuildStateManager(
                 ".gradle/",
                 "temp/",
                 "tmp/",
-                "ConfigDumpInfo.xml"
+                "ConfigDumpInfo.xml",
             )
 
         return ignoredPatterns.any { pattern ->

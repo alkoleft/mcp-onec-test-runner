@@ -16,13 +16,15 @@ private val logger = KotlinLogging.logger { }
  * Реализация BuildAction для сборки через конфигуратор 1С
  */
 class DesignerBuildAction(
-    dsl: PlatformDsl
+    dsl: PlatformDsl,
 ) : AbstractBuildAction(dsl) {
-
     /**
      * Выполняет единый DSL для полной сборки проекта
      */
-    override suspend fun executeBuildDsl(properties: ApplicationProperties, sourceSet: SourceSet): BuildResult {
+    override suspend fun executeBuildDsl(
+        properties: ApplicationProperties,
+        sourceSet: SourceSet,
+    ): BuildResult {
         logger.debug { "Формирую единый DSL для сборки проекта" }
 
         val results = mutableMapOf<String, ConfiguratorResult>()
@@ -41,11 +43,12 @@ class DesignerBuildAction(
             // Загружаем основную конфигурацию
             sourceSet.configuration?.also { configuration ->
                 logger.info { "Загружаю основную конфигурацию" }
-                val result: ConfiguratorResult = loadConfigFromFiles {
-                    fromPath(properties.basePath.resolve(configuration.path))
-                    updateConfigDumpInfo()
-                    updateDBCfg = true
-                }
+                val result: ConfiguratorResult =
+                    loadConfigFromFiles {
+                        fromPath(properties.basePath.resolve(configuration.path))
+                        updateConfigDumpInfo()
+                        updateDBCfg = true
+                    }
                 if (result.success) {
                     logger.info { "Конфигурация загружена успешно" }
                 } else {
@@ -58,12 +61,13 @@ class DesignerBuildAction(
             val extensions = sourceSet.extensions
             logger.info { "Загружаю ${extensions.size} расширений: ${extensions.joinToString(", ")}" }
             extensions.forEach {
-                val result = loadConfigFromFiles {
-                    fromPath(properties.basePath.resolve(it.path))
-                    extension(it.name)
-                    updateConfigDumpInfo()
-                    updateDBCfg = true
-                }
+                val result =
+                    loadConfigFromFiles {
+                        fromPath(properties.basePath.resolve(it.path))
+                        extension(it.name)
+                        updateConfigDumpInfo()
+                        updateDBCfg = true
+                    }
                 results[it.name] = result
                 if (result.success) {
                     logger.info { "Расширение ${it.name} загружено успешно" }
@@ -78,26 +82,28 @@ class DesignerBuildAction(
 
             if (!updateResult.success) {
                 logger.error { "Ошибка обновления конфигурации: ${updateResult.error}" }
-                buildResult = BuildResult(
-                    success = false,
-                    sourceSet = results.toMap(),
-                    errors = listOf("Ошибка обновления конфигурации: ${updateResult.error}")
-                )
+                buildResult =
+                    BuildResult(
+                        success = false,
+                        sourceSet = results.toMap(),
+                        errors = listOf("Ошибка обновления конфигурации: ${updateResult.error}"),
+                    )
                 return@configurator
             }
 
             logger.info { "Сборка завершена успешно" }
-            buildResult = BuildResult(
-                success = true,
-                sourceSet = results.toMap()
-            )
+            buildResult =
+                BuildResult(
+                    success = true,
+                    sourceSet = results.toMap(),
+                )
         }
 
         // Если DSL не вернул результат, возвращаем ошибку
         return buildResult ?: BuildResult(
             success = false,
             errors = listOf("DSL сборки не вернул результат"),
-            sourceSet = emptyMap()
+            sourceSet = emptyMap(),
         )
     }
 
@@ -149,7 +155,7 @@ class DesignerBuildAction(
 
         return BuildResult(
             success = false,
-            errors = listOf("DSL сборки конфигурации не вернул результат")
+            errors = listOf("DSL сборки конфигурации не вернул результат"),
         )
     }
 
@@ -158,7 +164,7 @@ class DesignerBuildAction(
      */
     override suspend fun executeExtensionBuildDsl(
         extensionName: String,
-        properties: ApplicationProperties
+        properties: ApplicationProperties,
     ): BuildResult {
         logger.info { "Формирую DSL для сборки расширения: $extensionName" }
 
@@ -197,7 +203,7 @@ class DesignerBuildAction(
 
         return BuildResult(
             success = false,
-            errors = listOf("DSL сборки расширения не вернул результат")
+            errors = listOf("DSL сборки расширения не вернул результат"),
         )
     }
 
@@ -211,11 +217,15 @@ class DesignerBuildAction(
     /**
      * Получает путь к расширению
      */
-    private fun getExtensionPath(properties: ApplicationProperties, extensionName: String): Path {
-        val extension = properties.sourceSet
-            .find { it.type == SourceSetType.EXTENSION && it.path.contains(extensionName) }
+    private fun getExtensionPath(
+        properties: ApplicationProperties,
+        extensionName: String,
+    ): Path {
+        val extension =
+            properties.sourceSet
+                .find { it.type == SourceSetType.EXTENSION && it.path.contains(extensionName) }
 
         return extension?.let { properties.basePath.resolve(it.path) }
             ?: properties.basePath.resolve("Extensions").resolve("$extensionName.cf")
     }
-} 
+}

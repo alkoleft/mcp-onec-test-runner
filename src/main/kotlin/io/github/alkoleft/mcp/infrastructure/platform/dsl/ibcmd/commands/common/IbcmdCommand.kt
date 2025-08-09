@@ -31,4 +31,4 @@ interface IbcmdCommand {
      * Подкоманда в рамках режима (create, load, save, export, import и т.д.)
      */
     val subCommand: String
-} 
+}

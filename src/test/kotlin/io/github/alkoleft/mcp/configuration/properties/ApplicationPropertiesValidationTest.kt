@@ -5,32 +5,35 @@ import org.junit.jupiter.api.assertThrows
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class ApplicationPropertiesValidationTest {
-
     @Test
     fun `should validate correct configuration`() {
         val tempDir = Files.createTempDirectory("test")
         val configPath = tempDir.resolve("config")
         Files.createDirectory(configPath)
-        
-        val properties = ApplicationProperties(
-            basePath = tempDir,
-            sourceSet = SourceSet(listOf(
-                SourceSetItem(
-                    path = "config",
-                    name = "Configuration",
-                    type = SourceSetType.CONFIGURATION
-                )
-            )),
-            connection = ConnectionProperties(
-                connectionString = "File=test.db;"
-            ),
-            platformVersion = "8.3.20.1234",
-            tools = ToolsProperties(BuilderType.DESIGNER)
-        )
-        
+
+        val properties =
+            ApplicationProperties(
+                basePath = tempDir,
+                sourceSet =
+                    SourceSet(
+                        listOf(
+                            SourceSetItem(
+                                path = "config",
+                                name = "Configuration",
+                                type = SourceSetType.CONFIGURATION,
+                            ),
+                        ),
+                    ),
+                connection =
+                    ConnectionProperties(
+                        connectionString = "File=test.db;",
+                    ),
+                platformVersion = "8.3.20.1234",
+                tools = ToolsProperties(BuilderType.DESIGNER),
+            )
+
         // Если валидация прошла успешно, тест не должен выбросить исключение
         assertEquals(tempDir, properties.basePath)
         assertEquals("8.3.20.1234", properties.platformVersion)
@@ -39,18 +42,21 @@ class ApplicationPropertiesValidationTest {
     @Test
     fun `should throw exception for non-existent base path`() {
         val nonExistentPath = Path.of("/non/existent/path")
-        
+
         assertThrows<IllegalArgumentException> {
             ApplicationProperties(
                 basePath = nonExistentPath,
-                sourceSet = SourceSet(listOf(
-                    SourceSetItem(
-                        path = "config",
-                        name = "Configuration",
-                        type = SourceSetType.CONFIGURATION
-                    )
-                )),
-                connection = ConnectionProperties(connectionString = "File=test.db;")
+                sourceSet =
+                    SourceSet(
+                        listOf(
+                            SourceSetItem(
+                                path = "config",
+                                name = "Configuration",
+                                type = SourceSetType.CONFIGURATION,
+                            ),
+                        ),
+                    ),
+                connection = ConnectionProperties(connectionString = "File=test.db;"),
             )
         }
     }
@@ -58,12 +64,12 @@ class ApplicationPropertiesValidationTest {
     @Test
     fun `should throw exception for empty source set`() {
         val tempDir = Files.createTempDirectory("test")
-        
+
         assertThrows<IllegalArgumentException> {
             ApplicationProperties(
                 basePath = tempDir,
                 sourceSet = SourceSet(),
-                connection = ConnectionProperties(connectionString = "File=test.db;")
+                connection = ConnectionProperties(connectionString = "File=test.db;"),
             )
         }
     }
@@ -71,18 +77,21 @@ class ApplicationPropertiesValidationTest {
     @Test
     fun `should throw exception for missing configuration source set`() {
         val tempDir = Files.createTempDirectory("test")
-        
+
         assertThrows<IllegalArgumentException> {
             ApplicationProperties(
                 basePath = tempDir,
-                sourceSet = SourceSet(listOf(
-                    SourceSetItem(
-                        path = "extensions",
-                        name = "Extensions",
-                        type = SourceSetType.EXTENSION
-                    )
-                )),
-                connection = ConnectionProperties(connectionString = "File=test.db;")
+                sourceSet =
+                    SourceSet(
+                        listOf(
+                            SourceSetItem(
+                                path = "extensions",
+                                name = "Extensions",
+                                type = SourceSetType.EXTENSION,
+                            ),
+                        ),
+                    ),
+                connection = ConnectionProperties(connectionString = "File=test.db;"),
             )
         }
     }
@@ -92,18 +101,21 @@ class ApplicationPropertiesValidationTest {
         val tempDir = Files.createTempDirectory("test")
         val configPath = tempDir.resolve("config")
         Files.createDirectory(configPath)
-        
+
         assertThrows<IllegalArgumentException> {
             ApplicationProperties(
                 basePath = tempDir,
-                sourceSet = SourceSet(listOf(
-                    SourceSetItem(
-                        path = "config",
-                        name = "Configuration",
-                        type = SourceSetType.CONFIGURATION
-                    )
-                )),
-                connection = ConnectionProperties(connectionString = "")
+                sourceSet =
+                    SourceSet(
+                        listOf(
+                            SourceSetItem(
+                                path = "config",
+                                name = "Configuration",
+                                type = SourceSetType.CONFIGURATION,
+                            ),
+                        ),
+                    ),
+                connection = ConnectionProperties(connectionString = ""),
             )
         }
     }
@@ -113,19 +125,22 @@ class ApplicationPropertiesValidationTest {
         val tempDir = Files.createTempDirectory("test")
         val configPath = tempDir.resolve("config")
         Files.createDirectory(configPath)
-        
+
         assertThrows<IllegalArgumentException> {
             ApplicationProperties(
                 basePath = tempDir,
-                sourceSet = SourceSet(listOf(
-                    SourceSetItem(
-                        path = "config",
-                        name = "Configuration",
-                        type = SourceSetType.CONFIGURATION
-                    )
-                )),
+                sourceSet =
+                    SourceSet(
+                        listOf(
+                            SourceSetItem(
+                                path = "config",
+                                name = "Configuration",
+                                type = SourceSetType.CONFIGURATION,
+                            ),
+                        ),
+                    ),
                 connection = ConnectionProperties(connectionString = "File=test.db;"),
-                platformVersion = "invalid-version"
+                platformVersion = "invalid-version",
             )
         }
     }
@@ -136,7 +151,7 @@ class ApplicationPropertiesValidationTest {
             SourceSetItem(
                 path = "",
                 name = "Test",
-                type = SourceSetType.CONFIGURATION
+                type = SourceSetType.CONFIGURATION,
             )
         }
     }
@@ -147,7 +162,7 @@ class ApplicationPropertiesValidationTest {
             SourceSetItem(
                 path = "config",
                 name = "",
-                type = SourceSetType.CONFIGURATION
+                type = SourceSetType.CONFIGURATION,
             )
         }
     }

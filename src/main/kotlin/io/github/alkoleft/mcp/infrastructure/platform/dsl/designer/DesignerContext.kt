@@ -10,10 +10,10 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtility
  * Содержит базовые настройки и методы для построения аргументов команд
  */
 class DesignerContext(
-    platformContext: PlatformUtilityContext
+    platformContext: PlatformUtilityContext,
 ) : BasePlatformContext(platformContext) {
     /**
      * Строит базовые аргументы для команд конфигуратора
      */
     suspend fun buildBaseArgs(): List<String> = buildCommonArgs(UtilityType.DESIGNER, "DESIGNER")
-} 
+}

@@ -12,9 +12,8 @@ data class ConfigGenerationIdCommand(
      * Имя расширения
      * --extension=<extension>, -e <extension>
      */
-    var extension: String? = null
+    var extension: String? = null,
 ) : IbcmdCommand {
-
     override val mode: String = "config"
     override val subCommand: String = "generation-id"
     override val commandName: String = "config generation-id"
@@ -27,8 +26,7 @@ data class ConfigGenerationIdCommand(
             return args
         }
 
-    override fun getFullDescription(): String {
-        return "Идентификатор поколения конфигурации" +
-                (extension?.let { " (расширение: $it)" } ?: "")
-    }
+    override fun getFullDescription(): String =
+        "Идентификатор поколения конфигурации" +
+            (extension?.let { " (расширение: $it)" } ?: "")
 }

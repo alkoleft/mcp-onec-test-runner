@@ -6,10 +6,8 @@ import java.time.Duration
 import java.time.Instant
 
 /**
- * Core domain models for test execution
+ * Test execution requests
  */
-
-// Test execution requests
 sealed class TestExecutionRequest {
     val projectPath: Path
     val testsPath: Path
@@ -28,27 +26,32 @@ sealed class TestExecutionRequest {
     }
 }
 
-class RunAllTestsRequest(properties: ApplicationProperties) : TestExecutionRequest(properties) {
-}
+class RunAllTestsRequest(
+    properties: ApplicationProperties,
+) : TestExecutionRequest(properties)
 
 class RunModuleTestsRequest(
-    val moduleName: String, properties: ApplicationProperties
-) : TestExecutionRequest(properties) {
-}
+    val moduleName: String,
+    properties: ApplicationProperties,
+) : TestExecutionRequest(properties)
 
 data class RunListTestsRequest(
     val testNames: List<String>,
     val properties: ApplicationProperties,
-) : TestExecutionRequest(properties) {
-}
+) : TestExecutionRequest(properties)
 
-// Test execution results
+/**
+ * Test execution results
+ */
 data class TestExecutionResult(
     val success: Boolean,
     val report: GenericTestReport,
     val reportPath: Path,
     val duration: Duration,
-)
+) {
+    val successRate
+        get() = report.summary.successRate.toString()
+}
 
 sealed class TestExecutionError : Exception() {
     data class UtilNotFound(
@@ -68,7 +71,9 @@ sealed class TestExecutionError : Exception() {
     ) : TestExecutionError()
 }
 
-// Generic test report structure
+/**
+ * Generic test report structure
+ */
 data class GenericTestReport(
     val metadata: TestMetadata,
     val summary: TestSummary,
@@ -122,38 +127,10 @@ enum class TestStatus {
     ERROR,
 }
 
-// Build-related domain models
-sealed class BuildDecision {
-    object FULL_BUILD : BuildDecision()
-
-    data class INCREMENTAL_BUILD(
-        val changedModules: Set<String>,
-    ) : BuildDecision()
-
-    object INCREMENTAL_TESTS : BuildDecision()
-
-    object NO_BUILD_NEEDED : BuildDecision()
-}
-
 data class BuildResult(
     val success: Boolean,
     val duration: Duration,
-    val buildType: BuildType,
     val error: String? = null,
-)
-
-enum class BuildType {
-    FULL,
-    INCREMENTAL,
-    SKIP,
-}
-
-
-// File change detection
-data class FileChangeEvent(
-    val path: Path,
-    val changeType: ChangeType,
-    val timestamp: Instant,
 )
 
 enum class ChangeType {

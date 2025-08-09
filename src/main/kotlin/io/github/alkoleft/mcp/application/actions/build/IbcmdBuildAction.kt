@@ -12,15 +12,18 @@ private val logger = KotlinLogging.logger { }
  * Реализация BuildAction для сборки через ibcmd
  */
 class IbcmdBuildAction(
-    dsl: PlatformDsl
+    dsl: PlatformDsl,
 ) : AbstractBuildAction(dsl) {
-    override suspend fun executeBuildDsl(properties: ApplicationProperties, sourceSet: SourceSet): BuildResult {
+    override suspend fun executeBuildDsl(
+        properties: ApplicationProperties,
+        sourceSet: SourceSet,
+    ): BuildResult {
         logger.info { "Executing ibcmd build DSL" }
         // TODO: Implement actual ibcmd build logic
         return BuildResult(
             success = false,
             errors = listOf("DSL сборки не вернул результат"),
-            sourceSet = emptyMap()
+            sourceSet = emptyMap(),
         )
     }
 
@@ -30,20 +33,20 @@ class IbcmdBuildAction(
         return BuildResult(
             success = false,
             errors = listOf("DSL сборки не вернул результат"),
-            sourceSet = emptyMap()
+            sourceSet = emptyMap(),
         )
     }
 
     override suspend fun executeExtensionBuildDsl(
         extensionName: String,
-        properties: ApplicationProperties
+        properties: ApplicationProperties,
     ): BuildResult {
         logger.info { "Executing ibcmd extension build DSL for: $extensionName" }
         // TODO: Implement actual ibcmd extension build logic
         return BuildResult(
             success = false,
             errors = listOf("DSL сборки не вернул результат"),
-            sourceSet = emptyMap()
+            sourceSet = emptyMap(),
         )
     }
-} 
+}

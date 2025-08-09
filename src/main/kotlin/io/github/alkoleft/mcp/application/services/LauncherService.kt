@@ -15,9 +15,14 @@ private val logger = KotlinLogging.logger { }
 @Service
 class LauncherService(
     private val actionFactory: ActionFactory,
-    private val properties: ApplicationProperties
+    private val properties: ApplicationProperties,
 ) {
     suspend fun run(request: TestExecutionRequest): TestExecutionResult {
+        build()
+        return actionFactory.createRunTestAction().run(request)
+    }
+
+    suspend fun build() {
         val changeAnalyzer = actionFactory.createChangeAnalysisAction()
         val changes = changeAnalyzer.analyzeBySourceSet(properties)
         if (changes.hasChanges) {
@@ -25,14 +30,17 @@ class LauncherService(
         } else {
             logger.info { "Исходные файлы не изменены. Обновление базы пропущено" }
         }
-        return actionFactory.createRunTestAction().run(request)
     }
 
-    private suspend fun updateIB(changes: FileSystemChangeAnalysisResult, changeAnalyzer: ChangeAnalysisAction) {
+    private suspend fun updateIB(
+        changes: FileSystemChangeAnalysisResult,
+        changeAnalyzer: ChangeAnalysisAction,
+    ) {
         val builder = actionFactory.createBuildAction(properties.tools.builder)
-        val changedSourceSets = properties.sourceSet.subSourceSet { sourceSetItem ->
-            changes.sourceSetChanges.contains(sourceSetItem.name)
-        }
+        val changedSourceSets =
+            properties.sourceSet.subSourceSet { sourceSetItem ->
+                changes.sourceSetChanges.contains(sourceSetItem.name)
+            }
 
         logger.info { "Обнаружены изменения: ${changedSourceSets.joinToString { it.name }}" }
         var success = true

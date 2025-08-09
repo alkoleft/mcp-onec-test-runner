@@ -12,9 +12,8 @@ data class LockListCommand(
      * Идентификатор сеанса (опционально, для фильтрации по сеансу)
      * --session=<uuid>
      */
-    val session: String? = null
+    val session: String? = null,
 ) : IbcmdCommand {
-
     override val mode: String = "lock"
     override val subCommand: String = "list"
     override val commandName: String = "lock list"
@@ -28,8 +27,7 @@ data class LockListCommand(
             return args
         }
 
-    override fun getFullDescription(): String {
-        return "Получение списка блокировок" +
-                (session?.let { " (сеанс: $it)" } ?: "")
-    }
-} 
+    override fun getFullDescription(): String =
+        "Получение списка блокировок" +
+            (session?.let { " (сеанс: $it)" } ?: "")
+}

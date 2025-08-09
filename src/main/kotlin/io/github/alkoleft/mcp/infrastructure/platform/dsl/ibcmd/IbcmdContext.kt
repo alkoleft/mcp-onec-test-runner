@@ -6,7 +6,7 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtility
  * Контекст для выполнения команд ibcmd
  */
 class IbcmdContext(
-    private val platformContext: PlatformUtilityContext
+    private val platformContext: PlatformUtilityContext,
 ) {
     private var dbPath: String? = null
     private var user: String? = null
@@ -53,4 +53,4 @@ class IbcmdContext(
 
         return args
     }
-} 
+}

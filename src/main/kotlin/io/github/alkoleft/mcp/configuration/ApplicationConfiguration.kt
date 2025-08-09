@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @EnableConfigurationProperties(ApplicationProperties::class)
 class ApplicationConfiguration {
-
     /**
      * Создает ErrorHandler для централизованной обработки ошибок
      */

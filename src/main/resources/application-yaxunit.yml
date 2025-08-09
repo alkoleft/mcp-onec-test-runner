@@ -35,6 +35,6 @@ app:
   platform-version: "8.3.22.1709"
   
   # Настройки инструментов
-  tools-properties:
+  tools:
     # Тип сборщика: DESIGNER или IBMCMD
     builder: DESIGNER

@@ -25,15 +25,15 @@ class SearchStrategyTest {
         // Check that paths contain expected Windows paths
         assertTrue(
             tier1Paths.any { it.toString().contains("C:\\Program Files\\1cv8") },
-            "Tier 1 should contain Program Files path"
+            "Tier 1 should contain Program Files path",
         )
         assertTrue(
             tier1Paths.any { it.toString().contains("C:\\Program Files (x86)\\1cv8") },
-            "Tier 1 should contain Program Files (x86) path"
+            "Tier 1 should contain Program Files (x86) path",
         )
         assertTrue(
             tier1Paths.any { it.toString().contains("1cv8c") },
-            "Tier 1 should contain 1cv8c executable"
+            "Tier 1 should contain 1cv8c executable",
         )
     }
 
@@ -52,19 +52,19 @@ class SearchStrategyTest {
         assertNotNull(tier2Paths, "Tier 2 paths should not be null")
         assertTrue(tier1Paths.isEmpty(), "Tier 1 paths should be empty")
         assertTrue(tier2Paths.isNotEmpty(), "Tier 2 paths should not be empty")
-        
+
         // Check that paths contain expected Linux paths
         assertTrue(
             tier2Paths.any { it.toString().contains("/opt/1cv8") },
-            "Tier 1 should contain /opt/1cv8 path"
+            "Tier 1 should contain /opt/1cv8 path",
         )
         assertTrue(
             tier2Paths.any { it.toString().contains("/usr/local/1cv8") },
-            "Tier 1 should contain /usr/local/1cv8 path"
+            "Tier 1 should contain /usr/local/1cv8 path",
         )
         assertTrue(
             tier2Paths.any { it.toString().contains("1cv8") && !it.toString().contains(".exe") },
-            "Tier 1 should contain 1cv8c executable without .exe extension"
+            "Tier 1 should contain 1cv8c executable without .exe extension",
         )
     }
 
@@ -82,15 +82,15 @@ class SearchStrategyTest {
         assertTrue(paths.isNotEmpty(), "Paths should not be empty")
         assertTrue(
             paths.any { it.toString().contains(version) },
-            "Paths should contain the specified version"
+            "Paths should contain the specified version",
         )
         assertTrue(
             paths.any { it.toString().contains("8.3.24") },
-            "Paths should contain exact version string"
+            "Paths should contain exact version string",
         )
         assertTrue(
             paths.any { it.toString().contains("8.3") },
-            "Paths should contain major.minor version"
+            "Paths should contain major.minor version",
         )
     }
 
@@ -110,11 +110,11 @@ class SearchStrategyTest {
         assertTrue(ibcmdPaths.isNotEmpty(), "IBCMD paths should not be empty")
         assertTrue(
             compilerPaths.any { it.toString().contains("1cv8") },
-            "Compiler paths should contain 1cv8c executable"
+            "Compiler paths should contain 1cv8c executable",
         )
         assertTrue(
             ibcmdPaths.any { it.toString().contains("ibcmd") },
-            "IBCMD paths should contain ibcmd executable"
+            "IBCMD paths should contain ibcmd executable",
         )
     }
 
@@ -149,11 +149,11 @@ class SearchStrategyTest {
         assertEquals(1, paths.size, "Version location should generate at least 3 paths")
         assertTrue(
             paths.any { it.toString().contains("/opt/1cv8/8.3.24") },
-            "Should contain specific version path"
+            "Should contain specific version path",
         )
         assertTrue(
             paths.any { it.toString().contains("/opt/1cv8/8.3.24/1cv8") },
-            "Should contain specific version executable path"
+            "Should contain specific version executable path",
         )
     }
 }

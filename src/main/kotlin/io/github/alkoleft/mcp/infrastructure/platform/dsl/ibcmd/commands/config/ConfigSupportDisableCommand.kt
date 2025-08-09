@@ -12,9 +12,8 @@ data class ConfigSupportDisableCommand(
      * Снятие с поддержки принудительно
      * --force, -F
      */
-    var force: Boolean = false
+    var force: Boolean = false,
 ) : IbcmdCommand {
-
     override val mode: String = "config"
     override val subCommand: String = "support disable"
     override val commandName: String = "config support disable"
@@ -28,7 +27,5 @@ data class ConfigSupportDisableCommand(
             return args
         }
 
-    override fun getFullDescription(): String {
-        return "Снятие конфигурации с поддержки" + if (force) " (принудительно)" else ""
-    }
+    override fun getFullDescription(): String = "Снятие конфигурации с поддержки" + if (force) " (принудительно)" else ""
 }

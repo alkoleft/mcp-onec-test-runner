@@ -13,19 +13,16 @@ data class ConfigLoadCommand(
      * --extension=<extension>, -e <extension>
      */
     var extension: String? = null,
-
     /**
      * Подтверждение при наличии предупреждений
      * --force, -F
      */
     var force: Boolean = false,
-
     /**
      * Путь к файлу конфигурации
      */
-    val path: String
+    val path: String,
 ) : IbcmdCommand {
-
     override val mode: String = "config"
     override val subCommand: String = "load"
     override val commandName: String = "config load"
@@ -47,7 +44,6 @@ data class ConfigLoadCommand(
         if (force) details.add("принудительно")
 
         return "Загрузка конфигурации из файла: $path" +
-                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }
-

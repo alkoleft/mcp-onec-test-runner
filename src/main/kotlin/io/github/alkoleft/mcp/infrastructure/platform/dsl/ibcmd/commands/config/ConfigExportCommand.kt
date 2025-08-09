@@ -13,61 +13,51 @@ data class ConfigExportCommand(
      * Подкоманда экспорта (info, status, objects, all-extensions)
      */
     var exportSubCommand: String? = null,
-
     /**
      * Файл информации о конфигурации
      * --base=<file>, -b <file>
      */
     var base: String? = null,
-
     /**
      * Файл конфигурации
      * --file=<file>, -f <file>
      */
     var file: String? = null,
-
     /**
      * Имя расширения
      * --extension=<extension>, -e <extension>
      */
     var extension: String? = null,
-
     /**
      * Синхронизация с конфигурацией
      * --sync
      */
     var sync: Boolean = false,
-
     /**
      * Полная выгрузка
      * --force
      */
     var force: Boolean = false,
-
     /**
      * Количество потоков
      * --threads=<n>, -T <n>
      */
     var threads: Int? = null,
-
     /**
      * Упаковать в архив
      * --archive, -A
      */
     var archive: Boolean = false,
-
     /**
      * Игнорировать неразрешимые ссылки
      * --ignore-unresolved-refs
      */
     var ignoreUnresolvedRefs: Boolean = false,
-
     /**
      * Путь к каталогу экспорта
      */
-    val path: String
+    val path: String,
 ) : IbcmdCommand {
-
     override val mode: String = "config"
     override val subCommand: String = "export" + (exportSubCommand?.let { " $it" } ?: "")
     override val commandName: String = "config export" + (exportSubCommand?.let { " $it" } ?: "")
@@ -102,7 +92,6 @@ data class ConfigExportCommand(
         if (ignoreUnresolvedRefs) details.add("игнорировать ссылки")
 
         return "Экспорт конфигурации в XML: $path" +
-                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }
-

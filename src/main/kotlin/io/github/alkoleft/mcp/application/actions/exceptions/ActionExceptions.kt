@@ -6,7 +6,7 @@ package io.github.alkoleft.mcp.application.actions.exceptions
 sealed class ActionError(
     message: String,
     cause: Throwable? = null,
-    val context: Map<String, Any> = emptyMap()
+    val context: Map<String, Any> = emptyMap(),
 ) : Exception(message, cause)
 
 /**
@@ -15,7 +15,7 @@ sealed class ActionError(
 class BuildError(
     message: String,
     cause: Throwable? = null,
-    context: Map<String, Any> = emptyMap()
+    context: Map<String, Any> = emptyMap(),
 ) : ActionError(message, cause, context)
 
 /**
@@ -24,7 +24,7 @@ class BuildError(
 class ConfigurationError(
     message: String,
     cause: Throwable? = null,
-    context: Map<String, Any> = emptyMap()
+    context: Map<String, Any> = emptyMap(),
 ) : ActionError(message, cause, context)
 
 /**
@@ -33,7 +33,7 @@ class ConfigurationError(
 class ValidationError(
     message: String,
     cause: Throwable? = null,
-    context: Map<String, Any> = emptyMap()
+    context: Map<String, Any> = emptyMap(),
 ) : ActionError(message, cause, context)
 
 /**
@@ -42,7 +42,7 @@ class ValidationError(
 class AnalysisError(
     message: String,
     cause: Throwable? = null,
-    context: Map<String, Any> = emptyMap()
+    context: Map<String, Any> = emptyMap(),
 ) : ActionError(message, cause, context)
 
 /**
@@ -51,13 +51,16 @@ class AnalysisError(
 class TestExecutionError(
     message: String,
     cause: Throwable? = null,
-    context: Map<String, Any> = emptyMap()
+    context: Map<String, Any> = emptyMap(),
 ) : ActionError(message, cause, context)
 
 // Обратная совместимость с существующими исключениями
-sealed class ActionException(message: String, cause: Throwable? = null) : Exception(message, cause)
+sealed class ActionException(
+    message: String,
+    cause: Throwable? = null,
+) : Exception(message, cause)
 
 // Алиасы для обратной совместимости
 typealias BuildException = BuildError
 typealias AnalyzeException = AnalysisError
-typealias TestExecuteException = TestExecutionError 
+typealias TestExecuteException = TestExecutionError

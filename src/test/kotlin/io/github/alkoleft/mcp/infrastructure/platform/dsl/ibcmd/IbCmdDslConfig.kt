@@ -46,7 +46,6 @@ import kotlin.test.assertTrue
  * - Использование ConfigCommandBuilder
  */
 class IbCmdDslConfig {
-
     lateinit var builder: ConfigCommandBuilder
 
     @BeforeEach
@@ -54,13 +53,14 @@ class IbCmdDslConfig {
         builder = ConfigCommandBuilder()
     }
 
-
     @Test
     fun testConfigLoadCommand() {
-        val command = builder.load("/path/to/config.cf") {
-            extension = "MyExtension"
-            force = true
-        }.let { builder.result[0] } as ConfigLoadCommand
+        val command =
+            builder
+                .load("/path/to/config.cf") {
+                    extension = "MyExtension"
+                    force = true
+                }.let { builder.result[0] } as ConfigLoadCommand
 
         assertEquals("config load", command.commandName)
         assertEquals("/path/to/config.cf", command.path)
@@ -70,10 +70,12 @@ class IbCmdDslConfig {
 
     @Test
     fun testConfigSaveCommand() {
-        val command = builder.save("/path/to/export.cf") {
-            extension = "MyExtension"
-            db = true
-        }.let { builder.result[0] } as ConfigSaveCommand
+        val command =
+            builder
+                .save("/path/to/export.cf") {
+                    extension = "MyExtension"
+                    db = true
+                }.let { builder.result[0] } as ConfigSaveCommand
 
         assertEquals("config save", command.commandName)
         assertEquals("/path/to/export.cf", command.path)
@@ -83,10 +85,12 @@ class IbCmdDslConfig {
 
     @Test
     fun testConfigCheckCommand() {
-        val command = builder.check {
-            extension = "MyExtension"
-            force = true
-        }.let { builder.result[0] } as ConfigCheckCommand
+        val command =
+            builder
+                .check {
+                    extension = "MyExtension"
+                    force = true
+                }.let { builder.result[0] } as ConfigCheckCommand
 
         assertEquals("config check", command.commandName)
         assertEquals("MyExtension", command.extension)
@@ -95,10 +99,12 @@ class IbCmdDslConfig {
 
     @Test
     fun testConfigApplyCommand() {
-        val command = builder.apply {
-            extension = "MyExtension"
-            force = true
-        }.let { builder.result[0] } as ConfigApplyCommand
+        val command =
+            builder
+                .apply {
+                    extension = "MyExtension"
+                    force = true
+                }.let { builder.result[0] } as ConfigApplyCommand
 
         assertEquals("config apply", command.commandName)
         assertEquals("MyExtension", command.extension)
@@ -107,9 +113,11 @@ class IbCmdDslConfig {
 
     @Test
     fun testConfigResetCommand() {
-        val command = builder.reset {
-            extension = "MyExtension"
-        }.let { builder.result[0] } as ConfigResetCommand
+        val command =
+            builder
+                .reset {
+                    extension = "MyExtension"
+                }.let { builder.result[0] } as ConfigResetCommand
 
         assertEquals("config reset", command.commandName)
         assertEquals("MyExtension", command.extension)
@@ -117,10 +125,12 @@ class IbCmdDslConfig {
 
     @Test
     fun testConfigExportCommand() {
-        val command = builder.export("/path/to/export.xml") {
-            extension = "MyExtension"
-            force = true
-        }.let { builder.result[0] } as ConfigExportCommand
+        val command =
+            builder
+                .export("/path/to/export.xml") {
+                    extension = "MyExtension"
+                    force = true
+                }.let { builder.result[0] } as ConfigExportCommand
 
         assertEquals("config export", command.commandName)
         assertEquals("/path/to/export.xml", command.path)
@@ -130,9 +140,11 @@ class IbCmdDslConfig {
 
     @Test
     fun testConfigImportCommand() {
-        val command = builder.import("/path/to/import.xml") {
-            extension = "MyExtension"
-        }.let { builder.result[0] } as ConfigImportCommand
+        val command =
+            builder
+                .import("/path/to/import.xml") {
+                    extension = "MyExtension"
+                }.let { builder.result[0] } as ConfigImportCommand
 
         assertEquals("config import", command.commandName)
         assertEquals("/path/to/import.xml", command.path)
@@ -141,13 +153,15 @@ class IbCmdDslConfig {
 
     @Test
     fun testConfigSignCommand() {
-        val command = builder.sign {
-            key = "/path/to/private.key"
-            extension = "MyExtension"
-            db = true
-            out = "/path/to/signed.cf"
-            path = "/path/to/config.cf"
-        }.let { builder.result[0] } as ConfigSignCommand
+        val command =
+            builder
+                .sign {
+                    key = "/path/to/private.key"
+                    extension = "MyExtension"
+                    db = true
+                    out = "/path/to/signed.cf"
+                    path = "/path/to/config.cf"
+                }.let { builder.result[0] } as ConfigSignCommand
 
         assertEquals("config sign", command.commandName)
         assertEquals("/path/to/private.key", command.key)
@@ -159,8 +173,10 @@ class IbCmdDslConfig {
 
     @Test
     fun testConfigDataSeparationListCommand() {
-        val command = builder.dataSeparationList()
-            .let { builder.result[0] } as ConfigDataSeparationListCommand
+        val command =
+            builder
+                .dataSeparationList()
+                .let { builder.result[0] } as ConfigDataSeparationListCommand
 
         assertEquals("config data-separation list", command.commandName)
         assertEquals("Список разделителей информационной базы", command.getFullDescription())
@@ -168,11 +184,13 @@ class IbCmdDslConfig {
 
     @Test
     fun testConfigRepairCommand() {
-        val command = builder.repair {
-            commit = true
-            rollback = false
-            fixMetadata = true
-        }.let { builder.result[0] } as ConfigRepairCommand
+        val command =
+            builder
+                .repair {
+                    commit = true
+                    rollback = false
+                    fixMetadata = true
+                }.let { builder.result[0] } as ConfigRepairCommand
 
         assertEquals("config repair", command.commandName)
         assertTrue(command.commit)
@@ -182,9 +200,11 @@ class IbCmdDslConfig {
 
     @Test
     fun testConfigSupportDisableCommand() {
-        val command = builder.supportDisable {
-            force = true
-        }.let { builder.result[0] } as ConfigSupportDisableCommand
+        val command =
+            builder
+                .supportDisable {
+                    force = true
+                }.let { builder.result[0] } as ConfigSupportDisableCommand
 
         assertEquals("config support disable", command.commandName)
         assertTrue(command.force)
@@ -192,9 +212,11 @@ class IbCmdDslConfig {
 
     @Test
     fun testConfigGenerationIdCommand() {
-        val command = builder.generationId {
-            extension = "MyExtension"
-        }.let { builder.result[0] } as ConfigGenerationIdCommand
+        val command =
+            builder
+                .generationId {
+                    extension = "MyExtension"
+                }.let { builder.result[0] } as ConfigGenerationIdCommand
 
         assertEquals("config generation-id", command.commandName)
         assertEquals("MyExtension", command.extension)
@@ -202,12 +224,14 @@ class IbCmdDslConfig {
 
     @Test
     fun testConfigExtensionCommand() {
-        val command = builder.extension("MyExtension", "create") {
-            namePrefix = "ME"
-            purpose = "add-on"
-            active = true
-            safeMode = false
-        }.let { builder.result[0] } as ConfigExtensionCommand
+        val command =
+            builder
+                .extension("MyExtension", "create") {
+                    namePrefix = "ME"
+                    purpose = "add-on"
+                    active = true
+                    safeMode = false
+                }.let { builder.result[0] } as ConfigExtensionCommand
 
         assertEquals("config extension create", command.commandName)
         assertEquals("MyExtension", command.name)
@@ -219,32 +243,37 @@ class IbCmdDslConfig {
 
     @Test
     fun testConfigExtensionSubCommands() {
-        val createCommand = ConfigExtensionCommand(
-            extensionSubCommand = "create",
-            name = "TestExtension",
-            namePrefix = "TE",
-            purpose = "add-on"
-        )
+        val createCommand =
+            ConfigExtensionCommand(
+                extensionSubCommand = "create",
+                name = "TestExtension",
+                namePrefix = "TE",
+                purpose = "add-on",
+            )
 
-        val infoCommand = ConfigExtensionCommand(
-            extensionSubCommand = "info",
-            name = "TestExtension"
-        )
+        val infoCommand =
+            ConfigExtensionCommand(
+                extensionSubCommand = "info",
+                name = "TestExtension",
+            )
 
-        val listCommand = ConfigExtensionCommand(
-            extensionSubCommand = "list"
-        )
+        val listCommand =
+            ConfigExtensionCommand(
+                extensionSubCommand = "list",
+            )
 
-        val updateCommand = ConfigExtensionCommand(
-            extensionSubCommand = "update",
-            name = "TestExtension",
-            active = true
-        )
+        val updateCommand =
+            ConfigExtensionCommand(
+                extensionSubCommand = "update",
+                name = "TestExtension",
+                active = true,
+            )
 
-        val deleteCommand = ConfigExtensionCommand(
-            extensionSubCommand = "delete",
-            name = "TestExtension"
-        )
+        val deleteCommand =
+            ConfigExtensionCommand(
+                extensionSubCommand = "delete",
+                name = "TestExtension",
+            )
 
         assertEquals("config extension create", createCommand.commandName)
         assertEquals("config extension info", infoCommand.commandName)
@@ -255,11 +284,12 @@ class IbCmdDslConfig {
 
     @Test
     fun testConfigCommandsArgumentsGeneration() {
-        val loadCommand = ConfigLoadCommand(
-            path = "/path/to/config.cf",
-            extension = "MyExtension",
-            force = true
-        )
+        val loadCommand =
+            ConfigLoadCommand(
+                path = "/path/to/config.cf",
+                extension = "MyExtension",
+                force = true,
+            )
 
         val arguments = loadCommand.arguments
 
@@ -271,13 +301,14 @@ class IbCmdDslConfig {
 
     @Test
     fun testConfigSignCommandArguments() {
-        val signCommand = ConfigSignCommand(
-            key = "/path/to/key.pem",
-            extension = "MyExtension",
-            db = true,
-            out = "/path/to/signed.cf",
-            path = "/path/to/config.cf"
-        )
+        val signCommand =
+            ConfigSignCommand(
+                key = "/path/to/key.pem",
+                extension = "MyExtension",
+                db = true,
+                out = "/path/to/signed.cf",
+                path = "/path/to/config.cf",
+            )
 
         val arguments = signCommand.arguments
         assertTrue(arguments.contains("--key"))
@@ -292,10 +323,11 @@ class IbCmdDslConfig {
 
     @Test
     fun testConfigCommandsFullDescription() {
-        val loadCommand = ConfigLoadCommand(
-            path = "/path/to/config.cf",
-            extension = "MyExtension"
-        )
+        val loadCommand =
+            ConfigLoadCommand(
+                path = "/path/to/config.cf",
+                extension = "MyExtension",
+            )
 
         val description = loadCommand.getFullDescription()
 
@@ -306,18 +338,19 @@ class IbCmdDslConfig {
 
     @Test
     fun testConfigExtensionCommandWithAllParameters() {
-        val command = ConfigExtensionCommand(
-            extensionSubCommand = "create",
-            name = "TestExtension",
-            namePrefix = "TE",
-            synonym = "Test Ext",
-            purpose = "add-on",
-            active = true,
-            safeMode = false,
-            securityProfileName = true,
-            unsafeActionProtection = true,
-            usedInDistributedInfobase = false
-        )
+        val command =
+            ConfigExtensionCommand(
+                extensionSubCommand = "create",
+                name = "TestExtension",
+                namePrefix = "TE",
+                synonym = "Test Ext",
+                purpose = "add-on",
+                active = true,
+                safeMode = false,
+                securityProfileName = true,
+                unsafeActionProtection = true,
+                usedInDistributedInfobase = false,
+            )
 
         assertEquals("TestExtension", command.name)
         assertEquals("TE", command.namePrefix)

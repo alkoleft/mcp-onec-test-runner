@@ -13,7 +13,7 @@ import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
-import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
+import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
 import io.github.alkoleft.mcp.infrastructure.yaxunit.EnhancedReportParser
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -23,32 +23,33 @@ import org.springframework.test.context.ActiveProfiles
 import kotlin.io.path.Path
 import kotlin.test.Ignore
 
-const val sourcesPath = "/home/akoryakin@dellin.local/Загрузки/sources"
-const val ibPath = "/home/common/develop/file-data-base/YAxUnit"
-const val version = "8.3.22.1709"
+const val SOURCE_PATH = "~/Загрузки/sources"
+const val IB_PATH = "/home/common/develop/file-data-base/YAxUnit"
+const val VERSION = "8.3.22.1709"
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.NONE,
 )
 @ActiveProfiles("test")
+@Ignore
 class RealTests(
     @Autowired private val platformDsl: PlatformDsl,
-    @Autowired private val utilLocator: CrossPlatformUtilLocator,
-    @Autowired private val reportParser: EnhancedReportParser
+    @Autowired private val utilLocator: UtilityLocator,
+    @Autowired private val reportParser: EnhancedReportParser,
 ) {
     @Ignore
     @Test
     fun designerRealExecute() {
-        platformDsl.configurator(version) {
-            connectToFile(ibPath)
+        platformDsl.configurator(VERSION) {
+            connectToFile(IB_PATH)
             disableStartupDialogs()
             disableStartupMessages()
             loadConfigFromFiles {
-                fromPath(Path("$sourcesPath/configuration"))
+                fromPath(Path("$SOURCE_PATH/configuration"))
             }
             listOf("yaxunit", "tests").forEach {
                 loadConfigFromFiles {
-                    fromPath(Path("$sourcesPath/$it"))
+                    fromPath(Path("$SOURCE_PATH/$it"))
                     extension = it
                 }
             }
@@ -58,19 +59,19 @@ class RealTests(
     @Ignore
     @Test
     fun ibcmdRealExecute() {
-        val plan = platformDsl.ibcmd(version) {
-            dbPath(ibPath)
+        val plan =
+            platformDsl.ibcmd(VERSION) {
+                dbPath(IB_PATH)
 
-            config {
-                import("$sourcesPath/configuration")
-                listOf("yaxunit", "tests").forEach {
-                    import("$sourcesPath/$it") {
-                        extension = it
+                config {
+                    import("$SOURCE_PATH/configuration")
+                    listOf("yaxunit", "tests").forEach {
+                        import("$SOURCE_PATH/$it") {
+                            extension = it
+                        }
                     }
                 }
-
             }
-        }
         plan.printPlan()
         runBlocking { plan.execute() }
     }
@@ -195,68 +196,70 @@ class RealTests(
     /**
      * Создает тестовые свойства приложения для тестирования
      */
-    private fun createTestApplicationProperties(): ApplicationProperties {
-        return ApplicationProperties(
-            basePath = Path(sourcesPath),
-            sourceSet = SourceSet(
-                listOf(
-                SourceSetItem(
-                    path = "configuration",
-                    name = "configuration",
-                    type = SourceSetType.CONFIGURATION,
-                    purpose = setOf(SourceSetPurpose.MAIN)
+    private fun createTestApplicationProperties(): ApplicationProperties =
+        ApplicationProperties(
+            basePath = Path(SOURCE_PATH),
+            sourceSet =
+                SourceSet(
+                    listOf(
+                        SourceSetItem(
+                            path = "configuration",
+                            name = "configuration",
+                            type = SourceSetType.CONFIGURATION,
+                            purpose = setOf(SourceSetPurpose.MAIN),
+                        ),
+                        SourceSetItem(
+                            path = "yaxunit",
+                            name = "yaxunit",
+                            type = SourceSetType.EXTENSION,
+                            purpose = setOf(SourceSetPurpose.YAXUNIT),
+                        ),
+                        SourceSetItem(
+                            path = "tests",
+                            name = "tests",
+                            type = SourceSetType.EXTENSION,
+                            purpose = setOf(SourceSetPurpose.TESTS),
+                        ),
+                    ),
                 ),
-                SourceSetItem(
-                    path = "yaxunit",
-                    name = "yaxunit",
-                    type = SourceSetType.EXTENSION,
-                    purpose = setOf(SourceSetPurpose.YAXUNIT)
+            connection =
+                ConnectionProperties(
+                    connectionString = "File=\"$IB_PATH\";",
                 ),
-                SourceSetItem(
-                    path = "tests",
-                    name = "tests",
-                    type = SourceSetType.EXTENSION,
-                    purpose = setOf(SourceSetPurpose.TESTS)
-                )
-                )
-            ),
-            connection = ConnectionProperties(
-                connectionString = "File=\"$ibPath\";"
-            ),
-            platformVersion = version,
-            tools = ToolsProperties()
+            platformVersion = VERSION,
+            tools = ToolsProperties(),
         )
-    }
 
     /**
      * Создает кастомные свойства приложения для тестирования
      */
-    private fun createCustomApplicationProperties(): ApplicationProperties {
-        return ApplicationProperties(
+    private fun createCustomApplicationProperties(): ApplicationProperties =
+        ApplicationProperties(
             basePath = Path("/custom/path/to/project"),
-            sourceSet = SourceSet(
-                listOf(
-                SourceSetItem(
-                    path = "src/configuration",
-                    name = "main-config",
-                    type = SourceSetType.CONFIGURATION,
-                    purpose = setOf(SourceSetPurpose.MAIN)
+            sourceSet =
+                SourceSet(
+                    listOf(
+                        SourceSetItem(
+                            path = "src/configuration",
+                            name = "main-config",
+                            type = SourceSetType.CONFIGURATION,
+                            purpose = setOf(SourceSetPurpose.MAIN),
+                        ),
+                        SourceSetItem(
+                            path = "src/extensions/custom-extension",
+                            name = "custom-extension",
+                            type = SourceSetType.EXTENSION,
+                            purpose = setOf(SourceSetPurpose.YAXUNIT),
+                        ),
+                    ),
                 ),
-                SourceSetItem(
-                    path = "src/extensions/custom-extension",
-                    name = "custom-extension",
-                    type = SourceSetType.EXTENSION,
-                    purpose = setOf(SourceSetPurpose.YAXUNIT)
-                )
-                )
-            ),
-            connection = ConnectionProperties(
-                connectionString = "File=\"/custom/path/to/database\"",
-                user = "Admin",
-                password = ""
-            ),
-            platformVersion = version,
-            tools = ToolsProperties()
+            connection =
+                ConnectionProperties(
+                    connectionString = "File=\"/custom/path/to/database\"",
+                    user = "Admin",
+                    password = "",
+                ),
+            platformVersion = VERSION,
+            tools = ToolsProperties(),
         )
-    }
 }

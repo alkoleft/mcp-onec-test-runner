@@ -12,7 +12,7 @@ private val logger = KotlinLogging.logger { }
 /**
  * Multi-level caching system with TTL and validation for utility locations
  */
-class UtilPathCache {
+class UtilityCache {
     private val memoryCache = ConcurrentHashMap<CacheKey, CachedEntry>()
 
     data class CacheKey(
@@ -50,11 +50,16 @@ class UtilPathCache {
         location: UtilityLocation,
     ) {
         val key = CacheKey(utility, version)
-        val entry = CachedEntry(
-            location = location,
-            timestamp = Instant.now(),
-            validationHash = location.executablePath.toString().hashCode().toString(),
-        )
+        val entry =
+            CachedEntry(
+                location = location,
+                timestamp = Instant.now(),
+                validationHash =
+                    location.executablePath
+                        .toString()
+                        .hashCode()
+                        .toString(),
+            )
         memoryCache[key] = entry
         logger.debug { "Stored in cache: $utility, version: $version at ${location.executablePath}" }
     }
@@ -74,4 +79,4 @@ class UtilPathCache {
     }
 
     fun getCacheSize(): Int = memoryCache.size
-} 
+}

@@ -9,6 +9,5 @@ class SourceSet : ArrayList<SourceSetItem> {
     val extensions
         get() = filter { it.type == SourceSetType.EXTENSION }
 
-    fun subSourceSet(predicate: (SourceSetItem) -> Boolean) =
-        SourceSet(filter(predicate))
+    fun subSourceSet(predicate: (SourceSetItem) -> Boolean) = SourceSet(filter(predicate))
 }

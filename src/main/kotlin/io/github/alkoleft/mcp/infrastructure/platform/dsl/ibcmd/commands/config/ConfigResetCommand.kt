@@ -12,9 +12,8 @@ data class ConfigResetCommand(
      * Имя расширения
      * --extension=<extension>, -e <extension>
      */
-    var extension: String? = null
+    var extension: String? = null,
 ) : IbcmdCommand {
-
     override val mode: String = "config"
     override val subCommand: String = "reset"
     override val commandName: String = "config reset"
@@ -28,8 +27,7 @@ data class ConfigResetCommand(
             return args
         }
 
-    override fun getFullDescription(): String {
-        return "Возврат к конфигурации базы данных" +
-                (extension?.let { " (расширение: $it)" } ?: "")
-    }
+    override fun getFullDescription(): String =
+        "Возврат к конфигурации базы данных" +
+            (extension?.let { " (расширение: $it)" } ?: "")
 }

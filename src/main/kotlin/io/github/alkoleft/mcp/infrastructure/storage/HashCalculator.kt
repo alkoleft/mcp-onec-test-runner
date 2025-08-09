@@ -37,4 +37,3 @@ fun calculateStringHash(value: String): String {
     val bytes = digest.digest(value.toByteArray(Charsets.UTF_8))
     return bytes.fold("") { str, it -> str + "%02x".format(it) }
 }
-

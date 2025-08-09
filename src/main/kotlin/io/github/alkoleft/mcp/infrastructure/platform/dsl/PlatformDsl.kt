@@ -5,7 +5,7 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.DesignerDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.enterprise.EnterpriseDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdPlan
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdPlanDsl
-import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
+import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
 import org.springframework.stereotype.Component
 
 /**
@@ -16,12 +16,15 @@ import org.springframework.stereotype.Component
  */
 @Component
 class PlatformDsl(
-    private val utilLocator: CrossPlatformUtilLocator
+    private val utilLocator: UtilityLocator,
 ) {
     /**
      * DSL для работы с конфигуратором 1С
      */
-    fun configurator(version: String? = null, block: DesignerDsl.() -> Unit): DesignerDsl {
+    fun configurator(
+        version: String? = null,
+        block: DesignerDsl.() -> Unit,
+    ): DesignerDsl {
         val context = PlatformUtilityContext(utilLocator, version)
         val designerDsl = DesignerDsl(context)
         designerDsl.block()
@@ -31,7 +34,10 @@ class PlatformDsl(
     /**
      * DSL для формирования плана команд ibcmd с поддержкой иерархической структуры
      */
-    fun ibcmd(version: String? = null, block: IbcmdPlanDsl.() -> Unit): IbcmdPlan {
+    fun ibcmd(
+        version: String? = null,
+        block: IbcmdPlanDsl.() -> Unit,
+    ): IbcmdPlan {
         val context = PlatformUtilityContext(utilLocator, version)
         val ibcmdPlanDsl = IbcmdPlanDsl(context)
         ibcmdPlanDsl.block()
@@ -41,10 +47,13 @@ class PlatformDsl(
     /**
      * DSL для работы с 1С:Предприятие
      */
-    fun enterprise(version: String? = null, block: EnterpriseDsl.() -> Unit): EnterpriseDsl {
+    fun enterprise(
+        version: String? = null,
+        block: EnterpriseDsl.() -> Unit,
+    ): EnterpriseDsl {
         val context = PlatformUtilityContext(utilLocator, version)
         val enterpriseDsl = EnterpriseDsl(context)
         enterpriseDsl.block()
         return enterpriseDsl
     }
-} 
+}

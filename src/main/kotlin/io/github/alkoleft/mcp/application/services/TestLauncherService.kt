@@ -18,14 +18,19 @@ private val logger = KotlinLogging.logger { }
  */
 @Service
 class TestLauncherService(
-    private val actionFactory: ActionFactory
+    private val actionFactory: ActionFactory,
 ) : TestLauncher {
-
     override suspend fun run(request: TestExecutionRequest): TestExecutionResult {
         when (request) {
             is RunAllTestsRequest -> logger.info { "Starting full test execution for project: ${request.projectPath}" }
-            is RunListTestsRequest -> logger.info { "Starting specific tests execution for: ${request.testNames} in project: ${request.projectPath}" }
-            is RunModuleTestsRequest -> logger.info { "Starting module test execution for: ${request.moduleName} in project: ${request.projectPath}" }
+            is RunListTestsRequest ->
+                logger.info {
+                    "Starting specific tests execution for: ${request.testNames} in project: ${request.projectPath}"
+                }
+            is RunModuleTestsRequest ->
+                logger.info {
+                    "Starting module test execution for: ${request.moduleName} in project: ${request.projectPath}"
+                }
         }
 
         val testAction = actionFactory.createRunTestAction()

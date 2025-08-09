@@ -21,6 +21,7 @@ kotlinx-serialization = "1.6.3"
 springAi = "1.0.0"
 ktlint = "1.4.1"
 jacoco = "0.8.11"
+dependencyCheck = "8.4.3"
 
 [libraries]
 # Kotlin
@@ -118,4 +119,5 @@ git-versioning = { id = "me.qoomon.git-versioning", version.ref = "gitVersioning
 gradle-git-properties = { id = "com.gorylenko.gradle-git-properties", version.ref = "gradleGitProperties" }
 spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }
-ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradle" } 
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradle" }
+dependencyCheck = { id = "org.owasp.dependencycheck", version.ref = "dependencyCheck" } 

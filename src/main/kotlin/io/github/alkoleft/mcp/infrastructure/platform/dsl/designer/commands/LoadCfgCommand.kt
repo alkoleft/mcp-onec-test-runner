@@ -9,7 +9,9 @@ import java.nio.file.Path
  *
  * Загрузка конфигурации из файла .cf
  */
-class LoadCfgCommand : ConfiguratorCommand(), UpdateDBCfgSupport {
+class LoadCfgCommand :
+    ConfiguratorCommand(),
+    UpdateDBCfgSupport {
     override val name: String = "LoadCfg"
     override val description: String = "Загрузка конфигурации из файла"
 
@@ -49,4 +51,4 @@ class LoadCfgCommand : ConfiguratorCommand(), UpdateDBCfgSupport {
 
             return params
         }
-} 
+}

@@ -12,7 +12,7 @@ private val logger = KotlinLogging.logger { }
  */
 data class IbcmdPlan(
     val commands: List<IbcmdCommand>,
-    val context: IbcmdContext
+    val context: IbcmdContext,
 ) {
     /**
      * Выводит план команд
@@ -53,7 +53,6 @@ data class IbcmdPlan(
         val baseArgs = context.buildBaseArgs()
         val commandArgs = listOf(context.utilityPath, *command.commandName.split(" ").toTypedArray()) + baseArgs + command.arguments
 
-
         return try {
             val result = executor.execute(commandArgs)
             IbcmdResult(
@@ -61,7 +60,7 @@ data class IbcmdPlan(
                 output = result.output,
                 error = result.error ?: "",
                 exitCode = result.exitCode,
-                duration = result.duration
+                duration = result.duration,
             )
         } catch (e: Exception) {
             IbcmdResult(
@@ -69,8 +68,8 @@ data class IbcmdPlan(
                 output = "",
                 error = e.message ?: "Unknown error",
                 exitCode = -1,
-                duration = Duration.ZERO
+                duration = Duration.ZERO,
             )
         }
     }
-} 
+}

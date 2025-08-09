@@ -15,74 +15,62 @@ data class InfobaseExtensionCommand(
      * (create, info, list, update, delete)
      */
     val extensionSubCommand: String,
-
     /**
      * Имя расширения
      * --name=<name>
      */
     val name: String? = null,
-
     /**
      * Префикс имен
      * --name-prefix=<prefix>
      */
     val namePrefix: String? = null,
-
     /**
      * Синоним
      * --synonym=<synonym>
      */
     val synonym: String? = null,
-
     /**
      * Назначение (customization|add-on|patch)
      * --purpose=<customization|add-on|patch>
      */
     val purpose: String? = null,
-
     /**
      * Активность (yes|no)
      * --active=<yes|no>
      */
     val active: Boolean? = null,
-
     /**
      * Безопасный режим (yes|no)
      * --safe-mode=<yes|no>
      */
     val safeMode: Boolean? = null,
-
     /**
      * Профиль безопасности (yes|no)
      * --security-profile-name=<yes|no>
      */
     val securityProfileName: Boolean? = null,
-
     /**
      * Защита от опасных действий (yes|no)
      * --unsafe-action-protection=<yes|no>
      */
     val unsafeActionProtection: Boolean? = null,
-
     /**
      * Используется в распределённой ИБ (yes|no)
      * --used-in-distributed-infobase=<yes|no>
      */
     val usedInDistributedInfobase: Boolean? = null,
-
     /**
      * Область действия (infobase|data-separation)
      * --scope=<infobase|data-separation>
      */
     val scope: String? = null,
-
     /**
      * Удалить все расширения (только для delete)
      * --all
      */
-    val all: Boolean = false
+    val all: Boolean = false,
 ) : IbcmdCommand {
-
     override val mode: String = "infobase"
     override val subCommand: String = "extension $extensionSubCommand"
     override val commandName: String = "infobase extension $extensionSubCommand"
@@ -140,9 +128,8 @@ data class InfobaseGenerationIdCommand(
      * Имя расширения
      * --extension=<extension>, -e <extension>
      */
-    val extension: String? = null
+    val extension: String? = null,
 ) : IbcmdCommand {
-
     override val mode: String = "infobase"
     override val subCommand: String = "generation-id"
     override val commandName: String = "infobase generation-id"
@@ -156,10 +143,9 @@ data class InfobaseGenerationIdCommand(
             return args
         }
 
-    override fun getFullDescription(): String {
-        return "Получить идентификатор поколения конфигурации" +
-                (extension?.let { " (расширение: $it)" } ?: "")
-    }
+    override fun getFullDescription(): String =
+        "Получить идентификатор поколения конфигурации" +
+            (extension?.let { " (расширение: $it)" } ?: "")
 }
 
 /**
@@ -173,31 +159,26 @@ data class InfobaseSignCommand(
      * --key=<path>, -k <path>
      */
     val key: String? = null,
-
     /**
      * Имя расширения
      * --extension=<extension>, -e <extension>
      */
     val extension: String? = null,
-
     /**
      * Операция над конфигурацией базы данных
      * --db
      */
     val db: Boolean = false,
-
     /**
      * Путь для подписанной копии
      * --out=<path>, -o <path>
      */
     val out: String? = null,
-
     /**
      * Путь к файлу для подписи
      */
-    val path: String? = null
+    val path: String? = null,
 ) : IbcmdCommand {
-
     override val mode: String = "infobase"
     override val subCommand: String = "sign"
     override val commandName: String = "infobase sign"
@@ -225,6 +206,6 @@ data class InfobaseSignCommand(
         path?.let { details.add("файл: $it") }
 
         return "Цифровая подпись конфигурации/расширения в ИБ" +
-                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
-} 
+}

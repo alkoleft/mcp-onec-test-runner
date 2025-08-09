@@ -2,7 +2,6 @@ package io.github.alkoleft.mcp.server
 
 import io.github.alkoleft.mcp.application.services.LauncherService
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
-import io.github.alkoleft.mcp.core.modules.BuildService
 import io.github.alkoleft.mcp.core.modules.GenericTestCase
 import io.github.alkoleft.mcp.core.modules.GenericTestReport
 import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
@@ -13,9 +12,8 @@ import kotlinx.coroutines.runBlocking
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.ai.tool.annotation.ToolParam
 import org.springframework.stereotype.Service
-import java.nio.file.Paths
 
-private val logger = KotlinLogging.logger {  }
+private val logger = KotlinLogging.logger { }
 
 /**
  * MCP Server для YaXUnit Runner
@@ -24,21 +22,19 @@ private val logger = KotlinLogging.logger {  }
 @Service
 class YaXUnitMcpServer(
     private val launcherService: LauncherService,
-    private val buildService: BuildService,
     private val properties: ApplicationProperties,
 ) {
-
     /**
      * Запускает все тесты в проекте
      * @return Результат выполнения всех тестов
      */
     @Tool(
         name = "yaxunit_run_all_tests",
-        description = "Запускает все тесты YaXUnit в проекте. Возвращает подробный отчет о выполнении тестов."
+        description = "Запускает все тесты YaXUnit в проекте. Возвращает подробный отчет о выполнении тестов.",
     )
     fun runAllTests(): TestExecutionResult {
         logger.info { "Запуск всех тестов YaXUnit" }
-        
+
         return runBlocking {
             try {
                 val request = RunAllTestsRequest(properties)
@@ -50,10 +46,11 @@ class YaXUnitMcpServer(
                     passedTests = result.report.summary.passed,
                     failedTests = result.report.summary.failed,
                     executionTime = result.duration.toMillis(),
-                    details = mapOf(
-                        "duration" to result.duration.toString(),
-                        "successRate" to result.report.summary.successRate.toString()
-                    )
+                    details =
+                        mapOf(
+                            "duration" to result.duration.toString(),
+                            "successRate" to result.successRate,
+                        ),
                 )
             } catch (e: Exception) {
                 logger.error(e) { "Ошибка при запуске всех тестов" }
@@ -64,7 +61,7 @@ class YaXUnitMcpServer(
                     passedTests = 0,
                     failedTests = 0,
                     executionTime = 0,
-                    details = mapOf("error" to e.message.toString())
+                    details = mapOf("error" to e.message.toString()),
                 )
             }
         }
@@ -77,13 +74,13 @@ class YaXUnitMcpServer(
      */
     @Tool(
         name = "yaxunit_run_module_tests",
-        description = "Запускает тесты YaXUnit из указанного модуля. Укажите имя модуля для тестирования."
+        description = "Запускает тесты YaXUnit из указанного модуля. Укажите имя модуля для тестирования.",
     )
     fun runModuleTests(
-        @ToolParam(description = "Имя модуля для тестирования") moduleName: String
+        @ToolParam(description = "Имя модуля для тестирования") moduleName: String,
     ): TestExecutionResult {
         logger.info { "Запуск тестов модуля: $moduleName" }
-        
+
         return runBlocking {
             try {
                 val request = RunModuleTestsRequest(moduleName, properties)
@@ -95,12 +92,13 @@ class YaXUnitMcpServer(
                     passedTests = result.report.summary.passed,
                     failedTests = result.report.summary.failed,
                     executionTime = result.duration.toMillis(),
-                    details = mapOf(
-                        "duration" to result.duration.toString(),
-                        "successRate" to result.report.summary.successRate.toString(),
-                        "module" to moduleName
-                    ),
-                    testDetail = collectTestDetails(result.report)
+                    details =
+                        mapOf(
+                            "duration" to result.duration.toString(),
+                            "successRate" to result.successRate,
+                            "module" to moduleName,
+                        ),
+                    testDetail = collectTestDetails(result.report),
                 )
             } catch (e: Exception) {
                 logger.error(e) { "Ошибка при запуске тестов модуля: $moduleName" }
@@ -111,14 +109,14 @@ class YaXUnitMcpServer(
                     passedTests = 0,
                     failedTests = 0,
                     executionTime = 0,
-                    details = mapOf("error" to e.message.toString(), "module" to moduleName)
+                    details = mapOf("error" to e.message.toString(), "module" to moduleName),
                 )
             }
         }
     }
 
-    fun collectTestDetails(report: GenericTestReport) =
-        report.testSuites.flatMap { it.testCases }
+    fun collectTestDetails(report: GenericTestReport) = report.testSuites.flatMap { it.testCases }
+
     /**
      * Запускает тесты из списка указанных модулей
      * @param moduleNames Список имен модулей для тестирования
@@ -126,29 +124,35 @@ class YaXUnitMcpServer(
      */
     @Tool(
         name = "yaxunit_run_list_tests",
-        description = "Запускает тесты YaXUnit из списка указанных модулей. Передайте список имен модулей."
+        description = "Запускает тесты YaXUnit из списка указанных модулей. Передайте список имен модулей.",
     )
     fun runListTests(
-        @ToolParam(description = "Список имен модулей для тестирования") moduleNames: List<String>
+        @ToolParam(description = "Список имен модулей для тестирования") moduleNames: List<String>,
     ): TestExecutionResult {
         logger.info { "Запуск тестов модулей: $moduleNames" }
-        
+
         return runBlocking {
             try {
                 val request = RunListTestsRequest(moduleNames, properties)
                 val result = launcherService.run(request)
                 TestExecutionResult(
                     success = result.success,
-                    message = if (result.success) "Тесты модулей выполнены: ${moduleNames.joinToString(", ")}" else "Ошибка при выполнении тестов модулей",
+                    message =
+                        if (result.success) {
+                            "Тесты модулей выполнены: ${moduleNames.joinToString(", ")}"
+                        } else {
+                            "Ошибка при выполнении тестов модулей"
+                        },
                     totalTests = result.report.summary.totalTests,
                     passedTests = result.report.summary.passed,
                     failedTests = result.report.summary.failed,
                     executionTime = result.duration.toMillis(),
-                    details = mapOf(
-                        "duration" to result.duration.toString(),
-                        "successRate" to result.report.summary.successRate.toString(),
-                        "modules" to moduleNames.joinToString(", ")
-                    )
+                    details =
+                        mapOf(
+                            "duration" to result.duration.toString(),
+                            "successRate" to result.successRate,
+                            "modules" to moduleNames.joinToString(", "),
+                        ),
                 )
             } catch (e: Exception) {
                 logger.error(e) { "Ошибка при запуске тестов модулей: $moduleNames" }
@@ -159,7 +163,7 @@ class YaXUnitMcpServer(
                     passedTests = 0,
                     failedTests = 0,
                     executionTime = 0,
-                    details = mapOf("error" to e.message.toString(), "modules" to moduleNames.joinToString(", "))
+                    details = mapOf("error" to e.message.toString(), "modules" to moduleNames.joinToString(", ")),
                 )
             }
         }
@@ -171,22 +175,19 @@ class YaXUnitMcpServer(
      */
     @Tool(
         name = "yaxunit_build_project",
-        description = "Выполняет сборку проекта YaXUnit. Возвращает результат сборки."
+        description = "Выполняет сборку проекта YaXUnit. Возвращает результат сборки.",
     )
     fun buildProject(): BuildResult {
         logger.info { "Выполнение сборки проекта" }
-        
+
         return runBlocking {
             try {
-                val result = buildService.ensureBuild(Paths.get("."))
+                launcherService.build()
                 BuildResult(
-                    success = result.success,
-                    message = if (result.success) "Сборка выполнена успешно" else "Ошибка при сборке",
-                    buildTime = result.duration.toMillis(),
-                    details = mapOf(
-                        "buildType" to result.buildType.name,
-                        "duration" to result.duration.toString()
-                    )
+                    success = true,
+                    message = "Сборка выполнена успешно",
+                    buildTime = 0L,
+                    details = emptyMap(),
                 )
             } catch (e: Exception) {
                 logger.error(e) { "Ошибка при сборке проекта" }
@@ -194,7 +195,7 @@ class YaXUnitMcpServer(
                     success = false,
                     message = "Ошибка при сборке: ${e.message}",
                     buildTime = 0,
-                    details = mapOf("error" to e.message.toString())
+                    details = mapOf("error" to e.message.toString()),
                 )
             }
         }
@@ -206,11 +207,11 @@ class YaXUnitMcpServer(
      */
     @Tool(
         name = "yaxunit_check_platform",
-        description = "Проверяет статус и доступность платформы 1С для выполнения тестов YaXUnit."
+        description = "Проверяет статус и доступность платформы 1С для выполнения тестов YaXUnit.",
     )
     fun checkPlatform(): PlatformStatusResult {
         logger.info { "Проверка статуса платформы 1С" }
-        
+
         return try {
             // TODO: Implement platform status check
             PlatformStatusResult(
@@ -219,7 +220,7 @@ class YaXUnitMcpServer(
                 version = "8.3.24.1482",
                 path = "/usr/local/1cv8/8.3.24.1482/1cv8c",
                 isAvailable = true,
-                details = mapOf("platform" to "1C:Enterprise", "version" to "8.3.24.1482")
+                details = mapOf("platform" to "1C:Enterprise", "version" to "8.3.24.1482"),
             )
         } catch (e: Exception) {
             logger.error(e) { "Ошибка при проверке платформы" }
@@ -229,7 +230,7 @@ class YaXUnitMcpServer(
                 version = null,
                 path = null,
                 isAvailable = false,
-                details = mapOf("error" to e.message.toString())
+                details = mapOf("error" to e.message.toString()),
             )
         }
     }
@@ -246,7 +247,7 @@ data class TestExecutionResult(
     val failedTests: Int,
     val executionTime: Long,
     val details: Map<String, Any>,
-    val testDetail: List<GenericTestCase> = emptyList()
+    val testDetail: List<GenericTestCase> = emptyList(),
 )
 
 /**
@@ -256,7 +257,7 @@ data class BuildResult(
     val success: Boolean,
     val message: String,
     val buildTime: Long,
-    val details: Map<String, Any>
+    val details: Map<String, Any>,
 )
 
 /**
@@ -266,7 +267,7 @@ data class ModuleListResult(
     val success: Boolean,
     val message: String,
     val modules: List<String>,
-    val totalCount: Int
+    val totalCount: Int,
 )
 
 /**
@@ -279,7 +280,7 @@ data class ConfigurationResult(
     val platformSettings: Any?,
     val buildSettings: Any?,
     val loggingSettings: Any?,
-    val serverSettings: Any?
+    val serverSettings: Any?,
 )
 
 /**
@@ -291,5 +292,5 @@ data class PlatformStatusResult(
     val version: String?,
     val path: String?,
     val isAvailable: Boolean,
-    val details: Map<String, Any>
-) 
+    val details: Map<String, Any>,
+)

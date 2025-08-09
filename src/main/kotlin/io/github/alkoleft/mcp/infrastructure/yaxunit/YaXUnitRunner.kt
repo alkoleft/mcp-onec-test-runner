@@ -24,62 +24,63 @@ private val logger = KotlinLogging.logger { }
  * Интегрирован со стратегиями построения команд и обработки ошибок
  */
 class YaXUnitRunner(
-    private val platformDsl: PlatformDsl
-
+    private val platformDsl: PlatformDsl,
 ) : YaXUnitRunner {
     private val objectMapper = ObjectMapper()
 
     override suspend fun executeTests(
         utilityLocation: UtilityLocation,
-        request: TestExecutionRequest
-    ): YaXUnitExecutionResult = withContext(Dispatchers.IO) {
-        val startTime = Instant.now()
-        logger.info { "Starting YaXUnit test execution for ${request.javaClass.simpleName}" }
+        request: TestExecutionRequest,
+    ): YaXUnitExecutionResult =
+        withContext(Dispatchers.IO) {
+            val startTime = Instant.now()
+            logger.info { "Starting YaXUnit test execution for ${request.javaClass.simpleName}" }
 
-        // Создаем временную конфигурацию
-        val (configPath, config) = createConfigFile(request)
-        try {
-            // Запускаем тесты через EnterpriseDsl
-            logger.debug { "Executing tests via EnterpriseDsl" }
-            val result = executeTests(
-                request = request,
-                configPath = configPath
-            )
+            // Создаем временную конфигурацию
+            val (configPath, config) = createConfigFile(request)
+            try {
+                // Запускаем тесты через EnterpriseDsl
+                logger.debug { "Executing tests via EnterpriseDsl" }
+                val result =
+                    executeTests(
+                        request = request,
+                        configPath = configPath,
+                    )
 
-            logger.info { "Process completed with exit code: ${result.exitCode}" }
+                logger.info { "Process completed with exit code: ${result.exitCode}" }
 
-            val duration = Duration.between(startTime, Instant.now())
-            logger.info { "Test execution completed in ${duration.toSeconds()}s" }
+                val duration = Duration.between(startTime, Instant.now())
+                logger.info { "Test execution completed in ${duration.toSeconds()}s" }
 
-            // Определяем путь к отчету
-            val reportPath = Path(config.reportPath)
-            if (Files.exists(reportPath)) {
-                logger.info { "Test report found at: $reportPath" }
-            } else {
-                logger.warn { "Test report not found at expected location" }
+                // Определяем путь к отчету
+                val reportPath = Path(config.reportPath)
+                if (Files.exists(reportPath)) {
+                    logger.info { "Test report found at: $reportPath" }
+                } else {
+                    logger.warn { "Test report not found at expected location" }
+                }
+
+                YaXUnitExecutionResult(
+                    success = result.success,
+                    reportPath = if (result.success) reportPath else null,
+                    exitCode = result.exitCode,
+                    standardOutput = result.output,
+                    errorOutput = result.error ?: "",
+                    duration = duration,
+                )
+            } catch (e: Exception) {
+                val duration = Duration.between(startTime, Instant.now())
+                logger.error(e) { "YaXUnit test execution failed after ${duration.toSeconds()}s" }
+                YaXUnitExecutionResult(
+                    success = false,
+                    reportPath = null,
+                    exitCode = -1,
+                    standardOutput = "",
+                    errorOutput = e.message ?: "Unknown error",
+                    duration = duration,
+                )
             }
-
-            YaXUnitExecutionResult(
-                success = result.success,
-                reportPath = if (result.success) reportPath else null,
-                exitCode = result.exitCode,
-                standardOutput = result.output,
-                errorOutput = result.error ?: "",
-                duration = duration
-            )
-        } catch (e: Exception) {
-            val duration = Duration.between(startTime, Instant.now())
-            logger.error(e) { "YaXUnit test execution failed after ${duration.toSeconds()}s" }
-            YaXUnitExecutionResult(
-                success = false,
-                reportPath = null,
-                exitCode = -1,
-                standardOutput = "",
-                errorOutput = e.message ?: "Unknown error",
-                duration = duration
-            )
         }
-    }
 
     private fun createConfigFile(request: TestExecutionRequest): Pair<Path, YaXUnitConfig> {
         val config = request.toConfig()
@@ -99,11 +100,13 @@ class YaXUnitRunner(
      */
     private suspend fun executeTests(
         request: TestExecutionRequest,
-        configPath: Path
-    ): PlatformUtilityResult = platformDsl.enterprise(request.platformVersion) {
-        connect(request.ibConnection)
-        request.user?.ifNoBlank { user(it) }
-        request.password?.ifNoBlank { password(it) }
-        runArguments("RunUnitTests=${configPath.toAbsolutePath()}")
-    }.run()
+        configPath: Path,
+    ): PlatformUtilityResult =
+        platformDsl
+            .enterprise(request.platformVersion) {
+                connect(request.ibConnection)
+                request.user?.ifNoBlank { user(it) }
+                request.password?.ifNoBlank { password(it) }
+                runArguments("RunUnitTests=${configPath.toAbsolutePath()}")
+            }.run()
 }

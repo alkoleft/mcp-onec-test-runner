@@ -20,19 +20,29 @@ import javax.xml.parsers.DocumentBuilderFactory
  * Minimal JUnit-only report parser
  */
 class EnhancedReportParser : ReportParser {
-    override suspend fun parseReport(input: InputStream, format: ReportFormat): GenericTestReport =
+    override suspend fun parseReport(
+        input: InputStream,
+        format: ReportFormat,
+    ): GenericTestReport =
         withContext(Dispatchers.IO) {
             require(format == ReportFormat.JUNIT_XML) { "Only JUNIT_XML format is supported" }
             parseJUnitXml(input)
         }
 
-    override suspend fun detectFormat(input: InputStream): ReportFormat = withContext(Dispatchers.IO) {
-        val bytes = input.readAllBytes()
-        val content = String(bytes)
-        if (content.trim()
-                .startsWith("<?xml") && content.contains("testsuite")
-        ) ReportFormat.JUNIT_XML else ReportFormat.JUNIT_XML
-    }
+    override suspend fun detectFormat(input: InputStream): ReportFormat =
+        withContext(Dispatchers.IO) {
+            val bytes = input.readAllBytes()
+            val content = String(bytes)
+            if (content
+                    .trim()
+                    .startsWith("<?xml") &&
+                content.contains("testsuite")
+            ) {
+                ReportFormat.JUNIT_XML
+            } else {
+                ReportFormat.JUNIT_XML
+            }
+        }
 
     override fun getSupportedFormats(): Set<ReportFormat> = setOf(ReportFormat.JUNIT_XML)
 
@@ -60,13 +70,14 @@ class EnhancedReportParser : ReportParser {
             totalErrors += testSuite.errors
         }
 
-        val summary = TestSummary(
-            totalTests = totalTests,
-            passed = totalPassed,
-            failed = totalFailed,
-            skipped = totalSkipped,
-            errors = totalErrors
-        )
+        val summary =
+            TestSummary(
+                totalTests = totalTests,
+                passed = totalPassed,
+                failed = totalFailed,
+                skipped = totalSkipped,
+                errors = totalErrors,
+            )
 
         val metadata = TestMetadata(environment = mapOf("format" to "junit_xml"))
 
@@ -75,7 +86,7 @@ class EnhancedReportParser : ReportParser {
             summary = summary,
             testSuites = testSuites,
             timestamp = Instant.now(),
-            duration = Duration.ZERO
+            duration = Duration.ZERO,
         )
     }
 
@@ -105,7 +116,7 @@ class EnhancedReportParser : ReportParser {
             skipped = skipped,
             errors = errors,
             duration = Duration.ofMillis((time * 1000).toLong()),
-            testCases = testCases
+            testCases = testCases,
         )
     }
 
@@ -114,27 +125,32 @@ class EnhancedReportParser : ReportParser {
         val className = element.getAttribute("classname").takeIf { it.isNotBlank() }
         val time = element.getAttribute("time").toDoubleOrNull() ?: 0.0
 
-        val status = when {
-            element.getElementsByTagName("failure").length > 0 -> TestStatus.FAILED
-            element.getElementsByTagName("error").length > 0 -> TestStatus.ERROR
-            element.getElementsByTagName("skipped").length > 0 -> TestStatus.SKIPPED
-            else -> TestStatus.PASSED
-        }
+        val status =
+            when {
+                element.getElementsByTagName("failure").length > 0 -> TestStatus.FAILED
+                element.getElementsByTagName("error").length > 0 -> TestStatus.ERROR
+                element.getElementsByTagName("skipped").length > 0 -> TestStatus.SKIPPED
+                else -> TestStatus.PASSED
+            }
 
-        val errorMessage = when (status) {
-            TestStatus.FAILED -> (element.getElementsByTagName("failure").item(0) as? Element)?.getAttribute("message")
-                ?: (element.getElementsByTagName("failure").item(0) as? Element)?.textContent
+        val errorMessage =
+            when (status) {
+                TestStatus.FAILED ->
+                    (element.getElementsByTagName("failure").item(0) as? Element)?.getAttribute("message")
+                        ?: (element.getElementsByTagName("failure").item(0) as? Element)?.textContent
 
-            TestStatus.ERROR -> (element.getElementsByTagName("error").item(0) as? Element)?.getAttribute("message")
-                ?: (element.getElementsByTagName("error").item(0) as? Element)?.textContent
-            else -> null
-        }
+                TestStatus.ERROR ->
+                    (element.getElementsByTagName("error").item(0) as? Element)?.getAttribute("message")
+                        ?: (element.getElementsByTagName("error").item(0) as? Element)?.textContent
+                else -> null
+            }
 
-        val stackTrace = when (status) {
-            TestStatus.FAILED -> (element.getElementsByTagName("failure").item(0) as? Element)?.textContent
-            TestStatus.ERROR -> (element.getElementsByTagName("error").item(0) as? Element)?.textContent
-            else -> null
-        }
+        val stackTrace =
+            when (status) {
+                TestStatus.FAILED -> (element.getElementsByTagName("failure").item(0) as? Element)?.textContent
+                TestStatus.ERROR -> (element.getElementsByTagName("error").item(0) as? Element)?.textContent
+                else -> null
+            }
 
         return GenericTestCase(
             name = name,
@@ -144,7 +160,7 @@ class EnhancedReportParser : ReportParser {
             errorMessage = errorMessage,
             stackTrace = stackTrace,
             systemOut = null,
-            systemErr = null
+            systemErr = null,
         )
     }
 }

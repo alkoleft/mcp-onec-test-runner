@@ -10,7 +10,8 @@ plugins {
     alias(libs.plugins.spring.dependency.management)
     id("maven-publish")
     jacoco
-//    alias(libs.plugins.ktlint)
+    alias(libs.plugins.ktlint)
+    alias(libs.plugins.dependencyCheck)
 }
 
 group = "io.github.alkoleft.mcp"
@@ -130,9 +131,9 @@ jacoco {
     toolVersion = libs.versions.jacoco.get()
 }
 
-//ktlint {
-//    version = libs.versions.ktlint.get()
-//}
+ktlint {
+    version = libs.versions.ktlint.get()
+}
 
 tasks.jacocoTestReport {
     dependsOn(tasks.test)

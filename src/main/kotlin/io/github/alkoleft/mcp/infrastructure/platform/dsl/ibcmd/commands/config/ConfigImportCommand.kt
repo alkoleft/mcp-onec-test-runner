@@ -13,49 +13,41 @@ class ConfigImportCommand(
      * Подкоманда импорта (files, all-extensions)
      */
     var importSubCommand: String? = null,
-
     /**
      * Файл для записи конфигурации
      * --out=<file>, -o <file>
      */
     var out: String? = null,
-
     /**
      * Имя расширения
      * --extension=<extension>, -e <extension>
      */
     var extension: String? = null,
-
     /**
      * Базовый каталог XML файлов
      * --base-dir=<directory>
      */
     var baseDir: String? = null,
-
     /**
      * Путь к архиву XML файлов
      * --archive=<path>
      */
     var archivePath: String? = null,
-
     /**
      * Отключить проверку метаданных
      * --no-check
      */
     var noCheck: Boolean = false,
-
     /**
      * Разрешить частичный набор файлов
      * --partial
      */
     var partial: Boolean = false,
-
     /**
      * Путь к каталогу или архиву XML
      */
-    val path: String
+    val path: String,
 ) : IbcmdCommand {
-
     override val mode: String = "config"
     override val subCommand: String = "import" + (importSubCommand?.let { " $it" } ?: "")
     override val commandName: String = "config import" + (importSubCommand?.let { " $it" } ?: "")
@@ -87,6 +79,6 @@ class ConfigImportCommand(
 
         if (extension.isNullOrBlank()) "конфигурации" else "расширения"
         return "Импорт ${if (extension.isNullOrBlank()) "конфигурации" else "расширения"} из XML: $path" +
-                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }

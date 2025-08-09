@@ -8,7 +8,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class SearchStrategyFactoryTest {
-
     @Test
     fun `should create correct strategy for current platform`() {
         // Arrange
@@ -102,7 +101,7 @@ class SearchStrategyFactoryTest {
         assertEquals(
             strategy1.javaClass,
             strategy2.javaClass,
-            "Strategies for same platform should be of same type"
+            "Strategies for same platform should be of same type",
         )
     }
 
@@ -118,7 +117,7 @@ class SearchStrategyFactoryTest {
         assertNotNull(strategy, "Strategy should be created for any supported platform")
         assertTrue(
             strategy is WindowsSearchStrategy || strategy is LinuxSearchStrategy,
-            "Strategy should be either WindowsSearchStrategy or LinuxSearchStrategy"
+            "Strategy should be either WindowsSearchStrategy or LinuxSearchStrategy",
         )
     }
-} 
+}

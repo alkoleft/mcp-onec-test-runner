@@ -1,12 +1,11 @@
 package io.github.alkoleft.mcp.configuration.properties
 
-
 /**
  * Тип элемента исходного кода
  */
 enum class SourceSetType {
     CONFIGURATION,
-    EXTENSION
+    EXTENSION,
 }
 
 /**
@@ -14,14 +13,14 @@ enum class SourceSetType {
  */
 enum class BuilderType {
     DESIGNER,
-    IBMCMD
+    IBMCMD,
 }
 
 /**
  * Назначение элемента исходного кода
  */
 enum class SourceSetPurpose {
-    MAIN,      // Основной код продукта
-    TESTS,     // Тесты
-    YAXUNIT    // Движок YaXUnit
+    MAIN, // Основной код продукта
+    TESTS, // Тесты
+    YAXUNIT, // Движок YaXUnit
 }

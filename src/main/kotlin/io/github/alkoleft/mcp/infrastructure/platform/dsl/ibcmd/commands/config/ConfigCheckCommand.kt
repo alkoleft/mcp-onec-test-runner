@@ -13,14 +13,12 @@ data class ConfigCheckCommand(
      * --extension=<extension>, -e <extension>
      */
     var extension: String? = null,
-
     /**
      * Подтверждение при наличии предупреждений
      * --force, -F
      */
-    var force: Boolean = false
+    var force: Boolean = false,
 ) : IbcmdCommand {
-
     override val mode: String = "config"
     override val subCommand: String = "check"
     override val commandName: String = "config check"
@@ -41,6 +39,6 @@ data class ConfigCheckCommand(
         if (force) details.add("принудительно")
 
         return "Проверка конфигурации" +
-                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }

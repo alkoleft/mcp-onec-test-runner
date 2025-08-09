@@ -14,26 +14,22 @@ data class ExtensionCreateCommand(
      * --name=<name>
      */
     val name: String,
-
     /**
      * Префикс имен (обязательно, правила те же)
      * --name-prefix=<prefix>
      */
     val namePrefix: String,
-
     /**
      * Синоним в формате функции NStr()
      * --synonym=<synonym>
      */
     var synonym: String? = null,
-
     /**
      * Назначение расширения (customization|add-on|patch)
      * --purpose=<customization|add-on|patch>
      */
-    var purpose: String? = null
+    var purpose: String? = null,
 ) : IbcmdCommand {
-
     override val mode: String = "extension"
     override val subCommand: String = "create"
     override val commandName: String = "extension create"
@@ -71,9 +67,8 @@ data class ExtensionInfoCommand(
      * Имя расширения (обязательно)
      * --name=<name>
      */
-    val name: String
+    val name: String,
 ) : IbcmdCommand {
-
     override val mode: String = "extension"
     override val subCommand: String = "info"
     override val commandName: String = "extension info"
@@ -87,9 +82,7 @@ data class ExtensionInfoCommand(
             return args
         }
 
-    override fun getFullDescription(): String {
-        return "Получение информации о расширении: $name"
-    }
+    override fun getFullDescription(): String = "Получение информации о расширении: $name"
 }
 
 /**
@@ -97,17 +90,14 @@ data class ExtensionInfoCommand(
  *
  * Получает список всех расширений в информационной базе.
  */
-class ExtensionListCommand() : IbcmdCommand {
-
+class ExtensionListCommand : IbcmdCommand {
     override val mode: String = "extension"
     override val subCommand: String = "list"
     override val commandName: String = "extension list"
 
     override val arguments: List<String> = emptyList()
 
-    override fun getFullDescription(): String {
-        return "Получение списка расширений"
-    }
+    override fun getFullDescription(): String = "Получение списка расширений"
 }
 
 /**
@@ -121,44 +111,37 @@ data class ExtensionUpdateCommand(
      * --name=<name>
      */
     val name: String,
-
     /**
      * Активность расширения (yes|no)
      * --active=<yes|no>
      */
     var active: Boolean? = null,
-
     /**
      * Безопасный режим (yes|no)
      * --safe-mode=<yes|no>
      */
     var safeMode: Boolean? = null,
-
     /**
      * Имя профиля безопасности (yes|no)
      * --security-profile-name=<yes|no>
      */
     var securityProfileName: Boolean? = null,
-
     /**
      * Защита от опасных действий (yes|no)
      * --unsafe-action-protection=<yes|no>
      */
     var unsafeActionProtection: Boolean? = null,
-
     /**
      * Используется в распределённой ИБ (yes|no)
      * --used-in-distributed-infobase=<yes|no>
      */
     var usedInDistributedInfobase: Boolean? = null,
-
     /**
      * Область действия расширения (infobase|data-separation)
      * --scope=<infobase|data-separation>
      */
-    var scope: String? = null
+    var scope: String? = null,
 ) : IbcmdCommand {
-
     override val mode: String = "extension"
     override val subCommand: String = "update"
     override val commandName: String = "extension update"
@@ -200,14 +183,12 @@ data class ExtensionDeleteCommand(
      * --name=<name>
      */
     var name: String? = null,
-
     /**
      * Удалить все расширения
      * --all
      */
-    var all: Boolean = false
+    var all: Boolean = false,
 ) : IbcmdCommand {
-
     override val mode: String = "extension"
     override val subCommand: String = "delete"
     override val commandName: String = "extension delete"
@@ -222,11 +203,10 @@ data class ExtensionDeleteCommand(
             return args
         }
 
-    override fun getFullDescription(): String {
-        return if (all) {
+    override fun getFullDescription(): String =
+        if (all) {
             "Удаление всех расширений"
         } else {
             "Удаление расширения: ${name ?: "не указано"}"
         }
-    }
-} 
+}

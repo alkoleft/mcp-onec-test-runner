@@ -13,14 +13,12 @@ data class SessionInfoCommand(
      * --session=<uuid>
      */
     val session: String,
-
     /**
      * Вывод информации о лицензиях
      * --licenses
      */
-    var licenses: Boolean = false
+    var licenses: Boolean = false,
 ) : IbcmdCommand {
-
     override val mode: String = "session"
     override val subCommand: String = "info"
     override val commandName: String = "session info"
@@ -54,9 +52,8 @@ data class SessionListCommand(
      * Вывод информации о лицензиях
      * --licenses
      */
-    val licenses: Boolean = false
+    val licenses: Boolean = false,
 ) : IbcmdCommand {
-
     override val mode: String = "session"
     override val subCommand: String = "list"
     override val commandName: String = "session list"
@@ -70,9 +67,7 @@ data class SessionListCommand(
             return args
         }
 
-    override fun getFullDescription(): String {
-        return "Получение списка сеансов" + if (licenses) " (с лицензиями)" else ""
-    }
+    override fun getFullDescription(): String = "Получение списка сеансов" + if (licenses) " (с лицензиями)" else ""
 }
 
 /**
@@ -86,14 +81,12 @@ data class SessionTerminateCommand(
      * --session=<uuid>
      */
     val session: String,
-
     /**
      * Сообщение о причине завершения
      * --error-message=<string>
      */
-    var errorMessage: String? = null
+    var errorMessage: String? = null,
 ) : IbcmdCommand {
-
     override val mode: String = "session"
     override val subCommand: String = "terminate"
     override val commandName: String = "session terminate"
@@ -128,14 +121,12 @@ data class SessionInterruptCurrentServerCallCommand(
      * --session=<uuid>
      */
     val session: String,
-
     /**
      * Сообщение о причине прерывания
      * --error-message=<string>
      */
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
 ) : IbcmdCommand {
-
     override val mode: String = "session"
     override val subCommand: String = "interrupt-current-server-call"
     override val commandName: String = "session interrupt-current-server-call"
@@ -157,4 +148,4 @@ data class SessionInterruptCurrentServerCallCommand(
 
         return "Прерывание текущего серверного вызова (${details.joinToString(", ")})"
     }
-} 
+}

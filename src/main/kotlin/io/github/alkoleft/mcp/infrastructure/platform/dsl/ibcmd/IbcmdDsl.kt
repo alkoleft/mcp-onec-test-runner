@@ -17,7 +17,7 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.server.
  * DSL для формирования плана команд ibcmd с поддержкой иерархической структуры
  */
 class IbcmdPlanDsl(
-    context: PlatformUtilityContext
+    context: PlatformUtilityContext,
 ) {
     private val ibcmdContext = IbcmdContext(context)
     private val commonParameters = CommonParameters()
@@ -67,14 +67,12 @@ class IbcmdPlanDsl(
     /**
      * Добавляет команду конфигурации в план
      */
-    fun config(block: ConfigCommandBuilder.() -> Unit) =
-        appendSubCommands(block)
+    fun config(block: ConfigCommandBuilder.() -> Unit) = appendSubCommands(block)
 
     /**
      * Добавляет команды информационной базы в план
      */
-    fun infobase(block: InfobaseCommandBuilder.() -> Unit) =
-        appendSubCommands(block)
+    fun infobase(block: InfobaseCommandBuilder.() -> Unit) = appendSubCommands(block)
 
     /**
      * Добавляет команды сервера в план
@@ -120,15 +118,12 @@ class IbcmdPlanDsl(
     /**
      * Добавляет команды расширений в план
      */
-    fun extension(block: ExtensionCommandBuilder.() -> Unit) =
-        appendSubCommands(block)
+    fun extension(block: ExtensionCommandBuilder.() -> Unit) = appendSubCommands(block)
 
     /**
      * Строит план выполнения команд
      */
-    fun buildPlan(): IbcmdPlan {
-        return IbcmdPlan(commands.toList(), ibcmdContext)
-    }
+    fun buildPlan(): IbcmdPlan = IbcmdPlan(commands.toList(), ibcmdContext)
 
     private inline fun <reified T : CommandBuilder> appendSubCommands(block: T.() -> Unit) {
         val clazz = T::class.java
@@ -156,9 +151,7 @@ class ServerPlanDsl {
     /**
      * Строит список команд сервера
      */
-    fun buildCommands(): List<IbcmdCommand> {
-        return commands.toList()
-    }
+    fun buildCommands(): List<IbcmdCommand> = commands.toList()
 }
 
 /**
@@ -209,15 +202,14 @@ class ServerConfigurePlanDsl {
     /**
      * Строит команду настройки сервера
      */
-    fun buildCommand(): ServerConfigInitCommand {
-        return ServerConfigInitCommand(
+    fun buildCommand(): ServerConfigInitCommand =
+        ServerConfigInitCommand(
             out = out,
             httpAddress = httpAddress,
             httpPort = httpPort,
             httpBase = httpBase,
-            name = name
+            name = name,
         )
-    }
 }
 
 /**
@@ -238,9 +230,7 @@ class LockPlanDsl {
     /**
      * Строит список команд блокировок
      */
-    fun buildCommands(): List<IbcmdCommand> {
-        return commands.toList()
-    }
+    fun buildCommands(): List<IbcmdCommand> = commands.toList()
 }
 
 /**
@@ -259,11 +249,10 @@ class LockListPlanDsl {
     /**
      * Строит команду списка блокировок
      */
-    fun buildCommand(): LockListCommand {
-        return LockListCommand(
-            session = session
+    fun buildCommand(): LockListCommand =
+        LockListCommand(
+            session = session,
         )
-    }
 }
 
 /**
@@ -284,9 +273,7 @@ class MobileAppPlanDsl {
     /**
      * Строит список команд мобильного приложения
      */
-    fun buildCommands(): List<IbcmdCommand> {
-        return commands.toList()
-    }
+    fun buildCommands(): List<IbcmdCommand> = commands.toList()
 }
 
 /**
@@ -305,11 +292,10 @@ class MobileAppCreatePlanDsl {
     /**
      * Строит команду экспорта мобильного приложения
      */
-    fun buildCommand(): MobileAppExportCommand {
-        return MobileAppExportCommand(
-            path = path.ifEmpty { "/default/mobile/app/path" }
+    fun buildCommand(): MobileAppExportCommand =
+        MobileAppExportCommand(
+            path = path.ifEmpty { "/default/mobile/app/path" },
         )
-    }
 }
 
 /**
@@ -330,9 +316,7 @@ class MobileClientPlanDsl {
     /**
      * Строит список команд мобильного клиента
      */
-    fun buildCommands(): List<IbcmdCommand> {
-        return commands.toList()
-    }
+    fun buildCommands(): List<IbcmdCommand> = commands.toList()
 }
 
 /**
@@ -351,9 +335,8 @@ class MobileClientCreatePlanDsl {
     /**
      * Строит команду экспорта мобильного клиента
      */
-    fun buildCommand(): MobileClientExportCommand {
-        return MobileClientExportCommand(
-            path = path.ifEmpty { "/default/mobile/client/path" }
+    fun buildCommand(): MobileClientExportCommand =
+        MobileClientExportCommand(
+            path = path.ifEmpty { "/default/mobile/client/path" },
         )
-    }
 }

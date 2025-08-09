@@ -2,7 +2,7 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.common
 
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
-import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
+import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
 import kotlinx.coroutines.runBlocking
 import org.springframework.stereotype.Component
 
@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component
  */
 @Component
 class PlatformUtilityContext(
-    private val utilLocator: CrossPlatformUtilLocator,
-    val version: String?
+    private val utilLocator: UtilityLocator,
+    val version: String?,
 ) {
     private var lastError: String? = null
     private var lastOutput: String = ""
@@ -22,18 +22,15 @@ class PlatformUtilityContext(
     /**
      * Получает локацию утилиты указанного типа
      */
-    suspend fun locateUtility(utilityType: UtilityType): UtilityLocation {
-        return utilLocator.locateUtility(utilityType, version)
-    }
+    suspend fun locateUtility(utilityType: UtilityType): UtilityLocation = utilLocator.locateUtility(utilityType, version)
 
     /**
      * Синхронная версия получения локации утилиты
      */
-    fun locateUtilitySync(utilityType: UtilityType): UtilityLocation {
-        return runBlocking {
+    fun locateUtilitySync(utilityType: UtilityType): UtilityLocation =
+        runBlocking {
             locateUtility(utilityType)
         }
-    }
 
     /**
      * Устанавливает результат выполнения операции
@@ -43,7 +40,7 @@ class PlatformUtilityContext(
         output: String,
         error: String?,
         exitCode: Int,
-        duration: kotlin.time.Duration
+        duration: kotlin.time.Duration,
     ) {
         this.lastOutput = output
         this.lastError = error
@@ -54,55 +51,49 @@ class PlatformUtilityContext(
     /**
      * Строит результат выполнения операций
      */
-    fun buildResult(): PlatformUtilityResult {
-        return PlatformUtilityResult(
+    fun buildResult(): PlatformUtilityResult =
+        PlatformUtilityResult(
             success = lastExitCode == 0,
             output = lastOutput,
             error = lastError,
             exitCode = lastExitCode,
-            duration = lastDuration
+            duration = lastDuration,
         )
-    }
 
     /**
      * Проверяет, доступна ли утилита
      */
-    suspend fun isUtilityAvailable(utilityType: UtilityType): Boolean {
-        return try {
+    suspend fun isUtilityAvailable(utilityType: UtilityType): Boolean =
+        try {
             val location = locateUtility(utilityType)
             utilLocator.validateUtility(location)
         } catch (e: Exception) {
             false
         }
-    }
 
     /**
      * Синхронная версия проверки доступности утилиты
      */
-    fun isUtilityAvailableSync(utilityType: UtilityType): Boolean {
-        return runBlocking {
+    fun isUtilityAvailableSync(utilityType: UtilityType): Boolean =
+        runBlocking {
             isUtilityAvailable(utilityType)
         }
-    }
 
     /**
      * Получает путь к указанной утилите
      */
-    fun getUtilityPath(utilityType: UtilityType): String {
-        return try {
+    fun getUtilityPath(utilityType: UtilityType): String =
+        try {
             val location = locateUtilitySync(utilityType)
             location.executablePath.toString()
         } catch (e: Exception) {
             "/path/to/default/utility"
         }
-    }
 
     /**
      * Получает путь к утилите ibcmd
      */
-    fun getUtilityPath(): String {
-        return getUtilityPath(UtilityType.IBCMD)
-    }
+    fun getUtilityPath(): String = getUtilityPath(UtilityType.IBCMD)
 }
 
 /**
@@ -113,5 +104,5 @@ data class PlatformUtilityResult(
     val output: String,
     val error: String?,
     val exitCode: Int,
-    val duration: kotlin.time.Duration
-) 
+    val duration: kotlin.time.Duration,
+)

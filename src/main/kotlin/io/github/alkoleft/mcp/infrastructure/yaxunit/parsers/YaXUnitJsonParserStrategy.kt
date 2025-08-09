@@ -12,18 +12,13 @@ private val logger = KotlinLogging.logger { }
  * Использует JsonReportParserStrategy для обработки
  */
 class YaXUnitJsonParserStrategy : ReportParserStrategy {
-
     private val jsonParser = JsonReportParserStrategy()
 
     override suspend fun parse(input: InputStream) = jsonParser.parse(input)
 
-    override fun canHandle(format: ReportFormat): Boolean {
-        return format == ReportFormat.YAXUNIT_JSON
-    }
+    override fun canHandle(format: ReportFormat): Boolean = format == ReportFormat.YAXUNIT_JSON
 
-    override fun getSupportedFormats(): Set<ReportFormat> {
-        return setOf(ReportFormat.YAXUNIT_JSON)
-    }
+    override fun getSupportedFormats(): Set<ReportFormat> = setOf(ReportFormat.YAXUNIT_JSON)
 
     override suspend fun detectFormat(input: InputStream): ReportFormat {
         val content = String(input.readAllBytes())
