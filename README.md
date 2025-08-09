@@ -70,24 +70,9 @@ flowchart LR
 ./gradlew bootJar
 ```
 
-## Конфигурация
-
-### Переменные окружения
-- `YAXUNIT_TESTS_PATH` - путь к директории с тестами
-- `YAXUNIT_BUILD_TIMEOUT` - таймаут сборки (мс)
-- `YAXUNIT_TEST_TIMEOUT` - таймаут выполнения тестов (мс)
-
-
-## Запуск
-
-### Как MCP-сервер
+## Запуск MCP-сервер
 ```bash
-java -jar mcp-yaxunit-runner.jar mcp
-```
-
-### Как CLI-приложение
-```bash
-java -jar mcp-yaxunit-runner.jar test run-all
+java -jar mcp-yaxunit-runner.jar
 ```
 
 ## Интеграция с AI-ассистентами

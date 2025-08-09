@@ -1,4 +1,4 @@
-package io.github.alkoleft.mcp.interfaces.mcp
+package io.github.alkoleft.mcp.server
 
 import org.springframework.ai.tool.ToolCallbackProvider
 import org.springframework.ai.tool.method.MethodToolCallbackProvider

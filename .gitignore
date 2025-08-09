@@ -43,3 +43,5 @@ bin/
 logs/
 *.log
 *.db
+*.wal.*
+*.gz

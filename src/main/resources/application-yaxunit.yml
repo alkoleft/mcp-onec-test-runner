@@ -3,6 +3,7 @@
 
 # Базовые настройки приложения
 app:
+  id: yaxunit
   # Базовый путь к проекту
   base-path: "/home/akoryakin@dellin.local/Загрузки/sources/"
   

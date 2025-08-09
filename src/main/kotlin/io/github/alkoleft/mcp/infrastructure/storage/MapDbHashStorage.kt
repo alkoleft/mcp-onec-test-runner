@@ -1,5 +1,6 @@
 package io.github.alkoleft.mcp.infrastructure.storage
 
+import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
@@ -11,6 +12,7 @@ import kotlinx.coroutines.withContext
 import org.mapdb.DB
 import org.mapdb.DBMaker
 import org.mapdb.Serializer
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.nio.file.Files
 import java.nio.file.Path
@@ -24,14 +26,17 @@ import java.util.concurrent.ConcurrentMap
 private val logger = KotlinLogging.logger {  }
 
 @Component
-class MapDbHashStorage {
+class MapDbHashStorage(
+    private val properties: ApplicationProperties,
+    @Value("\${spring.application.name}") private val applicationName: String
+) {
     private val mutex = Mutex()
 
     private lateinit var db: DB
     private lateinit var hashMap: ConcurrentMap<String, String>
     private lateinit var timestampMap: ConcurrentMap<String, Long>
 
-    private val dbPath = Paths.get(".yaxunit", "file-hashes.db")
+    private val dbPath = getDbPath()
 
     @PostConstruct
     private fun initialize() {
@@ -293,6 +298,13 @@ class MapDbHashStorage {
             close()
         }
     }
+
+    private fun getDbPath(): Path =
+        if (properties.id != null && properties.id.isNotBlank()) {
+            properties.id
+        } else {
+            calculateStringHash(properties.basePath.toString())
+        }.let { Paths.get(".$applicationName-${it}-storage", "file-hashes.db") }
 }
 
 /**

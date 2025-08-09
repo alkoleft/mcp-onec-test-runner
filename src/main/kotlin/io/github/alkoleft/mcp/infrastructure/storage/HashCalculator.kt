@@ -31,3 +31,10 @@ suspend fun calculateFileHash(file: Path): String =
             throw e
         }
     }
+
+fun calculateStringHash(value: String): String {
+    val digest = MessageDigest.getInstance("SHA-256")
+    val bytes = digest.digest(value.toByteArray(Charsets.UTF_8))
+    return bytes.fold("") { str, it -> str + "%02x".format(it) }
+}
+

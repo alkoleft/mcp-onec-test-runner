@@ -1,4 +1,4 @@
-package io.github.alkoleft.mcp.interfaces.mcp
+package io.github.alkoleft.mcp.server
 
 import io.github.alkoleft.mcp.application.services.LauncherService
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
