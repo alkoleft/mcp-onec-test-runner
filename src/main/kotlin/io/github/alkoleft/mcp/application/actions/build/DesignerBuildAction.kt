@@ -8,6 +8,8 @@ import io.github.alkoleft.mcp.configuration.properties.SourceSetType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.ConfiguratorResult
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.stereotype.Component
 import java.nio.file.Path
 
 private val logger = KotlinLogging.logger { }
@@ -15,6 +17,8 @@ private val logger = KotlinLogging.logger { }
 /**
  * Реализация BuildAction для сборки через конфигуратор 1С
  */
+@Component
+@ConditionalOnProperty(name = ["app.tools.builder"], havingValue = "DESIGNER")
 class DesignerBuildAction(
     dsl: PlatformDsl,
 ) : AbstractBuildAction(dsl) {
@@ -32,7 +36,7 @@ class DesignerBuildAction(
 
         var buildResult: BuildResult? = null
 
-        dsl.configurator(properties.platformVersion) {
+        dsl.configurator {
             // Подключаемся к информационной базе
             connect(properties.connection.connectionString)
 

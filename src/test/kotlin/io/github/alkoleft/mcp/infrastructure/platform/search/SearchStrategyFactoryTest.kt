@@ -20,10 +20,10 @@ class SearchStrategyFactoryTest {
         assertNotNull(strategy, "Strategy should not be null")
         when (PlatformDetector.current) {
             PlatformType.WINDOWS -> {
-                assertTrue(strategy is WindowsSearchStrategy, "Should create WindowsSearchStrategy for Windows platform")
+                assertTrue(strategy is PlatformWindowsSearchStrategy, "Should create WindowsSearchStrategy for Windows platform")
             }
             PlatformType.LINUX, PlatformType.MACOS -> {
-                assertTrue(strategy is LinuxSearchStrategy, "Should create LinuxSearchStrategy for Linux/MacOS platform")
+                assertTrue(strategy is PlatformLinuxSearchStrategy, "Should create LinuxSearchStrategy for Linux/MacOS platform")
             }
         }
     }
@@ -36,7 +36,7 @@ class SearchStrategyFactoryTest {
         // Act & Assert
         if (PlatformDetector.current == PlatformType.WINDOWS) {
             val strategy = factory.createSearchStrategy()
-            assertTrue(strategy is WindowsSearchStrategy, "Should create WindowsSearchStrategy for Windows platform")
+            assertTrue(strategy is PlatformWindowsSearchStrategy, "Should create WindowsSearchStrategy for Windows platform")
         } else {
             // Skip test if not on Windows platform
             assertTrue(true, "Test skipped - not on Windows platform")
@@ -51,7 +51,7 @@ class SearchStrategyFactoryTest {
         // Act & Assert
         if (PlatformDetector.current == PlatformType.LINUX) {
             val strategy = factory.createSearchStrategy()
-            assertTrue(strategy is LinuxSearchStrategy, "Should create LinuxSearchStrategy for Linux platform")
+            assertTrue(strategy is PlatformLinuxSearchStrategy, "Should create LinuxSearchStrategy for Linux platform")
         } else {
             // Skip test if not on Linux platform
             assertTrue(true, "Test skipped - not on Linux platform")
@@ -66,7 +66,7 @@ class SearchStrategyFactoryTest {
         // Act & Assert
         if (PlatformDetector.current == PlatformType.MACOS) {
             val strategy = factory.createSearchStrategy()
-            assertTrue(strategy is LinuxSearchStrategy, "Should create LinuxSearchStrategy for MacOS platform")
+            assertTrue(strategy is PlatformLinuxSearchStrategy, "Should create LinuxSearchStrategy for MacOS platform")
         } else {
             // Skip test if not on MacOS platform
             assertTrue(true, "Test skipped - not on MacOS platform")
@@ -116,8 +116,8 @@ class SearchStrategyFactoryTest {
         // Assert
         assertNotNull(strategy, "Strategy should be created for any supported platform")
         assertTrue(
-            strategy is WindowsSearchStrategy || strategy is LinuxSearchStrategy,
-            "Strategy should be either WindowsSearchStrategy or LinuxSearchStrategy",
+            strategy is PlatformWindowsSearchStrategy || strategy is PlatformLinuxSearchStrategy,
+            "Strategy should be either WindowsSearchStrategy or LinuxSearchStrategy"
         )
     }
 }

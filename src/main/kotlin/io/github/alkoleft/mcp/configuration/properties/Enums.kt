@@ -8,12 +8,18 @@ enum class SourceSetType {
     EXTENSION,
 }
 
+enum class ProjectFormat {
+    DESIGNER,
+    EDT
+}
+
 /**
  * Тип сборщика
  */
 enum class BuilderType {
     DESIGNER,
     IBMCMD,
+    EDT
 }
 
 /**

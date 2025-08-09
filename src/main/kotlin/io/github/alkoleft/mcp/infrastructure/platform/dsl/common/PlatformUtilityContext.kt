@@ -1,5 +1,6 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.common
 
+import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Component
 @Component
 class PlatformUtilityContext(
     private val utilLocator: UtilityLocator,
-    val version: String?,
+    private val properties: ApplicationProperties
 ) {
     private var lastError: String? = null
     private var lastOutput: String = ""
@@ -22,7 +23,12 @@ class PlatformUtilityContext(
     /**
      * Получает локацию утилиты указанного типа
      */
-    suspend fun locateUtility(utilityType: UtilityType): UtilityLocation = utilLocator.locateUtility(utilityType, version)
+    suspend fun locateUtility(utilityType: UtilityType): UtilityLocation {
+        return utilLocator.locateUtility(
+            utilityType,
+            version = if (utilityType.isPlatform()) properties.platformVersion else "latest"
+        )
+    }
 
     /**
      * Синхронная версия получения локации утилиты
@@ -67,16 +73,8 @@ class PlatformUtilityContext(
         try {
             val location = locateUtility(utilityType)
             utilLocator.validateUtility(location)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
-        }
-
-    /**
-     * Синхронная версия проверки доступности утилиты
-     */
-    fun isUtilityAvailableSync(utilityType: UtilityType): Boolean =
-        runBlocking {
-            isUtilityAvailable(utilityType)
         }
 
     /**

@@ -75,12 +75,11 @@ class CrossPlatformUtilLocatorTest {
     fun `should validate utility location correctly`() {
         // Arrange
         val locator = UtilityLocator()
-        val testLocation =
-            UtilityLocation(
-                executablePath = Paths.get("/non/existent/path"),
-                version = "8.3.24",
-                platformType = PlatformType.LINUX,
-            )
+        val testLocation = UtilityLocation(
+            executablePath = Paths.get("/non/existent/path"),
+            version = "8.3.24",
+            platformType = PlatformType.LINUX
+        )
 
         // Act
         val result =

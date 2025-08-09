@@ -1,7 +1,6 @@
 package io.github.alkoleft.mcp.core.modules
 
 import io.github.alkoleft.mcp.application.actions.change.ChangesSet
-import java.io.InputStream
 import java.nio.file.Path
 
 /**
@@ -45,20 +44,6 @@ data class YaXUnitExecutionResult(
     val errorOutput: String,
     val duration: java.time.Duration,
 )
-
-/**
- * Report parsing
- */
-interface ReportParser {
-    suspend fun parseReport(
-        input: InputStream,
-        format: ReportFormat,
-    ): GenericTestReport
-
-    suspend fun detectFormat(input: InputStream): ReportFormat
-
-    fun getSupportedFormats(): Set<ReportFormat>
-}
 
 enum class ReportFormat {
     JUNIT_XML,

@@ -1,11 +1,12 @@
 package io.github.alkoleft.mcp
 
+import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.infrastructure.utility.PlatformDetector
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 
-@EnableConfigurationProperties
+@EnableConfigurationProperties(ApplicationProperties::class)
 @SpringBootApplication
 class McpYaxUnitRunnerApplication
 

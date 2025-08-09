@@ -9,7 +9,7 @@ import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
-import io.github.alkoleft.mcp.infrastructure.yaxunit.EnhancedReportParser
+import io.github.alkoleft.mcp.infrastructure.yaxunit.ReportParser
 import io.github.alkoleft.mcp.infrastructure.yaxunit.YaXUnitRunner
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +28,7 @@ private val logger = KotlinLogging.logger { }
 class YaXUnitTestAction(
     private val platformDsl: PlatformDsl,
     private val utilLocator: UtilityLocator,
-    private val reportParser: EnhancedReportParser,
+    private val reportParser: ReportParser
 ) : RunTestAction {
     override suspend fun run(request: TestExecutionRequest): TestExecutionResult {
         val startTime = Instant.now()

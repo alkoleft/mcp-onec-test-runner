@@ -100,13 +100,11 @@ class YaXUnitRunner(
      */
     private suspend fun executeTests(
         request: TestExecutionRequest,
-        configPath: Path,
-    ): PlatformUtilityResult =
-        platformDsl
-            .enterprise(request.platformVersion) {
-                connect(request.ibConnection)
-                request.user?.ifNoBlank { user(it) }
-                request.password?.ifNoBlank { password(it) }
-                runArguments("RunUnitTests=${configPath.toAbsolutePath()}")
-            }.run()
+        configPath: Path
+    ): PlatformUtilityResult = platformDsl.enterprise {
+        connect(request.ibConnection)
+        request.user?.ifNoBlank { user(it) }
+        request.password?.ifNoBlank { password(it) }
+        runArguments("RunUnitTests=${configPath.toAbsolutePath()}")
+    }.run()
 }

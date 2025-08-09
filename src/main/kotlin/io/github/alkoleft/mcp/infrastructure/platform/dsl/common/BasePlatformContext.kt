@@ -92,7 +92,9 @@ abstract class BasePlatformContext(
         val args = mutableListOf<String>()
         val location = platformContext.locateUtility(utilityType)
         args.add(location.executablePath.toString())
-        args.add(mode)
+        if (mode.isNotBlank()) {
+            args.add(mode)
+        }
 
         connectionString.ifNoBlank {
             args.add("/IBConnectionString")

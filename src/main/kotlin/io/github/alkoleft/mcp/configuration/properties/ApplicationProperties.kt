@@ -11,6 +11,7 @@ import java.nio.file.Path
 @ConfigurationProperties(prefix = "app")
 data class ApplicationProperties(
     val id: String? = null,
+    val format: ProjectFormat = ProjectFormat.DESIGNER,
     val basePath: Path,
     val sourceSet: SourceSet = SourceSet(),
     val connection: ConnectionProperties = ConnectionProperties(),

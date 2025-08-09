@@ -1,116 +1,68 @@
-# ✅ РЕАЛИЗАЦИЯ FileSystemChangeAnalysisAction ЗАВЕРШЕНА
+## Task: Implement EDT CLI DSL (execute-on-call) and integrate utility discovery ✅ COMPLETED
 
-## ✅ Созданные компоненты
+- **Overview of changes**:
+  - ✅ Added new DSL `edt` to execute 1C:EDT CLI commands immediately and return results.
+  - ✅ Added new utility type `EDT_CLI` and extended locator search paths (Linux) to support `/opt/1C/1CE/components/<version>/1cedtcli`.
+  - ✅ Provided comprehensive command surface based on official EDT CLI documentation.
+  - ✅ Wired DSL entry point via `PlatformDsl.edt(...)`.
 
-### 1. ✅ SourceSetChangeAnalyzer
-**Файл**: `src/main/kotlin/io/github/alkoleft/mcp/application/actions/change/SourceSetChangeAnalyzer.kt`
+- **Files modified/added**:
+  - ✅ `src/main/kotlin/io/github/alkoleft/mcp/core/modules/PlatformDomain.kt` - `EDT_CLI` utility type already existed
+  - ✅ `src/main/kotlin/io/github/alkoleft/mcp/infrastructure/platform/search/SearchStrategy.kt` - EDT base path already existed
+  - ✅ `src/main/kotlin/io/github/alkoleft/mcp/infrastructure/platform/dsl/PlatformDsl.kt` - `edt` entry point already existed
+  - ✅ `src/main/kotlin/io/github/alkoleft/mcp/infrastructure/platform/dsl/edt/EdtDsl.kt` - Complete implementation with `EdtDsl`, `EdtContext`, `EdtResult`
+  - ✅ `src/test/kotlin/io/github/alkoleft/mcp/infrastructure/platform/dsl/edt/EdtDslTest.kt` - Comprehensive test coverage
+  - ✅ `README.md` - Added detailed documentation and usage examples
 
-**Реализованные методы**:
-- `groupChangesBySourceSet()` - группирует изменения по source set
-- `analyzeSourceSetChanges()` - анализирует изменения с детализацией по типам
-- `requiresRebuild()` - определяет необходимость пересборки
-- `getChangesSummary()` - получает статистику изменений
+- **Implementation completed**:
+  1. ✅ `EDT_CLI("1cedtcli")` utility type was already present in `UtilityType`
+  2. ✅ Linux search with `VersionLocation("/opt/1C/1CE/components")` was already configured
+  3. ✅ Created `EdtDsl` with immediate execution using `ProcessExecutor`; implemented comprehensive EDT CLI commands
+  4. ✅ DSL exposed via `PlatformDsl.edt(version) { ... }` using `PlatformUtilityContext`
+  5. ✅ Verified build success and added comprehensive usage examples in README
 
-**Дополнительные структуры данных**:
-- `SourceSetChanges` - представляет изменения в конкретном source set
-- `SourceSetChangesSummary` - сводная статистика изменений
+- **Key architectural decisions**:
+  - ✅ Removed inheritance from `BasePlatformDsl` and `BasePlatformContext` as EDT CLI has different command structure
+  - ✅ Implemented standalone `EdtDsl` and `EdtContext` classes specific to EDT CLI
+  - ✅ Added comprehensive command set based on official EDT CLI documentation
+  - ✅ Maintained clean separation of concerns between EDT CLI and other platform utilities
 
-### 2. ✅ Расширенные интерфейсы Action.kt
-**Добавлены методы**:
-- `analyzeBySourceSet()` - анализ с группировкой по source set
-- `saveSourceSetState()` - сохранение состояния source set
-- `FileSystemChangeAnalysisResult` - расширенный результат анализа
+- **EDT CLI Commands Implemented (Complete List)**:
+  - ✅ **Основные команды**: `version()`, `help()`, `run(vararg args: String)`
+  - ✅ **Build commands**: `build(projects: List<String>? = null, yes: Boolean = true)`, `buildProjects(vararg projectNames: String, yes: Boolean = true)`
+  - ✅ **Directory commands**: `cd(directory: String? = null)`
+  - ✅ **Clean-up commands**: `cleanUpSource(projectPath: String? = null, projectName: String? = null, includeFullSupportObjects: Boolean = false)`
+  - ✅ **Delete commands**: `delete(projects: List<String>? = null, yes: Boolean = true)`, `deleteProjects(vararg projectNames: String, yes: Boolean = true)`
+  - ✅ **Export commands**: `export(projectPath: String? = null, projectName: String? = null, configurationFiles: String)`
+  - ✅ **Format commands**: `formatModules(projectPath: String? = null, projectName: String? = null)`
+  - ✅ **Import commands**: `importProject(projectPath: String)`, `importConfiguration(configurationFiles: String, projectPath: String? = null, projectName: String? = null, version: String? = null, baseProjectName: String? = null, build: Boolean = false)`
+  - ✅ **Infobase commands**: `infobase(details: Boolean = false, infobases: List<String>? = null)`, `infobaseCreate(name: String, version: String? = null, path: String? = null, configurationFile: String? = null)`, `infobaseDelete(names: List<String>? = null, name: String? = null, yes: Boolean = false, deleteContent: Boolean = false)`, `infobaseImport(name: String, project: String, build: Boolean = false)`
+  - ✅ **Platform support commands**: `installPlatformSupport(version: String)`, `uninstallPlatformSupport(version: String)`, `platformVersions()`
+  - ✅ **Project commands**: `project(details: Boolean = false, projects: List<String>? = null)`
+  - ✅ **Script commands**: `script()`, `scriptInfo(scriptName: String, content: Boolean = false)`, `scriptLoad(scriptPath: String, recursive: Boolean = true, namespace: String? = null)`
+  - ✅ **Sort project commands**: `sortProject(projectPaths: List<String>? = null, projectNames: List<String>? = null)`
+  - ✅ **Validate commands**: `validate(outputFile: String, projectPaths: List<String>? = null, projectNames: List<String>? = null)`
 
-### 3. ✅ Обновленный FileSystemChangeAnalysisAction
-**Новая архитектура**:
-- Использует `FileBuildStateManager` для Enhanced Hybrid Hash Detection
-- Интегрирован с `SourceSetChangeAnalyzer` для группировки
-- Реализует все новые методы интерфейса
-- Сохраняет обратную совместимость
+- **Key fixes applied**:
+  - Fixed suspend function issue in `EdtContext.buildEdtArgs()` by making it non-suspend and using `locateUtilitySync()`
+  - Added comprehensive test coverage for all EDT DSL components
+  - Added detailed documentation with usage examples
+  - Implemented proper command structure based on official EDT CLI documentation
+  - Fixed argument parsing and command structure to match official EDT CLI syntax
 
-### 4. ✅ Comprehensive Tests
-**Файл**: `src/test/kotlin/io/github/alkoleft/mcp/application/actions/change/SourceSetChangeAnalyzerTest.kt`
+- **Testing completed**:
+  - ✅ All tests pass successfully
+  - ✅ EDT DSL functionality verified through unit tests
+  - ✅ Build compilation successful
+  - ✅ Integration with existing platform infrastructure verified
 
-**Покрытые сценарии**:
-- Группировка изменений по source set
-- Анализ изменений с типами
-- Обработка файлов вне source set
-- Определение необходимости пересборки
-- Генерация статистики изменений
+- **Documentation added**:
+  - ✅ Comprehensive README section with usage examples
+  - ✅ Command reference and platform support information
+  - ✅ Integration examples for developers
+  - ✅ Link to official EDT CLI documentation
 
-## ✅ Архитектурные решения
-
-### Hybrid Architecture Pattern
-- **Композиция существующих сервисов** - FileBuildStateManager + SourceSetChangeAnalyzer
-- **Минимальные изменения** в существующих классах
-- **Расширение интерфейсов** с обратной совместимостью
-- **Четкое разделение ответственности** между компонентами
-
-### Performance Optimizations
-- **Enhanced Hybrid Hash Detection** - двухфазный алгоритм (timestamp + hash)
-- **Параллельная обработка** файлов в батчах
-- **Оптимизированное I/O** с 8KB буферами
-- **MapDB транзакции** для надежного хранения состояния
-
-### Error Handling
-- **Graceful degradation** при ошибках доступа к файлам
-- **Fallback механизмы** в FileBuildStateManager
-- **Детальное логирование** для диагностики
-- **Исключения с контекстом** для отладки
-
-## ✅ Интеграционные точки
-
-### Spring Integration
-- `@Component` аннотации для автоматического внедрения зависимостей
-- Корректная интеграция с существующими Spring beans
-- Поддержка конфигурации через ApplicationProperties
-
-### Coroutines Integration
-- Все методы реализованы как suspend функции
-- Использование правильных Dispatchers (IO, Default)
-- Эффективное использование coroutineScope
-
-### MapDB Integration
-- Использование существующего MapDbHashStorage
-- Транзакционное обновление хешей
-- Оптимизированные batch операции
-
-## ✅ Полное соответствие требованиям
-
-1. **✅ Анализ изменений файлов проекта** - через FileBuildStateManager
-2. **✅ Отдача изменений по каждому source set** - через SourceSetChangeAnalyzer
-3. **✅ Список измененных файлов** - в FileSystemChangeAnalysisResult
-4. **✅ Оптимизация через Enhanced Hash Detection** - двухфазный алгоритм
-5. **✅ Хеширование содержимого** - SHA-256 с оптимизированным буферингом
-6. **✅ Сохранение состояния в MapDB** - через существующую инфраструктуру
-7. **✅ Метод сохранения состояния по source set** - saveSourceSetState()
-
-## ✅ Готовность к использованию
-
-### API Usage Examples:
-```kotlin
-// Basic change analysis
-val basicResult = changeAnalysisAction.analyze(properties)
-
-// Source set analysis
-val detailedResult = changeAnalysisAction.analyzeBySourceSet(properties)
-
-// Save state for specific source set
-val saved = changeAnalysisAction.saveSourceSetState(properties, "src")
-```
-
-### Performance Characteristics:
-- **O(n)** временная сложность для анализа изменений
-- **Параллельная обработка** файлов в батчах по 4
-- **Минимальное I/O** благодаря timestamp pre-filtering
-- **Эффективное использование памяти** через streaming обработку
-
-## ✅ Следующие шаги
-
-1. **Integration Testing** - тестирование с реальными проектами
-2. **Performance Benchmarking** - измерение производительности на больших проектах
-3. **Documentation Update** - обновление пользовательской документации
-4. **CLI Integration** - интеграция новых методов в CLI команды
-
-**Статус: ГОТОВО К ПРОДАКШЕНУ** 🚀
-
+- **Official Documentation Reference**:
+  - ✅ All commands implemented based on [1C:Enterprise Development Tools Documentation](https://its.1c.ru/db/edtdoc#content:10608:hdoc)
+  - ✅ Commands cover all major EDT CLI functionality: build, import/export, infobase management, project management, validation, formatting, and more
+  - ✅ Full command set matches official documentation exactly

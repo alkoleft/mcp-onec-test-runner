@@ -13,7 +13,7 @@ class SearchStrategyTest {
     @Test
     fun `should generate correct paths for Windows strategy`() {
         // Arrange
-        val strategy = WindowsSearchStrategy()
+        val strategy = PlatformWindowsSearchStrategy
 
         // Act
         val tier1Paths = strategy.locations.flatMap { it.generatePaths(UtilityType.DESIGNER, null) }
@@ -41,7 +41,7 @@ class SearchStrategyTest {
     @Test
     fun `should generate correct paths for Linux strategy`() {
         // Arrange
-        val strategy = LinuxSearchStrategy()
+        val strategy = PlatformLinuxSearchStrategy
 
         // Act
         val tier1Paths = strategy.locations.flatMap { it.generatePaths(UtilityType.DESIGNER, null) }
