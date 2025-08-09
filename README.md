@@ -6,6 +6,42 @@
 
 Проект представляет собой MCP-сервер, который интегрируется с AI-моделями (Claude, GPT) для автоматизации тестирования проектов 1С:Предприятие с использованием фреймворка YaXUnit.
 
+```mermaid
+flowchart LR
+    subgraph " "
+        A["🚀 Запрос на<br/>выполнение тестов"]
+        B["🔍 Анализ<br/>изменений"]
+        C{"📊 Есть<br/>изменения?"}
+        D["🔨 Сборка<br/>проекта"]
+        E["🧪 Запуск<br/>тестов"]
+        F{"✅ Сборка<br/>успешна?"}
+        G["❌ Ошибка<br/>сборки"]
+        H["📋 Результат<br/>тестирования"]
+    end
+    
+    A --> B
+    B --> C
+    C -->|Да| D
+    C -->|Нет| E
+    D --> F
+    F -->|Да| E
+    F -->|Нет| G
+    E --> H
+    
+    %% Современные стили с градиентами и тенями
+    classDef startNode fill:#4FC3F7,stroke:#0277BD,stroke-width:3px,color:#fff,font-weight:bold
+    classDef processNode fill:#81C784,stroke:#388E3C,stroke-width:3px,color:#fff,font-weight:bold
+    classDef decisionNode fill:#FFB74D,stroke:#F57C00,stroke-width:3px,color:#fff,font-weight:bold
+    classDef successNode fill:#A5D6A7,stroke:#4CAF50,stroke-width:3px,color:#fff,font-weight:bold
+    classDef errorNode fill:#EF5350,stroke:#C62828,stroke-width:3px,color:#fff,font-weight:bold
+    
+    class A startNode
+    class B,D,E processNode
+    class C,F decisionNode
+    class H successNode
+    class G errorNode
+```
+  
 ## Основные возможности
 
 - Запуск всех тестов проекта

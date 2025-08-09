@@ -8,9 +8,8 @@ import io.github.alkoleft.mcp.application.actions.test.YaXUnitTestAction
 import io.github.alkoleft.mcp.configuration.properties.BuilderType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
-import io.github.alkoleft.mcp.infrastructure.process.EnhancedReportParser
-import io.github.alkoleft.mcp.infrastructure.process.JsonYaXUnitConfigWriter
 import io.github.alkoleft.mcp.infrastructure.storage.FileBuildStateManager
+import io.github.alkoleft.mcp.infrastructure.yaxunit.EnhancedReportParser
 
 /**
  * Фабрика для создания Actions
@@ -27,7 +26,6 @@ interface ActionFactory {
 class ActionFactoryImpl(
     private val platformDsl: PlatformDsl,
     private val utilLocator: CrossPlatformUtilLocator,
-    private val configWriter: JsonYaXUnitConfigWriter,
     private val reportParser: EnhancedReportParser,
     private val buildStateManager: FileBuildStateManager
 ) : ActionFactory {
@@ -44,6 +42,6 @@ class ActionFactoryImpl(
     }
 
     override fun createRunTestAction(): RunTestAction {
-        return YaXUnitTestAction(platformDsl, utilLocator, configWriter, reportParser)
+        return YaXUnitTestAction(platformDsl, utilLocator, reportParser)
     }
 } 

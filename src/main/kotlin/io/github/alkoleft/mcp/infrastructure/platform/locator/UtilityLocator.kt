@@ -4,7 +4,6 @@ import io.github.alkoleft.mcp.core.modules.TestExecutionError
 import io.github.alkoleft.mcp.core.modules.UtilLocator
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
-import io.github.alkoleft.mcp.infrastructure.platform.cache.UtilPathCache
 import io.github.alkoleft.mcp.infrastructure.platform.search.SearchLocation
 import io.github.alkoleft.mcp.infrastructure.platform.search.SearchStrategy
 import io.github.alkoleft.mcp.infrastructure.platform.search.SearchStrategyFactory

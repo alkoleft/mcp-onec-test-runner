@@ -1,4 +1,4 @@
-package io.github.alkoleft.mcp.infrastructure.process
+package io.github.alkoleft.mcp.infrastructure.yaxunit
 
 import io.github.alkoleft.mcp.core.modules.GenericTestCase
 import io.github.alkoleft.mcp.core.modules.GenericTestReport
@@ -24,7 +24,7 @@ class EnhancedReportParser : ReportParser {
         withContext(Dispatchers.IO) {
             require(format == ReportFormat.JUNIT_XML) { "Only JUNIT_XML format is supported" }
             parseJUnitXml(input)
-    }
+        }
 
     override suspend fun detectFormat(input: InputStream): ReportFormat = withContext(Dispatchers.IO) {
         val bytes = input.readAllBytes()

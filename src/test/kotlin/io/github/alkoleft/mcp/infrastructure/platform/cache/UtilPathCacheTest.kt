@@ -3,6 +3,7 @@ package io.github.alkoleft.mcp.infrastructure.platform.cache
 import io.github.alkoleft.mcp.core.modules.PlatformType
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilPathCache
 import java.nio.file.Paths
 import kotlin.test.Test
 import kotlin.test.assertEquals

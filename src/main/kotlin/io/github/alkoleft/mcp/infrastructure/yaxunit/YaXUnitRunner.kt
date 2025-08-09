@@ -1,12 +1,12 @@
-package io.github.alkoleft.mcp.infrastructure.process
+package io.github.alkoleft.mcp.infrastructure.yaxunit
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult
 import io.github.alkoleft.mcp.core.modules.YaXUnitRunner
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityResult
-import io.github.alkoleft.mcp.infrastructure.strategy.ErrorHandlerFactory
 import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
@@ -24,11 +24,10 @@ private val logger = KotlinLogging.logger { }
  * Интегрирован со стратегиями построения команд и обработки ошибок
  */
 class YaXUnitRunner(
-    private val platformDsl: PlatformDsl,
-    private val configWriter: JsonYaXUnitConfigWriter
-) : YaXUnitRunner {
+    private val platformDsl: PlatformDsl
 
-    private val errorHandlerFactory = ErrorHandlerFactory()
+) : YaXUnitRunner {
+    private val objectMapper = ObjectMapper()
 
     override suspend fun executeTests(
         utilityLocation: UtilityLocation,
@@ -38,9 +37,7 @@ class YaXUnitRunner(
         logger.info { "Starting YaXUnit test execution for ${request.javaClass.simpleName}" }
 
         // Создаем временную конфигурацию
-        val config = configWriter.createConfig(request)
-        val configPath = configWriter.writeConfig(config)
-
+        val (configPath, config) = createConfigFile(request)
         try {
             // Запускаем тесты через EnterpriseDsl
             logger.debug { "Executing tests via EnterpriseDsl" }
@@ -70,7 +67,6 @@ class YaXUnitRunner(
                 errorOutput = result.error ?: "",
                 duration = duration
             )
-
         } catch (e: Exception) {
             val duration = Duration.between(startTime, Instant.now())
             logger.error(e) { "YaXUnit test execution failed after ${duration.toSeconds()}s" }
@@ -85,6 +81,19 @@ class YaXUnitRunner(
         }
     }
 
+    private fun createConfigFile(request: TestExecutionRequest): Pair<Path, YaXUnitConfig> {
+        val config = request.toConfig()
+        config.validate().also {
+            if (!it.isValid) {
+                logger.warn { "Configuration validation failed: ${it.errors.joinToString(", ")}" }
+            }
+        }
+        val configPath = configPath()
+        objectMapper.writeValue(configPath.toFile(), config)
+
+        return configPath to config
+    }
+
     /**
      * Строит аргументы команды для запуска 1С:Предприятие
      */
@@ -97,31 +106,4 @@ class YaXUnitRunner(
         request.password?.ifNoBlank { password(it) }
         runArguments("RunUnitTests=${configPath.toAbsolutePath()}")
     }.run()
-
-    /**
-     * Определяет путь к отчету о тестировании
-     */
-    private fun determineReportPath(request: TestExecutionRequest, configPath: Path): Path? {
-        // Пытаемся найти отчет в нескольких возможных местах
-        val possiblePaths = listOf(
-            request.testsPath.resolve("reports").resolve("report.xml"),
-            request.testsPath.resolve("reports").resolve("junit.xml"),
-            request.testsPath.resolve("report.xml"),
-            request.testsPath.resolve("junit.xml"),
-            configPath.parent.resolve("report.xml"),
-            configPath.parent.resolve("junit.xml")
-        )
-
-        logger.debug { "Searching for test report in possible paths: ${possiblePaths.joinToString(", ")}" }
-
-        for (path in possiblePaths) {
-            if (Files.exists(path)) {
-                logger.info { "Found test report at: $path" }
-                return path
-            }
-        }
-
-        logger.warn { "Test report not found in any expected location" }
-        return null
-    }
 }

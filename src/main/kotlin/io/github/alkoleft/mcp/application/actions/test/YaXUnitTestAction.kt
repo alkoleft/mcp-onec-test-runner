@@ -5,17 +5,12 @@ import io.github.alkoleft.mcp.application.actions.exceptions.TestExecuteExceptio
 import io.github.alkoleft.mcp.core.modules.GenericTestReport
 import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
 import io.github.alkoleft.mcp.core.modules.TestExecutionResult
-import io.github.alkoleft.mcp.core.modules.TestStatus
 import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult
-import io.github.alkoleft.mcp.core.modules.strategy.ErrorContext
-import io.github.alkoleft.mcp.core.modules.strategy.ErrorResolution
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
-import io.github.alkoleft.mcp.infrastructure.process.EnhancedReportParser
-import io.github.alkoleft.mcp.infrastructure.process.JsonYaXUnitConfigWriter
-import io.github.alkoleft.mcp.infrastructure.process.YaXUnitRunner
-import io.github.alkoleft.mcp.infrastructure.strategy.ErrorHandlerFactory
+import io.github.alkoleft.mcp.infrastructure.yaxunit.EnhancedReportParser
+import io.github.alkoleft.mcp.infrastructure.yaxunit.YaXUnitRunner
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -33,11 +28,8 @@ private val logger = KotlinLogging.logger { }
 class YaXUnitTestAction(
     private val platformDsl: PlatformDsl,
     private val utilLocator: CrossPlatformUtilLocator,
-    private val configWriter: JsonYaXUnitConfigWriter,
     private val reportParser: EnhancedReportParser
 ) : RunTestAction {
-
-    private val errorHandlerFactory = ErrorHandlerFactory()
 
     override suspend fun run(request: TestExecutionRequest): TestExecutionResult {
         val startTime = Instant.now()
@@ -51,7 +43,7 @@ class YaXUnitTestAction(
                 logger.info { "Found ENTERPRISE utility at: ${utilityLocation.executablePath}" }
                 
                 // Создаем runner и выполняем тесты
-                val runner = YaXUnitRunner(platformDsl, configWriter)
+                val runner = YaXUnitRunner(platformDsl)
                 logger.info { "Executing tests via ProcessYaXUnitRunner" }
                 val executionResult = runner.executeTests(utilityLocation, request)
                 
@@ -77,34 +69,7 @@ class YaXUnitTestAction(
             } catch (e: Exception) {
                 val duration = Duration.between(startTime, Instant.now())
                 logger.error(e) { "YaXUnit test execution failed after ${duration.toSeconds()}s" }
-
-                // Обрабатываем ошибку с помощью цепочки обработчиков
-                val errorHandler = errorHandlerFactory.createErrorHandlerChain()
-                val errorContext = ErrorContext(
-                    request = request,
-                    utilityLocation = request.platformVersion,
-                    configPath = null,
-                    attempt = 1,
-                    maxAttempts = 3
-                )
-
-                val resolution = errorHandler.handle(e, errorContext)
-                when (resolution) {
-                    is ErrorResolution.Retry -> {
-                        logger.info { "Retrying test execution: ${resolution.reason}" }
-                        // TODO: Реализовать повторную попытку
-                        throw TestExecuteException("YaXUnit test execution failed: ${e.message}", e)
-                    }
-
-                    is ErrorResolution.Fail -> {
-                        logger.error { "Test execution failed: ${resolution.reason}" }
-                        throw TestExecuteException("YaXUnit test execution failed: ${resolution.reason}", e)
-                    }
-
-                    else -> {
-                        throw TestExecuteException("YaXUnit test execution failed: ${e.message}", e)
-                    }
-                }
+                throw TestExecuteException("YaXUnit test execution failed: ${e.message}", e)
             }
         }
     }
@@ -137,31 +102,5 @@ class YaXUnitTestAction(
             logger.warn { "No test report found at expected location" }
             null
         }
-    }
-    
-    /**
-     * Строит список ошибок
-     */
-    private fun buildErrorList(
-        executionResult: YaXUnitExecutionResult,
-        report: GenericTestReport?
-    ): List<String> {
-        val errors = mutableListOf<String>()
-        
-        // Добавляем ошибки выполнения процесса
-        if (!executionResult.success) {
-            errors.add("Process execution failed: ${executionResult.errorOutput}")
-        }
-        
-        // Добавляем ошибки из отчета
-        report?.testSuites?.forEach { testSuite ->
-            testSuite.testCases.filter { it.status == TestStatus.FAILED }
-                .forEach { testCase ->
-                    val errorMsg = testCase.errorMessage ?: "Test failed without error message"
-                    errors.add("${testCase.name}: $errorMsg")
-                }
-        }
-        
-        return errors
     }
 } 

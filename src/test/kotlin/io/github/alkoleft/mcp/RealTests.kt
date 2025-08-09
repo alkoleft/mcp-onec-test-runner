@@ -2,7 +2,6 @@ package io.github.alkoleft.mcp
 
 import io.github.alkoleft.mcp.application.actions.build.DesignerBuildAction
 import io.github.alkoleft.mcp.application.actions.test.YaXUnitTestAction
-import io.github.alkoleft.mcp.configuration.ActionConfiguration
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.ConnectionProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
@@ -15,12 +14,12 @@ import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.locator.CrossPlatformUtilLocator
-import io.github.alkoleft.mcp.infrastructure.process.EnhancedReportParser
-import io.github.alkoleft.mcp.infrastructure.process.JsonYaXUnitConfigWriter
+import io.github.alkoleft.mcp.infrastructure.yaxunit.EnhancedReportParser
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import kotlin.io.path.Path
 import kotlin.test.Ignore
 
@@ -31,10 +30,10 @@ const val version = "8.3.22.1709"
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.NONE,
 )
+@ActiveProfiles("test")
 class RealTests(
     @Autowired private val platformDsl: PlatformDsl,
     @Autowired private val utilLocator: CrossPlatformUtilLocator,
-    @Autowired private val configWriter: JsonYaXUnitConfigWriter,
     @Autowired private val reportParser: EnhancedReportParser
 ) {
     @Ignore
@@ -146,7 +145,7 @@ class RealTests(
     @Test
     fun yaxunitRealTestRunAll() {
         val properties = createTestApplicationProperties()
-        val action = YaXUnitTestAction(platformDsl, utilLocator, configWriter, reportParser)
+        val action = YaXUnitTestAction(platformDsl, utilLocator, reportParser)
 
         runBlocking {
             println("=== Запуск всех тестов YaXUnit ===")
@@ -158,7 +157,7 @@ class RealTests(
     @Test
     fun yaxunitRealTestRunModule() {
         val properties = createTestApplicationProperties()
-        val action = YaXUnitTestAction(platformDsl, utilLocator, configWriter, reportParser)
+        val action = YaXUnitTestAction(platformDsl, utilLocator, reportParser)
         val moduleName = "ОМ_ЮТКоллекции" // Модуль с тестами
 
         runBlocking {
@@ -171,7 +170,7 @@ class RealTests(
     @Test
     fun yaxunitRealTestRunSpecificTests() {
         val properties = createTestApplicationProperties()
-        val action = YaXUnitTestAction(platformDsl, utilLocator, configWriter, reportParser)
+        val action = YaXUnitTestAction(platformDsl, utilLocator, reportParser)
         val testNames = listOf("TestExample", "TestCalculator") // Примеры имен тестов
 
         runBlocking {
@@ -184,7 +183,7 @@ class RealTests(
     @Test
     fun yaxunitRealTestRunSingleTest() {
         val properties = createTestApplicationProperties()
-        val action = YaXUnitTestAction(platformDsl, utilLocator, configWriter, reportParser)
+        val action = YaXUnitTestAction(platformDsl, utilLocator, reportParser)
         val testName = "TestExample" // Пример имени теста
 
         runBlocking {

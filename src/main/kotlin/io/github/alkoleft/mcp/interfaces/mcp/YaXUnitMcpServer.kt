@@ -201,37 +201,6 @@ class YaXUnitMcpServer(
     }
 
     /**
-     * Получает информацию о доступных модулях
-     * @return Список доступных модулей для тестирования
-     */
-    @Tool(
-        name = "yaxunit_list_modules",
-        description = "Возвращает список доступных модулей для тестирования YaXUnit."
-    )
-    fun listModules(): ModuleListResult {
-        logger.info { "Получение списка доступных модулей" }
-        
-        return try {
-            // TODO: Implement module discovery logic
-            val modules = listOf("CommonModule", "TestModule", "ExampleModule")
-            ModuleListResult(
-                success = true,
-                message = "Найдено ${modules.size} модулей",
-                modules = modules,
-                totalCount = modules.size
-            )
-        } catch (e: Exception) {
-            logger.error(e) { "Ошибка при получении списка модулей" }
-            ModuleListResult(
-                success = false,
-                message = "Ошибка при получении списка модулей: ${e.message}",
-                modules = emptyList(),
-                totalCount = 0
-            )
-        }
-    }
-
-    /**
      * Проверяет статус платформы 1С
      * @return Статус и информация о платформе 1С
      */

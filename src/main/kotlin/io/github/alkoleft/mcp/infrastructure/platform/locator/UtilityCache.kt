@@ -1,4 +1,4 @@
-package io.github.alkoleft.mcp.infrastructure.platform.cache
+package io.github.alkoleft.mcp.infrastructure.platform.locator
 
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
@@ -14,7 +14,6 @@ private val logger = KotlinLogging.logger { }
  */
 class UtilPathCache {
     private val memoryCache = ConcurrentHashMap<CacheKey, CachedEntry>()
-    private val ttl = Duration.ofHours(24)
 
     data class CacheKey(
         val utility: UtilityType,
