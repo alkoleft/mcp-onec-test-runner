@@ -31,7 +31,7 @@ import kotlin.time.measureTime
  * - version: версия EDT и компонентов
  */
 class EdtDsl(
-    utilityContext: PlatformUtilityContext
+    utilityContext: PlatformUtilityContext,
 ) {
     private val context = EdtContext(utilityContext)
 
@@ -52,10 +52,14 @@ class EdtDsl(
     fun run(vararg args: String): EdtResult = executeEdt(args.toList())
 
     // Build commands
+
     /**
      * Build project(s). Cleans and rebuilds all or some projects.
      */
-    fun build(projects: List<String>? = null, yes: Boolean = true): EdtResult {
+    fun build(
+        projects: List<String>? = null,
+        yes: Boolean = true,
+    ): EdtResult {
         val args = mutableListOf("build")
         if (yes) args.add("--yes")
         projects?.let { args.addAll(it) }
@@ -65,29 +69,32 @@ class EdtDsl(
     /**
      * Build specific projects
      */
-    fun buildProjects(vararg projectNames: String, yes: Boolean = true): EdtResult =
-        build(projectNames.toList(), yes)
+    fun buildProjects(
+        vararg projectNames: String,
+        yes: Boolean = true,
+    ): EdtResult = build(projectNames.toList(), yes)
 
     // Directory commands
+
     /**
      * Show current working directory or change it
      */
-    fun cd(directory: String? = null): EdtResult {
-        return if (directory != null) {
+    fun cd(directory: String? = null): EdtResult =
+        if (directory != null) {
             executeEdt(listOf("cd", directory))
         } else {
             executeEdt(listOf("cd"))
         }
-    }
 
     // Clean-up commands
+
     /**
      * Optimize project data storage format
      */
     fun cleanUpSource(
         projectPath: String? = null,
         projectName: String? = null,
-        includeFullSupportObjects: Boolean = false
+        includeFullSupportObjects: Boolean = false,
     ): EdtResult {
         val args = mutableListOf("clean-up-source")
         when {
@@ -102,10 +109,14 @@ class EdtDsl(
     }
 
     // Delete commands
+
     /**
      * Delete projects
      */
-    fun delete(projects: List<String>? = null, yes: Boolean = true): EdtResult {
+    fun delete(
+        projects: List<String>? = null,
+        yes: Boolean = true,
+    ): EdtResult {
         val args = mutableListOf("delete")
         if (yes) args.add("--yes")
         projects?.let { args.addAll(it) }
@@ -115,17 +126,20 @@ class EdtDsl(
     /**
      * Delete specific projects
      */
-    fun deleteProjects(vararg projectNames: String, yes: Boolean = true): EdtResult =
-        delete(projectNames.toList(), yes)
+    fun deleteProjects(
+        vararg projectNames: String,
+        yes: Boolean = true,
+    ): EdtResult = delete(projectNames.toList(), yes)
 
     // Export commands
+
     /**
      * Export project to XML configuration files
      */
     fun export(
         projectPath: String? = null,
         projectName: String? = null,
-        configurationFiles: String
+        configurationFiles: String,
     ): EdtResult {
         val args = mutableListOf("export", "--configuration-files", configurationFiles)
         when {
@@ -137,10 +151,14 @@ class EdtDsl(
     }
 
     // Format commands
+
     /**
      * Format modules in project
      */
-    fun formatModules(projectPath: String? = null, projectName: String? = null): EdtResult {
+    fun formatModules(
+        projectPath: String? = null,
+        projectName: String? = null,
+    ): EdtResult {
         val args = mutableListOf("format-modules")
         when {
             projectPath != null -> args.addAll(listOf("--project", projectPath))
@@ -151,11 +169,11 @@ class EdtDsl(
     }
 
     // Import commands
+
     /**
      * Import project into workspace
      */
-    fun importProject(projectPath: String): EdtResult =
-        executeEdt(listOf("import", "--project", projectPath))
+    fun importProject(projectPath: String): EdtResult = executeEdt(listOf("import", "--project", projectPath))
 
     /**
      * Import XML configuration files into project
@@ -166,7 +184,7 @@ class EdtDsl(
         projectName: String? = null,
         version: String? = null,
         baseProjectName: String? = null,
-        build: Boolean = false
+        build: Boolean = false,
     ): EdtResult {
         val args = mutableListOf("import", "--configuration-files", configurationFiles)
         when {
@@ -181,10 +199,14 @@ class EdtDsl(
     }
 
     // Infobase commands
+
     /**
      * Show infobase list
      */
-    fun infobase(details: Boolean = false, infobases: List<String>? = null): EdtResult {
+    fun infobase(
+        details: Boolean = false,
+        infobases: List<String>? = null,
+    ): EdtResult {
         val args = mutableListOf("infobase")
         if (details) args.add("--details")
         infobases?.let { args.addAll(it) }
@@ -198,7 +220,7 @@ class EdtDsl(
         name: String,
         version: String? = null,
         path: String? = null,
-        configurationFile: String? = null
+        configurationFile: String? = null,
     ): EdtResult {
         val args = mutableListOf("infobase-create", "--name", name)
         version?.let { args.addAll(listOf("--version", it)) }
@@ -214,7 +236,7 @@ class EdtDsl(
         names: List<String>? = null,
         name: String? = null,
         yes: Boolean = false,
-        deleteContent: Boolean = false
+        deleteContent: Boolean = false,
     ): EdtResult {
         val args = mutableListOf("infobase-delete")
         when {
@@ -233,7 +255,7 @@ class EdtDsl(
     fun infobaseImport(
         name: String,
         project: String,
-        build: Boolean = false
+        build: Boolean = false,
     ): EdtResult {
         val args = mutableListOf("infobase-import", "--name", name, "--project", project)
         if (build) args.addAll(listOf("--build", "true"))
@@ -241,17 +263,16 @@ class EdtDsl(
     }
 
     // Platform support commands
+
     /**
      * Install platform support
      */
-    fun installPlatformSupport(version: String): EdtResult =
-        executeEdt(listOf("install-platform-support", "--version", version))
+    fun installPlatformSupport(version: String): EdtResult = executeEdt(listOf("install-platform-support", "--version", version))
 
     /**
      * Uninstall platform support
      */
-    fun uninstallPlatformSupport(version: String): EdtResult =
-        executeEdt(listOf("uninstall-platform-support", "--version", version))
+    fun uninstallPlatformSupport(version: String): EdtResult = executeEdt(listOf("uninstall-platform-support", "--version", version))
 
     /**
      * Show platform versions
@@ -259,10 +280,14 @@ class EdtDsl(
     fun platformVersions(): EdtResult = executeEdt(listOf("platform-versions"))
 
     // Project commands
+
     /**
      * Show project information
      */
-    fun project(details: Boolean = false, projects: List<String>? = null): EdtResult {
+    fun project(
+        details: Boolean = false,
+        projects: List<String>? = null,
+    ): EdtResult {
         val args = mutableListOf("project")
         if (details) args.add("--details")
         projects?.let { args.addAll(it) }
@@ -270,6 +295,7 @@ class EdtDsl(
     }
 
     // Script commands
+
     /**
      * Show available scripts
      */
@@ -278,7 +304,10 @@ class EdtDsl(
     /**
      * Show script information
      */
-    fun scriptInfo(scriptName: String, content: Boolean = false): EdtResult {
+    fun scriptInfo(
+        scriptName: String,
+        content: Boolean = false,
+    ): EdtResult {
         val args = mutableListOf("script", scriptName)
         if (content) args.add("--content")
         return executeEdt(args)
@@ -290,7 +319,7 @@ class EdtDsl(
     fun scriptLoad(
         scriptPath: String,
         recursive: Boolean = true,
-        namespace: String? = null
+        namespace: String? = null,
     ): EdtResult {
         val args = mutableListOf("script", "--load", scriptPath)
         if (recursive) args.addAll(listOf("--recursive", "true"))
@@ -299,12 +328,13 @@ class EdtDsl(
     }
 
     // Sort project commands
+
     /**
      * Sort project objects
      */
     fun sortProject(
         projectPaths: List<String>? = null,
-        projectNames: List<String>? = null
+        projectNames: List<String>? = null,
     ): EdtResult {
         val args = mutableListOf("sort-project")
         when {
@@ -316,13 +346,14 @@ class EdtDsl(
     }
 
     // Validate commands
+
     /**
      * Validate project
      */
     fun validate(
         outputFile: String,
         projectPaths: List<String>? = null,
-        projectNames: List<String>? = null
+        projectNames: List<String>? = null,
     ): EdtResult {
         val args = mutableListOf("validate", "--file", outputFile)
         when {
@@ -336,47 +367,47 @@ class EdtDsl(
     /**
      * Executes an EDT CLI command with specified arguments immediately.
      */
-    private fun executeEdt(arguments: List<String>): EdtResult {
-        return runBlocking {
-            val duration = measureTime {
-                try {
-                    val executor = ProcessExecutor()
-                    val args = context.buildEdtArgs(arguments)
-                    val result = executor.execute(args)
-                    context.setResult(
-                        success = result.exitCode == 0,
-                        output = result.output,
-                        error = result.error,
-                        exitCode = result.exitCode,
-                        duration = result.duration
-                    )
-                } catch (e: Exception) {
-                    context.setResult(
-                        success = false,
-                        output = "",
-                        error = e.message ?: "Unknown error",
-                        exitCode = -1,
-                        duration = Duration.ZERO
-                    )
+    private fun executeEdt(arguments: List<String>): EdtResult =
+        runBlocking {
+            val duration =
+                measureTime {
+                    try {
+                        val executor = ProcessExecutor()
+                        val args = context.buildEdtArgs(arguments)
+                        val result = executor.execute(args)
+                        context.setResult(
+                            success = result.exitCode == 0,
+                            output = result.output,
+                            error = result.error,
+                            exitCode = result.exitCode,
+                            duration = result.duration,
+                        )
+                    } catch (e: Exception) {
+                        context.setResult(
+                            success = false,
+                            output = "",
+                            error = e.message ?: "Unknown error",
+                            exitCode = -1,
+                            duration = Duration.ZERO,
+                        )
+                    }
                 }
-            }
 
             EdtResult(
                 success = context.buildResult().success,
                 output = context.buildResult().output,
                 error = context.buildResult().error,
                 exitCode = context.buildResult().exitCode,
-                duration = duration
+                duration = duration,
             )
         }
-    }
 }
 
 /**
  * Context for EDT CLI.
  */
 class EdtContext(
-    val platformContext: PlatformUtilityContext
+    val platformContext: PlatformUtilityContext,
 ) {
     private var lastError: String? = null
     private var lastOutput: String = ""
@@ -403,7 +434,7 @@ class EdtContext(
         output: String,
         error: String?,
         exitCode: Int,
-        duration: kotlin.time.Duration
+        duration: kotlin.time.Duration,
     ) {
         this.lastOutput = output
         this.lastError = error
@@ -414,15 +445,14 @@ class EdtContext(
     /**
      * Builds the result of execution
      */
-    fun buildResult(): EdtResult {
-        return EdtResult(
+    fun buildResult(): EdtResult =
+        EdtResult(
             success = lastExitCode == 0,
             output = lastOutput,
             error = lastError,
             exitCode = lastExitCode,
-            duration = lastDuration
+            duration = lastDuration,
         )
-    }
 }
 
 /**
@@ -433,7 +463,7 @@ data class EdtResult(
     val output: String,
     val error: String?,
     val exitCode: Int,
-    val duration: Duration
+    val duration: Duration,
 ) {
     companion object {
         val EMPTY = EdtResult(false, "", "", -1, Duration.ZERO)

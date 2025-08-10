@@ -39,15 +39,13 @@ class UtilityLocator {
         val searchStrategy = searchStrategyFactory.createSearchStrategy(utility)
         val location = searchStrategy.search(utility, version)
 
-            // Phase 3: Cache successful result
-            pathCache.store(utility, version, location)
+        // Phase 3: Cache successful result
+        pathCache.store(utility, version, location)
 
         return location
     }
 
-    fun validateUtility(location: UtilityLocation): Boolean {
-        return utilityValidator.validateUtility(location)
-    }
+    fun validateUtility(location: UtilityLocation): Boolean = utilityValidator.validateUtility(location)
 
     fun clearCache() {
         pathCache.clear()

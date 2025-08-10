@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component
  */
 @Component
 class PlatformDsl(
-    private val context: PlatformUtilityContext
+    private val context: PlatformUtilityContext,
 ) {
     /**
      * DSL для работы с конфигуратором 1С
@@ -53,4 +53,4 @@ class PlatformDsl(
         edtDsl.block()
         return edtDsl
     }
-} 
+}

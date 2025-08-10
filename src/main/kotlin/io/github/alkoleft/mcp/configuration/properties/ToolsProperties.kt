@@ -6,5 +6,5 @@ package io.github.alkoleft.mcp.configuration.properties
 data class ToolsProperties(
     val builder: BuilderType = BuilderType.DESIGNER,
     val edtVersion: String? = null,
-    val edtWorkSpace: String? = null
+    val edtWorkSpace: String? = null,
 )

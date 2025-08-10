@@ -14,7 +14,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class EdtDslTest {
-
     @Test
     fun `should create EdtDsl with context`() {
         val mockLocator = mock(UtilityLocator::class.java)
@@ -38,13 +37,14 @@ class EdtDslTest {
 
     @Test
     fun `should create EdtResult with correct properties`() {
-        val result = EdtResult(
-            success = true,
-            output = "test output",
-            error = null,
-            exitCode = 0,
-            duration = kotlin.time.Duration.ZERO
-        )
+        val result =
+            EdtResult(
+                success = true,
+                output = "test output",
+                error = null,
+                exitCode = 0,
+                duration = kotlin.time.Duration.ZERO,
+            )
 
         assertTrue(result.success)
         assertEquals("test output", result.output)
@@ -74,7 +74,7 @@ class EdtDslTest {
         val mockLocation = mock(UtilityLocation::class.java)
         `when`(mockLocation.executablePath).thenReturn(Paths.get("/opt/1C/1CE/components/1.0.0/1cedtcli"))
         `when`(platformContext.locateUtilitySync(UtilityType.EDT_CLI)).thenReturn(
-            mockLocation
+            mockLocation,
         )
 
         val args = edtContext.buildEdtArgs(listOf("version"))
@@ -93,7 +93,7 @@ class EdtDslTest {
         val mockLocation = mock(UtilityLocation::class.java)
         `when`(mockLocation.executablePath).thenReturn(Paths.get("/opt/1C/1CE/components/1.0.0/1cedtcli"))
         `when`(platformContext.locateUtilitySync(UtilityType.EDT_CLI)).thenReturn(
-            mockLocation
+            mockLocation,
         )
 
         val args = edtContext.buildEdtArgs(listOf("build", "--yes", "Project1", "Project2"))
@@ -115,7 +115,7 @@ class EdtDslTest {
         val mockLocation = mock(UtilityLocation::class.java)
         `when`(mockLocation.executablePath).thenReturn(Paths.get("/opt/1C/1CE/components/1.0.0/1cedtcli"))
         `when`(platformContext.locateUtilitySync(UtilityType.EDT_CLI)).thenReturn(
-            mockLocation
+            mockLocation,
         )
 
         val args = edtContext.buildEdtArgs(listOf("infobase", "--details"))
@@ -135,18 +135,19 @@ class EdtDslTest {
         val mockLocation = mock(UtilityLocation::class.java)
         `when`(mockLocation.executablePath).thenReturn(Paths.get("/opt/1C/1CE/components/1.0.0/1cedtcli"))
         `when`(platformContext.locateUtilitySync(UtilityType.EDT_CLI)).thenReturn(
-            mockLocation
+            mockLocation,
         )
 
-        val args = edtContext.buildEdtArgs(
-            listOf(
-                "export",
-                "--project-name",
-                "MyProject",
-                "--configuration-files",
-                "/path/to/config"
+        val args =
+            edtContext.buildEdtArgs(
+                listOf(
+                    "export",
+                    "--project-name",
+                    "MyProject",
+                    "--configuration-files",
+                    "/path/to/config",
+                ),
             )
-        )
 
         assertEquals(6, args.size)
         assertEquals("/opt/1C/1CE/components/1.0.0/1cedtcli", args[0])
@@ -168,7 +169,7 @@ class EdtDslTest {
             output = "test output",
             error = null,
             exitCode = 0,
-            duration = kotlin.time.Duration.ZERO
+            duration = kotlin.time.Duration.ZERO,
         )
 
         val result = edtContext.buildResult()

@@ -28,7 +28,7 @@ private val logger = KotlinLogging.logger { }
 class YaXUnitTestAction(
     private val platformDsl: PlatformDsl,
     private val utilLocator: UtilityLocator,
-    private val reportParser: ReportParser
+    private val reportParser: ReportParser,
 ) : RunTestAction {
     override suspend fun run(request: TestExecutionRequest): TestExecutionResult {
         val startTime = Instant.now()

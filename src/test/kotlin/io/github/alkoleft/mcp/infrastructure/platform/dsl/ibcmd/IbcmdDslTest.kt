@@ -3,8 +3,8 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd
 import io.github.alkoleft.mcp.core.modules.PlatformType
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
-import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
+import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
 import io.github.alkoleft.mcp.testApplicationProperties
 import java.nio.file.Path
 import kotlin.test.Test
@@ -357,15 +357,18 @@ class IbcmdDslTest {
     }
 
     private fun mockPlatformContext(): PlatformUtilityContext {
-        val mockUtilLocator = object : UtilityLocator() {
-            override fun locateUtility(utility: UtilityType, version: String?): UtilityLocation {
-                return UtilityLocation(
-                    executablePath = Path.of("/path/to/ibcmd"),
-                    version = "8.3.24.1761",
-                    platformType = PlatformType.LINUX
-                )
+        val mockUtilLocator =
+            object : UtilityLocator() {
+                override fun locateUtility(
+                    utility: UtilityType,
+                    version: String?,
+                ): UtilityLocation =
+                    UtilityLocation(
+                        executablePath = Path.of("/path/to/ibcmd"),
+                        version = "8.3.24.1761",
+                        platformType = PlatformType.LINUX,
+                    )
             }
-        }
         return PlatformUtilityContext(mockUtilLocator, testApplicationProperties())
     }
 }

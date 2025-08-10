@@ -46,7 +46,6 @@ interface SearchStrategy {
  * Windows-specific search strategy
  */
 object PlatformWindowsSearchStrategy : SearchStrategy {
-
     override val locations = systemLocations() + userLocation()
 
     fun systemLocations() =
@@ -70,26 +69,29 @@ object PlatformWindowsSearchStrategy : SearchStrategy {
  * Linux-specific search strategy
  */
 object PlatformLinuxSearchStrategy : SearchStrategy {
-    override val locations = listOf(
-        VersionLocation("/opt/1cv8/x86_64"),
-        VersionLocation("/usr/local/1cv8"),
-        VersionLocation("/opt/1cv8/arm64"),
-        VersionLocation("/opt/1cv8/e2kv4"),
-        VersionLocation("/opt/1cv8/i386"),
-    )
+    override val locations =
+        listOf(
+            VersionLocation("/opt/1cv8/x86_64"),
+            VersionLocation("/usr/local/1cv8"),
+            VersionLocation("/opt/1cv8/arm64"),
+            VersionLocation("/opt/1cv8/e2kv4"),
+            VersionLocation("/opt/1cv8/i386"),
+        )
 }
 
 object PlatformMacSearchStrategy : SearchStrategy {
-    override val locations = listOf(
-        VersionLocation("/opt/1cv8")
-    )
+    override val locations =
+        listOf(
+            VersionLocation("/opt/1cv8"),
+        )
 }
 
 object EdtLinuxSearchStrategy : SearchStrategy {
-    override val locations = listOf(
-        VersionLocation("/opt/1C/1CE/components"),
-        VersionLocation("~/.local/share/1C/1cedtstart/installations/"),
-    )
+    override val locations =
+        listOf(
+            VersionLocation("/opt/1C/1CE/components"),
+            VersionLocation("~/.local/share/1C/1cedtstart/installations/"),
+        )
 }
 
 object EdtWindowsSearchStrategy : SearchStrategy {
@@ -111,9 +113,10 @@ object EdtWindowsSearchStrategy : SearchStrategy {
 }
 
 object EdtMacSearchStrategy : SearchStrategy {
-    override val locations = listOf(
-        VersionLocation("/opt/1C/1CE/components"),
-    )
+    override val locations =
+        listOf(
+            VersionLocation("/opt/1C/1CE/components"),
+        )
 }
 
 fun SearchStrategy.search(
@@ -129,7 +132,6 @@ fun SearchStrategy.search(
     throw TestExecutionError.UtilNotFound("$utility not found in any known location")
 }
 
-
 /**
  * Searches for utility in a specific location
  */
@@ -143,11 +145,12 @@ private fun searchInLocation(
 
         for (path in paths) {
             if (path.exists() && path.isExecutable()) {
-                val utilityLocation = UtilityLocation(
-                    executablePath = path,
-                    version = version,
-                    platformType = PlatformDetector.current,
-                )
+                val utilityLocation =
+                    UtilityLocation(
+                        executablePath = path,
+                        version = version,
+                        platformType = PlatformDetector.current,
+                    )
 
                 logger.debug { "Found utility at: $path, version: $version" }
                 return utilityLocation

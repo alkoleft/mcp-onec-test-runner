@@ -117,7 +117,7 @@ class SearchStrategyFactoryTest {
         assertNotNull(strategy, "Strategy should be created for any supported platform")
         assertTrue(
             strategy is PlatformWindowsSearchStrategy || strategy is PlatformLinuxSearchStrategy,
-            "Strategy should be either WindowsSearchStrategy or LinuxSearchStrategy"
+            "Strategy should be either WindowsSearchStrategy or LinuxSearchStrategy",
         )
     }
 }

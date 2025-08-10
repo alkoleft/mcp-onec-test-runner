@@ -21,19 +21,29 @@ import javax.xml.parsers.DocumentBuilderFactory
  */
 @Component
 class ReportParser {
-    suspend fun parseReport(input: InputStream, format: ReportFormat): GenericTestReport =
+    suspend fun parseReport(
+        input: InputStream,
+        format: ReportFormat,
+    ): GenericTestReport =
         withContext(Dispatchers.IO) {
             require(format == ReportFormat.JUNIT_XML) { "Only JUNIT_XML format is supported" }
             parseJUnitXml(input)
         }
 
-    suspend fun detectFormat(input: InputStream): ReportFormat = withContext(Dispatchers.IO) {
-        val bytes = input.readAllBytes()
-        val content = String(bytes)
-        if (content.trim()
-                .startsWith("<?xml") && content.contains("testsuite")
-        ) ReportFormat.JUNIT_XML else ReportFormat.JUNIT_XML
-    }
+    suspend fun detectFormat(input: InputStream): ReportFormat =
+        withContext(Dispatchers.IO) {
+            val bytes = input.readAllBytes()
+            val content = String(bytes)
+            if (content
+                    .trim()
+                    .startsWith("<?xml") &&
+                content.contains("testsuite")
+            ) {
+                ReportFormat.JUNIT_XML
+            } else {
+                ReportFormat.JUNIT_XML
+            }
+        }
 
     fun getSupportedFormats(): Set<ReportFormat> = setOf(ReportFormat.JUNIT_XML)
 

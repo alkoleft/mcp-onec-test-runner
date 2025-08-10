@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
 @Component
 class PlatformUtilityContext(
     private val utilLocator: UtilityLocator,
-    private val properties: ApplicationProperties
+    private val properties: ApplicationProperties,
 ) {
     private var lastError: String? = null
     private var lastOutput: String = ""
@@ -23,12 +23,11 @@ class PlatformUtilityContext(
     /**
      * Получает локацию утилиты указанного типа
      */
-    suspend fun locateUtility(utilityType: UtilityType): UtilityLocation {
-        return utilLocator.locateUtility(
+    suspend fun locateUtility(utilityType: UtilityType): UtilityLocation =
+        utilLocator.locateUtility(
             utilityType,
-            version = if (utilityType.isPlatform()) properties.platformVersion else "latest"
+            version = if (utilityType.isPlatform()) properties.platformVersion else "latest",
         )
-    }
 
     /**
      * Синхронная версия получения локации утилиты

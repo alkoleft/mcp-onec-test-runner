@@ -31,13 +31,13 @@ import kotlin.test.Ignore
 class RealTests(
     @Autowired private val platformDsl: PlatformDsl,
     @Autowired private val utilLocator: UtilityLocator,
-    @Autowired private val reportParser: ReportParser
+    @Autowired private val reportParser: ReportParser,
 ) {
     @Ignore
     @Test
     fun designerRealExecute() {
         platformDsl.configurator {
-            connectToFile(ibPath)
+            connectToFile(IB_PATH)
             disableStartupDialogs()
             disableStartupMessages()
             loadConfigFromFiles {
@@ -55,8 +55,9 @@ class RealTests(
     @Ignore
     @Test
     fun ibcmdRealExecute() {
-        val plan = platformDsl.ibcmd {
-            dbPath(ibPath)
+        val plan =
+            platformDsl.ibcmd {
+                dbPath(IB_PATH)
 
                 config {
                     import("$SOURCE_PATH/configuration")

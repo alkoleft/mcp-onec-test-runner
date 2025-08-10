@@ -10,7 +10,7 @@ enum class SourceSetType {
 
 enum class ProjectFormat {
     DESIGNER,
-    EDT
+    EDT,
 }
 
 /**
@@ -19,7 +19,7 @@ enum class ProjectFormat {
 enum class BuilderType {
     DESIGNER,
     IBMCMD,
-    EDT
+    EDT,
 }
 
 /**

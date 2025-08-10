@@ -21,21 +21,18 @@ class ActionFactory(
     private val platformDsl: PlatformDsl,
     private val utilLocator: UtilityLocator,
     private val reportParser: ReportParser,
-    private val buildStateManager: FileBuildStateManager
+    private val buildStateManager: FileBuildStateManager,
 ) {
     private val sourceSetAnalyzer: SourceSetChangeAnalyzer = SourceSetChangeAnalyzer()
-    fun createBuildAction(type: BuilderType): BuildAction {
-        return when (type) {
+
+    fun createBuildAction(type: BuilderType): BuildAction =
+        when (type) {
             BuilderType.DESIGNER -> DesignerBuildAction(platformDsl)
             BuilderType.IBMCMD -> IbcmdBuildAction(platformDsl)
             BuilderType.EDT -> EdtBuildAction(platformDsl)
         }
 
-    fun createChangeAnalysisAction(): ChangeAnalysisAction {
-        return FileSystemChangeAnalysisAction(buildStateManager, sourceSetAnalyzer)
-    }
+    fun createChangeAnalysisAction(): ChangeAnalysisAction = FileSystemChangeAnalysisAction(buildStateManager, sourceSetAnalyzer)
 
-    fun createRunTestAction(): RunTestAction {
-        return YaXUnitTestAction(platformDsl, utilLocator, reportParser)
-    }
-} 
+    fun createRunTestAction(): RunTestAction = YaXUnitTestAction(platformDsl, utilLocator, reportParser)
+}

@@ -9,7 +9,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 
-
 private val logger = KotlinLogging.logger { }
 
 /**
@@ -18,13 +17,15 @@ private val logger = KotlinLogging.logger { }
 @Component
 @ConditionalOnProperty(name = ["app.tools.builder"], havingValue = "EDT")
 class EdtBuildAction(
-    dsl: PlatformDsl
+    dsl: PlatformDsl,
 ) : AbstractBuildAction(dsl) {
-
     /**
      * Выполняет единый DSL для полной сборки проекта через EDT
      */
-    override suspend fun executeBuildDsl(properties: ApplicationProperties, sourceSet: SourceSet): BuildResult {
+    override suspend fun executeBuildDsl(
+        properties: ApplicationProperties,
+        sourceSet: SourceSet,
+    ): BuildResult {
         logger.debug { "Формирую единый DSL для сборки проекта через EDT" }
 
         val results = mutableMapOf<String, ConfiguratorResult>()
@@ -64,22 +65,24 @@ class EdtBuildAction(
                 val buildResult = build(yes = true)
                 if (buildResult.success) {
                     logger.info { "Конфигурация ${configuration.name} собрана успешно" }
-                    results[configuration.name] = ConfiguratorResult(
-                        success = true,
-                        output = buildResult.output,
-                        error = buildResult.error,
-                        exitCode = buildResult.exitCode,
-                        duration = buildResult.duration
-                    )
+                    results[configuration.name] =
+                        ConfiguratorResult(
+                            success = true,
+                            output = buildResult.output,
+                            error = buildResult.error,
+                            exitCode = buildResult.exitCode,
+                            duration = buildResult.duration,
+                        )
                 } else {
                     logger.error { "Ошибка сборки конфигурации ${configuration.name}: ${buildResult.error}" }
-                    results[configuration.name] = ConfiguratorResult(
-                        success = false,
-                        output = buildResult.output,
-                        error = buildResult.error,
-                        exitCode = buildResult.exitCode,
-                        duration = buildResult.duration
-                    )
+                    results[configuration.name] =
+                        ConfiguratorResult(
+                            success = false,
+                            output = buildResult.output,
+                            error = buildResult.error,
+                            exitCode = buildResult.exitCode,
+                            duration = buildResult.duration,
+                        )
                 }
             }
 
@@ -95,13 +98,14 @@ class EdtBuildAction(
                 val extCdResult = cd(extensionPath.toString())
                 if (!extCdResult.success) {
                     logger.error { "Не удалось перейти в директорию расширения ${extension.name}: ${extCdResult.error}" }
-                    results[extension.name] = ConfiguratorResult(
-                        success = false,
-                        output = extCdResult.output,
-                        error = extCdResult.error,
-                        exitCode = extCdResult.exitCode,
-                        duration = extCdResult.duration
-                    )
+                    results[extension.name] =
+                        ConfiguratorResult(
+                            success = false,
+                            output = extCdResult.output,
+                            error = extCdResult.error,
+                            exitCode = extCdResult.exitCode,
+                            duration = extCdResult.duration,
+                        )
                     return@forEach
                 }
 
@@ -109,44 +113,49 @@ class EdtBuildAction(
                 val extBuildResult = build(yes = true)
                 if (extBuildResult.success) {
                     logger.info { "Расширение ${extension.name} собрано успешно" }
-                    results[extension.name] = ConfiguratorResult(
-                        success = true,
-                        output = extBuildResult.output,
-                        error = extBuildResult.error,
-                        exitCode = extBuildResult.exitCode,
-                        duration = extBuildResult.duration
-                    )
+                    results[extension.name] =
+                        ConfiguratorResult(
+                            success = true,
+                            output = extBuildResult.output,
+                            error = extBuildResult.error,
+                            exitCode = extBuildResult.exitCode,
+                            duration = extBuildResult.duration,
+                        )
                 } else {
                     logger.error { "Ошибка сборки расширения ${extension.name}: ${extBuildResult.error}" }
-                    results[extension.name] = ConfiguratorResult(
-                        success = false,
-                        output = extBuildResult.output,
-                        error = extBuildResult.error,
-                        exitCode = extBuildResult.exitCode,
-                        duration = extBuildResult.duration
-                    )
+                    results[extension.name] =
+                        ConfiguratorResult(
+                            success = false,
+                            output = extBuildResult.output,
+                            error = extBuildResult.error,
+                            exitCode = extBuildResult.exitCode,
+                            duration = extBuildResult.duration,
+                        )
                 }
             }
 
             // Проверяем общий результат сборки
             val hasErrors = results.values.any { !it.success }
             if (hasErrors) {
-                val errorMessages = results.values
-                    .filter { !it.success }
-                    .mapNotNull { it.error }
+                val errorMessages =
+                    results.values
+                        .filter { !it.success }
+                        .mapNotNull { it.error }
 
                 logger.error { "Сборка завершилась с ошибками: ${errorMessages.joinToString("; ")}" }
-                buildResult = BuildResult(
-                    success = false,
-                    sourceSet = results.toMap(),
-                    errors = errorMessages
-                )
+                buildResult =
+                    BuildResult(
+                        success = false,
+                        sourceSet = results.toMap(),
+                        errors = errorMessages,
+                    )
             } else {
                 logger.info { "Сборка завершена успешно" }
-                buildResult = BuildResult(
-                    success = true,
-                    sourceSet = results.toMap()
-                )
+                buildResult =
+                    BuildResult(
+                        success = true,
+                        sourceSet = results.toMap(),
+                    )
             }
         }
 
@@ -154,7 +163,7 @@ class EdtBuildAction(
         return buildResult ?: BuildResult(
             success = false,
             sourceSet = results.toMap(),
-            errors = listOf("EDT DSL не вернул результат сборки")
+            errors = listOf("EDT DSL не вернул результат сборки"),
         )
     }
 
@@ -168,7 +177,7 @@ class EdtBuildAction(
         if (configuration == null) {
             return BuildResult(
                 success = false,
-                errors = listOf("Конфигурация не найдена в source set")
+                errors = listOf("Конфигурация не найдена в source set"),
             )
         }
 
@@ -194,41 +203,47 @@ class EdtBuildAction(
             val result = build(yes = true)
             if (result.success) {
                 logger.info { "Конфигурация ${configuration.name} собрана успешно" }
-                buildResult = BuildResult(
-                    success = true,
-                    configurationBuilt = true,
-                    sourceSet = mapOf(
-                        configuration.name to ConfiguratorResult(
-                            success = true,
-                            output = result.output,
-                            error = result.error,
-                            exitCode = result.exitCode,
-                            duration = result.duration
-                        )
+                buildResult =
+                    BuildResult(
+                        success = true,
+                        configurationBuilt = true,
+                        sourceSet =
+                            mapOf(
+                                configuration.name to
+                                    ConfiguratorResult(
+                                        success = true,
+                                        output = result.output,
+                                        error = result.error,
+                                        exitCode = result.exitCode,
+                                        duration = result.duration,
+                                    ),
+                            ),
                     )
-                )
             } else {
                 logger.error { "Ошибка сборки конфигурации ${configuration.name}: ${result.error}" }
-                buildResult = BuildResult(
-                    success = false,
-                    configurationBuilt = false,
-                    sourceSet = mapOf(
-                        configuration.name to ConfiguratorResult(
-                            success = false,
-                            output = result.output,
-                            error = result.error,
-                            exitCode = result.exitCode,
-                            duration = result.duration
-                        )
-                    ),
-                    errors = listOf("Ошибка сборки конфигурации: ${result.error}")
-                )
+                buildResult =
+                    BuildResult(
+                        success = false,
+                        configurationBuilt = false,
+                        sourceSet =
+                            mapOf(
+                                configuration.name to
+                                    ConfiguratorResult(
+                                        success = false,
+                                        output = result.output,
+                                        error = result.error,
+                                        exitCode = result.exitCode,
+                                        duration = result.duration,
+                                    ),
+                            ),
+                        errors = listOf("Ошибка сборки конфигурации: ${result.error}"),
+                    )
             }
         }
 
         return buildResult ?: BuildResult(
             success = false,
-            errors = listOf("EDT DSL не вернул результат сборки конфигурации")
+            errors = listOf("EDT DSL не вернул результат сборки конфигурации"),
         )
     }
 
@@ -237,7 +252,7 @@ class EdtBuildAction(
      */
     override suspend fun executeExtensionBuildDsl(
         extensionName: String,
-        properties: ApplicationProperties
+        properties: ApplicationProperties,
     ): BuildResult {
         logger.debug { "Выполняю сборку расширения $extensionName через EDT" }
 
@@ -245,7 +260,7 @@ class EdtBuildAction(
         if (extension == null) {
             return BuildResult(
                 success = false,
-                errors = listOf("Расширение $extensionName не найдено в source set")
+                errors = listOf("Расширение $extensionName не найдено в source set"),
             )
         }
 
@@ -271,39 +286,45 @@ class EdtBuildAction(
             val result = build(yes = true)
             if (result.success) {
                 logger.info { "Расширение $extensionName собрано успешно" }
-                buildResult = BuildResult(
-                    success = true,
-                    sourceSet = mapOf(
-                        extensionName to ConfiguratorResult(
-                            success = true,
-                            output = result.output,
-                            error = result.error,
-                            exitCode = result.exitCode,
-                            duration = result.duration
-                        )
+                buildResult =
+                    BuildResult(
+                        success = true,
+                        sourceSet =
+                            mapOf(
+                                extensionName to
+                                    ConfiguratorResult(
+                                        success = true,
+                                        output = result.output,
+                                        error = result.error,
+                                        exitCode = result.exitCode,
+                                        duration = result.duration,
+                                    ),
+                            ),
                     )
-                )
             } else {
                 logger.error { "Ошибка сборки расширения $extensionName: ${result.error}" }
-                buildResult = BuildResult(
-                    success = false,
-                    sourceSet = mapOf(
-                        extensionName to ConfiguratorResult(
-                            success = false,
-                            output = result.output,
-                            error = result.error,
-                            exitCode = result.exitCode,
-                            duration = result.duration
-                        )
-                    ),
-                    errors = listOf("Ошибка сборки расширения: ${result.error}")
-                )
+                buildResult =
+                    BuildResult(
+                        success = false,
+                        sourceSet =
+                            mapOf(
+                                extensionName to
+                                    ConfiguratorResult(
+                                        success = false,
+                                        output = result.output,
+                                        error = result.error,
+                                        exitCode = result.exitCode,
+                                        duration = result.duration,
+                                    ),
+                            ),
+                        errors = listOf("Ошибка сборки расширения: ${result.error}"),
+                    )
             }
         }
 
         return buildResult ?: BuildResult(
             success = false,
-            errors = listOf("EDT DSL не вернул результат сборки расширения")
+            errors = listOf("EDT DSL не вернул результат сборки расширения"),
         )
     }
 }
