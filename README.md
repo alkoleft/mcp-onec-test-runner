@@ -27,6 +27,7 @@ MCP YAxUnit Runner — это MCP‑сервер, который подключ�
 - Получение списка доступных модулей
 - Проверка статуса платформы 1С
 - Получение конфигурации проекта
+- Быстрая конвертация из формата EDT за счёт автозапуска EDT CLI в интерактивном режиме
 
 ```mermaid
 flowchart LR
@@ -34,6 +35,8 @@ flowchart LR
         A["🚀 Запрос на<br/>выполнение тестов"]
         B["🔍 Анализ<br/>изменений"]
         C{"📊 Есть<br/>изменения?"}
+        J{"🧩 Формат<br/>EDT?"}
+        I["🔁 Конвертация<br/>из EDT"]
         D["🔨 Сборка<br/>проекта"]
         E["🧪 Запуск<br/>тестов"]
         F{"✅ Сборка<br/>успешна?"}
@@ -43,8 +46,11 @@ flowchart LR
     
     A --> B
     B --> C
-    C -->|Да| D
+    C -->|Да| J
     C -->|Нет| E
+    J -->|Да| I
+    J -->|Нет| D
+    I --> D
     D --> F
     F -->|Да| E
     F -->|Нет| G
@@ -58,11 +64,13 @@ flowchart LR
     classDef errorNode fill:#EF5350,stroke:#C62828,stroke-width:3px,color:#fff,font-weight:bold
     
     class A startNode
-    class B,D,E processNode
-    class C,F decisionNode
+    class B,D,E,I processNode
+    class C,F,J decisionNode
     class H successNode
     class G errorNode
 ```
+
+> Примечание: при формате проекта `EDT` и включённом автозапуске (`app.tools.edt-cli.auto-start: true`) EDT CLI поднимается заранее в интерактивном режиме. Это сокращает время на инициализацию и ускоряет шаг «Конвертация из EDT».
 
 ## Дорожная карта разработки 🚀
 
@@ -83,7 +91,7 @@ flowchart LR
 - Gradle 8.5+
 - Платформа 1С:Предприятие 8.3.10+
 - YaXUnit фреймворк
-- 1С:Enterprise Development Tools 2025.1+
+- 1С:Enterprise Development Tools 2025.1+ (для формата EDT; см. [Issue #1758](https://github.com/1C-Company/1c-edt-issues/issues/1758))
 
 ## Установка и сборка
 
@@ -121,8 +129,39 @@ java -jar mcp-yaxunit-runner.jar
 - **`app.base-path`** - базовый путь к вашему проекту
 - **`app.source-set`** - описание модулей проекта (пути, типы, назначение)
 - **`app.connection.connection-string`** - строка подключения к информационной базе
-- **`app.platform-version`** - версия платформы 1С
- - **`app.tools.builder`** - тип сборщика (DESIGNER или IBMCMD)
+- **`app.format`** - формат проекта (`DESIGNER` | `EDT`)
+- **`app.platform-version`** - версия платформы 1С (опционально)
+- **`app.tools.builder`** - тип сборщика (`DESIGNER` | `IBMCMD`)
+- **`app.tools.edt-cli`** - опции EDT CLI (опционально, при `app.format: EDT`)
+
+##### Схема настроек (кратко)
+
+```yaml
+app:
+  id: string?                    # опционально
+  format: DESIGNER|EDT           # по умолчанию DESIGNER
+  base-path: string              # абсолютный путь
+  source-set:                    # >=1 элемент с type: CONFIGURATION
+    - path: string               # относительный путь от base-path
+      name: string               # уникальное имя
+      type: CONFIGURATION|EXTENSION
+      purpose: [ MAIN | TESTS | YAXUNIT ]
+  connection:
+    connection-string: string    # обязателен
+    user: string?                # опционально
+    password: string?            # опционально
+  tools:
+    builder: DESIGNER|IBMCMD     # обязателен
+    edt-cli:                     # опционально; требуется 1C:EDT >= 2025.1
+      auto-start: boolean        # default: false
+      version: string            # default: "latest"
+      interactive-mode: boolean  # default: true
+      working-directory: string? # EDT workspace
+      startup-timeout-ms: number # default: 30000
+      command-timeout-ms: number # default: 300000
+      ready-check-timeout-ms: number # default: 5000
+  platform-version: string?      # формат x[.x]+, напр. 8.3.22.1709
+```
 
 #### Настройка исходников тестов:
 
@@ -152,7 +191,7 @@ app:
     - path: "configuration"
       name: your-config
       type: "CONFIGURATION"
-      purpose: ["TESTS"]
+      purpose: ["MAIN"]
   connection:
     connection-string: "File='/path/to/your/infobase/';"
   platform-version: "8.3.24.1234"
