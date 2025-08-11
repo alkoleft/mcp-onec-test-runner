@@ -30,18 +30,18 @@ class PlatformUtilityContext(
     /**
      * Получает локацию утилиты указанного типа
      */
-    suspend fun locateUtility(utilityType: UtilityType): UtilityLocation =
+    private suspend fun locateUtility(utilityType: UtilityType, version: String): UtilityLocation =
         utilLocator.locateUtility(
             utilityType,
-            version = if (utilityType.isPlatform()) properties.platformVersion else "latest",
+            version = version,
         )
 
     /**
      * Синхронная версия получения локации утилиты
      */
-    fun locateUtilitySync(utilityType: UtilityType): UtilityLocation =
+    private fun locateUtilitySync(utilityType: UtilityType, version: String): UtilityLocation =
         runBlocking {
-            locateUtility(utilityType)
+            locateUtility(utilityType, version)
         }
 
     /**
@@ -73,31 +73,20 @@ class PlatformUtilityContext(
         )
 
     /**
-     * Проверяет, доступна ли утилита
-     */
-    suspend fun isUtilityAvailable(utilityType: UtilityType): Boolean =
-        try {
-            val location = locateUtility(utilityType)
-            utilLocator.validateUtility(location)
-        } catch (_: Exception) {
-            false
-        }
-
-    /**
      * Получает путь к указанной утилите
      */
-    fun getUtilityPath(utilityType: UtilityType): String =
+    fun getUtilityPath(utilityType: UtilityType, version: String = "default"): String =
         try {
-            val location = locateUtilitySync(utilityType)
+            val actualVersion: String = if (version == "default") {
+                if (utilityType.isPlatform()) properties.platformVersion else properties.tools.edtCli.version
+            } else {
+                version
+            }
+            val location = locateUtilitySync(utilityType, actualVersion)
             location.executablePath.toString()
         } catch (e: Exception) {
             "/path/to/default/utility"
         }
-
-    /**
-     * Получает путь к утилите ibcmd
-     */
-    fun getUtilityPath(): String = getUtilityPath(UtilityType.IBCMD)
 
     fun executor(utilityType: UtilityType): CommandExecutor {
         if (utilityType == UtilityType.EDT_CLI && properties.tools.edtCli.interactiveMode) {

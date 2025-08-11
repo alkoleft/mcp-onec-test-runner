@@ -48,7 +48,6 @@ app:
     # Настройки EDT CLI
     edt-cli:
       auto-start: true
-      executable-path: "/opt/1C/1CE/components/1c-edt-2025.1.0+656-x86_64/1cedtcli"
       working-directory: "/home/common/develop/edt-ws/yaxunit"
       startup-timeout-ms: 300000 # 5 минут
       command-timeout-ms: 600000 # 10 минут

@@ -421,7 +421,7 @@ class EdtContext(
     private var lastError: String? = null
     private var lastOutput: String = ""
     private var lastExitCode: Int = 0
-    private var lastDuration: kotlin.time.Duration = kotlin.time.Duration.ZERO
+    private var lastDuration: Duration = Duration.ZERO
 
     /**
      * Builds argument list for EDT CLI.
@@ -429,8 +429,8 @@ class EdtContext(
      */
     fun buildEdtArgs(commandArgs: List<String>): List<String> {
         val args = mutableListOf<String>()
-        val location = platformContext.locateUtilitySync(UtilityType.EDT_CLI)
-        args.add(location.executablePath.toString())
+        val location = platformContext.getUtilityPath(UtilityType.EDT_CLI)
+        args.add(location)
         args.addAll(commandArgs)
         return args
     }

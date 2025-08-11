@@ -1,22 +1,16 @@
 package io.github.alkoleft.mcp.core.modules
 
 import io.github.alkoleft.mcp.application.actions.change.ChangesSet
+import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import java.nio.file.Path
 
 /**
  * Build state management
  */
 interface BuildStateManager {
-    suspend fun checkChanges(projectPath: Path): ChangesSet
+    suspend fun checkChanges(properties: ApplicationProperties): ChangesSet
 
     suspend fun updateHashes(files: Map<Path, String>)
-
-    suspend fun getLastBuildTime(projectPath: Path): Long?
-
-    suspend fun setLastBuildTime(
-        projectPath: Path,
-        timestamp: Long,
-    )
 }
 
 /**

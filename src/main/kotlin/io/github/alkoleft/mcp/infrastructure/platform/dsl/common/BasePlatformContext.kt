@@ -71,13 +71,13 @@ abstract class BasePlatformContext(
         this.noTruncate = true
     }
 
-    protected suspend fun buildCommonArgs(
+    protected fun buildCommonArgs(
         utilityType: UtilityType,
         mode: String,
     ): MutableList<String> {
         val args = mutableListOf<String>()
-        val location = platformContext.locateUtility(utilityType)
-        args.add(location.executablePath.toString())
+        val location = platformContext.getUtilityPath(utilityType)
+        args.add(location)
         if (mode.isNotBlank()) {
             args.add(mode)
         }

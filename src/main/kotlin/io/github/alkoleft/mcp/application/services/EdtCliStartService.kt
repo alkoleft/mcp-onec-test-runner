@@ -2,6 +2,8 @@ package io.github.alkoleft.mcp.application.services
 
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.ProjectFormat
+import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.InteractiveProcessExecutor
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CompletableDeferred
@@ -36,6 +38,7 @@ private val logger = KotlinLogging.logger {}
 @EnableAsync
 class EdtCliStartService(
     private val properties: ApplicationProperties,
+    private val utilityContext: PlatformUtilityContext
 ) {
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -253,7 +256,7 @@ class EdtCliStartService(
     /**
      * Получает путь к исполняемому файлу EDT
      */
-    private fun getEdtExecutablePath(): String = properties.tools.edtCli.executablePath ?: "edt"
+    private fun getEdtExecutablePath(): String = utilityContext.getUtilityPath(UtilityType.EDT_CLI)
 
     /**
      * Проверяет, запущен ли процесс EDT CLI

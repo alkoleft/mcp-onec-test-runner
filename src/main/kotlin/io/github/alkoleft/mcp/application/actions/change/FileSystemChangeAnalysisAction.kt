@@ -28,7 +28,7 @@ class FileSystemChangeAnalysisAction(
         return withContext(Dispatchers.IO) {
             try {
                 // Use FileBuildStateManager's Enhanced Hybrid Hash Detection
-                val changes = buildStateManager.checkChanges(properties.basePath)
+                val changes = buildStateManager.checkChanges(properties)
 
                 if (changes.isEmpty()) {
                     logger.info { "No changes detected in project" }
@@ -77,9 +77,6 @@ class FileSystemChangeAnalysisAction(
                     buildStateManager.updateHashes(hashUpdates)
                     logger.info { "Updated ${hashUpdates.size} file hashes for source set: ${sourceSetChanges.sourceSetName}" }
                 }
-
-                // Update build timestamp
-                buildStateManager.setLastBuildTime(properties.basePath, System.currentTimeMillis())
 
                 true
             } catch (e: Exception) {

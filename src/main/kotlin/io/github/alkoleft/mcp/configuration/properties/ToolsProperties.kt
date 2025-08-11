@@ -5,7 +5,6 @@ package io.github.alkoleft.mcp.configuration.properties
  */
 data class ToolsProperties(
     val builder: BuilderType = BuilderType.DESIGNER,
-    val edtVersion: String? = null,
     val edtWorkSpace: String? = null,
     val edtCli: EdtCliProperties = EdtCliProperties(),
 )
@@ -15,8 +14,8 @@ data class ToolsProperties(
  */
 data class EdtCliProperties(
     val autoStart: Boolean = false,
+    val version: String = "latest",
     val interactiveMode: Boolean = true,
-    val executablePath: String? = null,
     val workingDirectory: String? = null,
     val startupTimeoutMs: Long = 30000, // 30 секунд по умолчанию
     val commandTimeoutMs: Long = 300000, // 5 минут по умолчанию

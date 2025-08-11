@@ -3,8 +3,10 @@ package io.github.alkoleft.mcp.infrastructure.platform.search
 import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.utility.PlatformDetector
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.exists
 
 /**
  * Search location interface for generating paths
@@ -14,6 +16,15 @@ interface SearchLocation {
         utility: UtilityType,
         version: String?,
     ): List<Path>
+
+    /**
+     * Version-aware candidates with optional extracted version metadata.
+     * Default implementation wraps plain paths without version metadata.
+     */
+    fun generateCandidates(
+        utility: UtilityType,
+        version: String?,
+    ): List<Pair<Path, String?>> = generatePaths(utility, version).map { it to null }
 }
 
 /**
@@ -22,7 +33,6 @@ interface SearchLocation {
 abstract class BaseSearchLocation : SearchLocation {
     protected fun getExecutableName(utility: UtilityType): String {
         val extension = if (PlatformDetector.isWindows) ".exe" else ""
-
         return "${utility.fileName}$extension"
     }
 }
@@ -38,7 +48,6 @@ class StandardLocation(
         version: String?,
     ): List<Path> {
         val executableName = getExecutableName(utility)
-
         return if (PlatformDetector.isWindows) {
             listOf(Paths.get(basePath, "bin", executableName))
         } else {
@@ -58,9 +67,7 @@ class VersionLocation(
         version: String?,
     ): List<Path> {
         if (version == null) return emptyList()
-
         val executableName = getExecutableName(utility)
-
         return if (PlatformDetector.isWindows) {
             listOf(Paths.get(basePath, version, "bin", executableName))
         } else {
@@ -82,5 +89,60 @@ class PathEnvironmentLocation : BaseSearchLocation() {
             .getenv("PATH")
             ?.split(File.pathSeparator)
             ?.map { Paths.get(it, executableName) } ?: emptyList()
+    }
+}
+
+/**
+ * Enumerates subdirectories of a base folder and builds candidate executable paths
+ * with optional version extraction from directory names.
+ */
+class DirectoryEnumeratingLocation(
+    private val basePath: String,
+    private val relativeExecutableSubPath: String? = null,
+    private val dirNameToVersion: (String) -> String? = { it },
+) : BaseSearchLocation() {
+    override fun generatePaths(
+        utility: UtilityType,
+        version: String?,
+    ): List<Path> {
+        // For compatibility with older code paths that only expect paths,
+        // return executable paths for existing directories regardless of version input.
+        return generateCandidates(utility, version).map { it.first }
+    }
+
+    override fun generateCandidates(
+        utility: UtilityType,
+        version: String?,
+    ): List<Pair<Path, String?>> {
+        val expandedBase = expandHome(basePath)
+        val baseDir = Paths.get(expandedBase)
+        if (!baseDir.exists()) return emptyList()
+        val executableName = getExecutableName(utility)
+        val result = mutableListOf<Pair<Path, String?>>()
+        try {
+            Files.newDirectoryStream(baseDir).use { stream ->
+                stream.forEach { entry ->
+                    if (Files.isDirectory(entry)) {
+                        val candidate = if (relativeExecutableSubPath != null && relativeExecutableSubPath.isNotBlank())
+                            entry.resolve(relativeExecutableSubPath).resolve(executableName)
+                        else
+                            entry.resolve(executableName)
+                        val ver = dirNameToVersion(entry.fileName.toString())
+                        result.add(candidate to ver)
+                    }
+                }
+            }
+        } catch (_: Exception) {
+            // ignore enumeration errors
+        }
+        return result
+    }
+
+    private fun expandHome(path: String): String {
+        if (path.startsWith("~")) {
+            val home = System.getProperty("user.home") ?: return path
+            return path.replaceFirst("~", home)
+        }
+        return path
     }
 }

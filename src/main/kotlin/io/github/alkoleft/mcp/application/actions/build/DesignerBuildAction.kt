@@ -59,7 +59,7 @@ class DesignerBuildAction(
 
             // Загружаем расширения
             val extensions = sourceSet.extensions
-            logger.info { "Загружаю ${extensions.size} расширений: ${extensions.joinToString(", ")}" }
+            logger.info { "Загружаю ${extensions.size} расширений: ${extensions.joinToString(", ") { it.name }}" }
             extensions.forEach {
                 val result =
                     loadConfigFromFiles {
