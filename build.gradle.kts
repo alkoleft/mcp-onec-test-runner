@@ -143,3 +143,22 @@ tasks.jacocoTestReport {
         csv.required.set(false)
     }
 }
+
+publishing {
+    repositories {
+        maven {
+            name = "mcp-onec-test-runner"
+            url = uri("https://maven.pkg.github.com/alkoleft/mcp-onec-test-runner")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+    publications {
+        register<MavenPublication>("gpr") {
+            from(components["java"])
+        }
+    }
+}
+
