@@ -13,9 +13,6 @@ reactor-core = "3.6.11"
 junit-bom = "5.11.4"
 assertj = "3.8.0"
 slf4j-log4j12 = "1.7.30"
-kotlinx-cli = "0.3.6"
-picocli = "4.7.5"
-picocli-spring-boot-starter = "4.7.5"
 kotlinx-serialization = "1.6.3"
 
 springAi = "1.0.0"
@@ -30,11 +27,6 @@ kotlin-stdlib-jdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk
 kotlin-test-junit5 = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit5" }
 kotlin-logging-jvm = { group = "io.github.oshai", name = "kotlin-logging-jvm", version.ref = "kotlin-logging" }
 
-# CLI
-picocli = { group = "info.picocli", name = "picocli", version.ref = "picocli" }
-picocli-spring-boot-starter = { group = "info.picocli", name = "picocli-spring-boot-starter", version.ref = "picocli-spring-boot-starter" }
-kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
-
 # Spring Boot
 spring-boot-starter = { group = "org.springframework.boot", name = "spring-boot-starter" }
 spring-boot-starter-cache = { group = "org.springframework.boot", name = "spring-boot-starter-cache" }
@@ -47,8 +39,6 @@ spring-webflux= { group = "org.springframework", name = "spring-webflux" }
 jackson-core = { group = "com.fasterxml.jackson.core", name = "jackson-core", version.ref = "jackson" }
 jackson-databind = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jackson" }
 jackson-annotations = { group = "com.fasterxml.jackson.core", name = "jackson-annotations", version.ref = "jackson" }
-jackson-dataformat-xml = { group = "com.fasterxml.jackson.dataformat", name = "jackson-dataformat-xml", version.ref = "jackson" }
-jackson-dataformat-yaml = { group = "com.fasterxml.jackson.dataformat", name = "jackson-dataformat-yaml", version.ref = "jackson" }
 jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson" }
 
 # Logging
@@ -57,9 +47,6 @@ janino = { group = "org.codehaus.janino", name = "janino", version.ref = "janino
 
 # Reactor
 reactor-core = { group = "io.projectreactor", name = "reactor-core", version.ref = "reactor-core" }
-
-# Kotlinx CLI
-kotlinx-cli = { group = "org.jetbrains.kotlinx", name = "kotlinx-cli", version.ref = "kotlinx-cli" }
 
 # Testing
 junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
@@ -72,28 +59,18 @@ spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-
 [bundles]
 # Kotlin bundle
 kotlin = [
-    "kotlin-reflect",
-    "kotlin-stdlib-jdk8",
     "kotlin-logging-jvm",
-    "kotlinx-cli",
-    "picocli",
-    "kotlinx-serialization-json"
 ]
 
 # Jackson bundle
 jackson = [
     "jackson-core",
     "jackson-databind",
-    "jackson-annotations",
-    "jackson-dataformat-xml",
-    "jackson-dataformat-yaml",
     "jackson-module-kotlin"
 ]
 
 # Spring Boot bundle
 spring-boot = [
-    "spring-boot-starter",
-    "spring-boot-starter-cache",
     "spring-ai-starter-mcp-server"
 ]
 
@@ -120,4 +97,4 @@ gradle-git-properties = { id = "com.gorylenko.gradle-git-properties", version.re
 spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradle" }
-dependencyCheck = { id = "org.owasp.dependencycheck", version.ref = "dependencyCheck" } 
+dependencyCheck = { id = "org.owasp.dependencycheck", version.ref = "dependencyCheck" }

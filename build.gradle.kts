@@ -51,9 +51,6 @@ dependencies {
     // Logging
     implementation(libs.bundles.logging)
 
-    // Reactor Core для Spring AI MCP
-    implementation(libs.reactor.core)
-
     // MapDB for persistent storage
     implementation("org.mapdb:mapdb:3.0.10")
 
@@ -146,5 +143,3 @@ tasks.jacocoTestReport {
         csv.required.set(false)
     }
 }
-
-// (removed duplicate publishing block for a different repository)
