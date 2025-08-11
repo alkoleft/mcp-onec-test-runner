@@ -1,13 +1,19 @@
 package io.github.alkoleft.mcp.infrastructure.storage
 
 import io.github.alkoleft.mcp.application.actions.change.ChangesSet
+import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.core.modules.BuildStateManager
 import io.github.alkoleft.mcp.core.modules.ChangeType
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toSet
 import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Component
 import java.nio.file.Files
@@ -26,20 +32,24 @@ private val logger = KotlinLogging.logger { }
 class FileBuildStateManager(
     private val hashStorage: MapDbHashStorage,
 ) : BuildStateManager {
-    // Supported source file extensions for 1C:Enterprise
-    private val sourceFileExtensions = setOf("bsl", "os", "cf", "epf", "xml", "mdo")
-
     // Performance tuning parameters
     private val maxConcurrentHashCalculations = 4
 
-    override suspend fun checkChanges(projectPath: Path): ChangesSet =
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override suspend fun checkChanges(properties: ApplicationProperties): ChangesSet =
         coroutineScope {
             val startTime = Instant.now()
-            logger.debug { "Starting Enhanced Hybrid Hash Detection for project: $projectPath" }
+            logger.debug { "Starting Enhanced Hybrid Hash Detection for project: ${properties.basePath}" }
 
             try {
                 // Phase 1: Fast timestamp pre-scan
-                val candidateFiles = scanForPotentialChanges(projectPath)
+                val candidateFiles =
+                    properties.sourceSet
+                        .asFlow()
+                        .map { properties.basePath.resolve(it.path) }
+                        .flatMapMerge { scanForPotentialChanges(it).asFlow() }
+                        .toSet()
+
                 logger.debug { "Phase 1: Found ${candidateFiles.size} potential changes after timestamp scan" }
 
                 if (candidateFiles.isEmpty()) {
@@ -59,7 +69,7 @@ class FileBuildStateManager(
             } catch (e: Exception) {
                 logger.error(e) { "Error during change detection" }
                 // Fallback: treat all source files as changed
-                getAllSourceFiles(projectPath).associateWith { Pair(ChangeType.MODIFIED, "") }
+                getAllSourceFiles(properties.basePath).associateWith { Pair(ChangeType.MODIFIED, "") }
             }
         }
 
@@ -72,36 +82,6 @@ class FileBuildStateManager(
         } catch (e: Exception) {
             logger.error(e) { "Failed to update file hashes" }
             throw e
-        }
-    }
-
-    override suspend fun getLastBuildTime(projectPath: Path): Long? =
-        try {
-            val buildMarkerFile = projectPath.resolve(".yaxunit/last-build-time")
-            if (Files.exists(buildMarkerFile)) {
-                Files.readString(buildMarkerFile).trim().toLongOrNull()
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            logger.debug(e) { "Failed to get last build time for $projectPath" }
-            null
-        }
-
-    override suspend fun setLastBuildTime(
-        projectPath: Path,
-        timestamp: Long,
-    ) {
-        withContext(Dispatchers.IO) {
-            try {
-                val buildMarkerFile = projectPath.resolve(".yaxunit/last-build-time")
-                Files.createDirectories(buildMarkerFile.parent)
-                Files.writeString(buildMarkerFile, timestamp.toString())
-                logger.debug { "Updated last build time to $timestamp for project: $projectPath" }
-            } catch (e: Exception) {
-                logger.error(e) { "Failed to set last build time for $projectPath" }
-                throw e
-            }
         }
     }
 
@@ -221,7 +201,6 @@ class FileBuildStateManager(
                 projectPath
                     .walk()
                     .filter { it.isRegularFile() }
-                    .filter { isSourceFile(it) }
                     .filter { !isIgnoredPath(it, projectPath) }
                     .toList()
             } catch (e: Exception) {
@@ -229,14 +208,6 @@ class FileBuildStateManager(
                 emptyList()
             }
         }
-
-    /**
-     * Determines if a file is a source file that should be tracked
-     */
-    private fun isSourceFile(path: Path): Boolean {
-        val extension = path.toString().substringAfterLast(".", "").lowercase()
-        return extension in sourceFileExtensions
-    }
 
     /**
      * Determines if a path should be ignored (e.g., build outputs, temp files)

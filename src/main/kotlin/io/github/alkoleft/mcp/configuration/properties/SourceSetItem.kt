@@ -40,13 +40,13 @@ data class SourceSetItem(
         }
 
         // Проверяем, что тип имеет допустимое значение
-        require(type in SourceSetType.values()) {
+        require(type in SourceSetType.entries.toTypedArray()) {
             "Invalid source set type: $type"
         }
 
         // Проверяем, что все назначения имеют допустимые значения
         purpose.forEach { purposeItem ->
-            require(purposeItem in SourceSetPurpose.values()) {
+            require(purposeItem in SourceSetPurpose.entries.toTypedArray()) {
                 "Invalid source set purpose: $purposeItem"
             }
         }

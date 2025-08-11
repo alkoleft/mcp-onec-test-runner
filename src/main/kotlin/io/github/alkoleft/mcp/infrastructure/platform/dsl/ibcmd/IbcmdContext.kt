@@ -1,5 +1,6 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd
 
+import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
 
 /**
@@ -13,7 +14,7 @@ class IbcmdContext(
     private var password: String? = null
 
     val utilityPath
-        get() = platformContext.getUtilityPath()
+        get() = platformContext.locateUtilitySync(UtilityType.IBCMD).executablePath.toString()
 
     /**
      * Устанавливает путь к базе данных

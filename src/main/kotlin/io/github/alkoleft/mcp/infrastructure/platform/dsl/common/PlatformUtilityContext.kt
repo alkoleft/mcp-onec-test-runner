@@ -1,10 +1,19 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.common
 
+import io.github.alkoleft.mcp.application.services.EdtCliStartService
+import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.edt.EdtCliExecutor
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.CommandExecutor
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
 import kotlinx.coroutines.runBlocking
+import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
+
+private const val DEFAULT_VERSION = "default"
 
 /**
  * Контекст для работы с утилитами платформы 1С
@@ -12,7 +21,8 @@ import org.springframework.stereotype.Component
 @Component
 class PlatformUtilityContext(
     private val utilLocator: UtilityLocator,
-    val version: String?,
+    private val properties: ApplicationProperties,
+    private val applicationContext: ApplicationContext,
 ) {
     private var lastError: String? = null
     private var lastOutput: String = ""
@@ -22,15 +32,34 @@ class PlatformUtilityContext(
     /**
      * Получает локацию утилиты указанного типа
      */
-    suspend fun locateUtility(utilityType: UtilityType): UtilityLocation = utilLocator.locateUtility(utilityType, version)
+    private suspend fun locateUtility(
+        utilityType: UtilityType,
+        version: String,
+    ): UtilityLocation =
+        utilLocator.locateUtility(
+            utilityType,
+            version = version,
+        )
 
     /**
      * Синхронная версия получения локации утилиты
      */
-    fun locateUtilitySync(utilityType: UtilityType): UtilityLocation =
+    fun locateUtilitySync(
+        utilityType: UtilityType,
+        version: String = DEFAULT_VERSION,
+    ): UtilityLocation =
         runBlocking {
-            locateUtility(utilityType)
+            locateUtility(utilityType, actualVersion(utilityType, version))
         }
+
+    private fun actualVersion(
+        utilityType: UtilityType,
+        version: String,
+    ) = if (version == DEFAULT_VERSION) {
+        if (utilityType.isPlatform()) properties.platformVersion else properties.tools.edtCli.version
+    } else {
+        version
+    }
 
     /**
      * Устанавливает результат выполнения операции
@@ -51,8 +80,8 @@ class PlatformUtilityContext(
     /**
      * Строит результат выполнения операций
      */
-    fun buildResult(): PlatformUtilityResult =
-        PlatformUtilityResult(
+    fun buildResult(): ProcessResult =
+        ProcessResult(
             success = lastExitCode == 0,
             output = lastOutput,
             error = lastError,
@@ -61,48 +90,29 @@ class PlatformUtilityContext(
         )
 
     /**
-     * Проверяет, доступна ли утилита
-     */
-    suspend fun isUtilityAvailable(utilityType: UtilityType): Boolean =
-        try {
-            val location = locateUtility(utilityType)
-            utilLocator.validateUtility(location)
-        } catch (e: Exception) {
-            false
-        }
-
-    /**
-     * Синхронная версия проверки доступности утилиты
-     */
-    fun isUtilityAvailableSync(utilityType: UtilityType): Boolean =
-        runBlocking {
-            isUtilityAvailable(utilityType)
-        }
-
-    /**
      * Получает путь к указанной утилите
      */
-    fun getUtilityPath(utilityType: UtilityType): String =
+    fun getUtilityPath(
+        utilityType: UtilityType,
+        version: String = DEFAULT_VERSION,
+    ): String? =
         try {
-            val location = locateUtilitySync(utilityType)
+            val location = locateUtilitySync(utilityType, version)
             location.executablePath.toString()
         } catch (e: Exception) {
-            "/path/to/default/utility"
+            null
         }
 
-    /**
-     * Получает путь к утилите ibcmd
-     */
-    fun getUtilityPath(): String = getUtilityPath(UtilityType.IBCMD)
+    fun executor(utilityType: UtilityType): CommandExecutor {
+        if (utilityType == UtilityType.EDT_CLI && properties.tools.edtCli.interactiveMode) {
+            val service = applicationContext.getBean(EdtCliStartService::class.java)
+            val executor = service.interactiveExecutor()
+            return executor?.let { EdtCliExecutor(it) }
+                ?: throw IllegalStateException("EDT cli не запущено, попробуйте позже")
+        } else {
+            return ProcessExecutor()
+        }
+    }
 }
 
-/**
- * Общий результат выполнения операций с утилитами платформы
- */
-data class PlatformUtilityResult(
-    val success: Boolean,
-    val output: String,
-    val error: String?,
-    val exitCode: Int,
-    val duration: kotlin.time.Duration,
-)
+// Removed PlatformUtilityResult in favor of generic ProcessResult

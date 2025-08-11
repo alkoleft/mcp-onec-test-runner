@@ -51,9 +51,6 @@ dependencies {
     // Logging
     implementation(libs.bundles.logging)
 
-    // Reactor Core для Spring AI MCP
-    implementation(libs.reactor.core)
-
     // MapDB for persistent storage
     implementation("org.mapdb:mapdb:3.0.10")
 
@@ -120,8 +117,11 @@ publishing {
         }
     }
     publications {
-        register<MavenPublication>("gpr") {
-            from(components["java"])
+        create<MavenPublication>("gpr") {
+            groupId = project.group.toString()
+            artifactId = project.name
+            version = project.version.toString()
+            artifact(tasks.named("bootJar"))
         }
     }
 }

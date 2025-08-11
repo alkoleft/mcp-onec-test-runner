@@ -9,14 +9,14 @@ import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
-import io.github.alkoleft.mcp.infrastructure.yaxunit.EnhancedReportParser
+import io.github.alkoleft.mcp.infrastructure.yaxunit.ReportParser
 import io.github.alkoleft.mcp.infrastructure.yaxunit.YaXUnitRunner
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Files
-import java.time.Duration
-import java.time.Instant
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 private val logger = KotlinLogging.logger { }
 
@@ -28,10 +28,11 @@ private val logger = KotlinLogging.logger { }
 class YaXUnitTestAction(
     private val platformDsl: PlatformDsl,
     private val utilLocator: UtilityLocator,
-    private val reportParser: EnhancedReportParser,
+    private val reportParser: ReportParser,
 ) : RunTestAction {
+    @OptIn(ExperimentalTime::class)
     override suspend fun run(request: TestExecutionRequest): TestExecutionResult {
-        val startTime = Instant.now()
+        val startTime = Clock.System.now()
         logger.info { "Starting YaXUnit test execution with filter: $request" }
 
         return withContext(Dispatchers.IO) {
@@ -49,7 +50,7 @@ class YaXUnitTestAction(
                 // Парсим отчет если он был создан
                 val report = parseTestReport(executionResult)
 
-                val duration = Duration.between(startTime, Instant.now())
+                val duration = Clock.System.now().minus(startTime)
 
                 // Формируем результат
                 val testsRun = report?.summary?.totalTests ?: 0
@@ -57,7 +58,7 @@ class YaXUnitTestAction(
                 val testsFailed = report?.summary?.failed ?: 0
 
                 logger.info {
-                    "YaXUnit test execution completed: $testsRun tests, $testsPassed passed, $testsFailed failed in ${duration.toSeconds()}s"
+                    "YaXUnit test execution completed: $testsRun tests, $testsPassed passed, $testsFailed failed in ${duration.inWholeSeconds}s"
                 }
 
                 TestExecutionResult(
@@ -67,8 +68,8 @@ class YaXUnitTestAction(
                     duration = duration,
                 )
             } catch (e: Exception) {
-                val duration = Duration.between(startTime, Instant.now())
-                logger.error(e) { "YaXUnit test execution failed after ${duration.toSeconds()}s" }
+                val duration = Clock.System.now().minus(startTime)
+                logger.error(e) { "YaXUnit test execution failed after ${duration.inWholeSeconds}s" }
                 throw TestExecuteException("YaXUnit test execution failed: ${e.message}", e)
             }
         }

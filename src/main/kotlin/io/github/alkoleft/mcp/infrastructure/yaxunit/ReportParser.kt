@@ -4,23 +4,26 @@ import io.github.alkoleft.mcp.core.modules.GenericTestCase
 import io.github.alkoleft.mcp.core.modules.GenericTestReport
 import io.github.alkoleft.mcp.core.modules.GenericTestSuite
 import io.github.alkoleft.mcp.core.modules.ReportFormat
-import io.github.alkoleft.mcp.core.modules.ReportParser
 import io.github.alkoleft.mcp.core.modules.TestMetadata
 import io.github.alkoleft.mcp.core.modules.TestStatus
 import io.github.alkoleft.mcp.core.modules.TestSummary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.springframework.stereotype.Component
 import org.w3c.dom.Element
 import java.io.InputStream
-import java.time.Duration
 import java.time.Instant
 import javax.xml.parsers.DocumentBuilderFactory
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 /**
  * Minimal JUnit-only report parser
  */
-class EnhancedReportParser : ReportParser {
-    override suspend fun parseReport(
+@Component
+class ReportParser {
+    suspend fun parseReport(
         input: InputStream,
         format: ReportFormat,
     ): GenericTestReport =
@@ -29,7 +32,7 @@ class EnhancedReportParser : ReportParser {
             parseJUnitXml(input)
         }
 
-    override suspend fun detectFormat(input: InputStream): ReportFormat =
+    suspend fun detectFormat(input: InputStream): ReportFormat =
         withContext(Dispatchers.IO) {
             val bytes = input.readAllBytes()
             val content = String(bytes)
@@ -44,7 +47,7 @@ class EnhancedReportParser : ReportParser {
             }
         }
 
-    override fun getSupportedFormats(): Set<ReportFormat> = setOf(ReportFormat.JUNIT_XML)
+    fun getSupportedFormats(): Set<ReportFormat> = setOf(ReportFormat.JUNIT_XML)
 
     private fun parseJUnitXml(input: InputStream): GenericTestReport {
         val factory = DocumentBuilderFactory.newInstance()
@@ -115,7 +118,7 @@ class EnhancedReportParser : ReportParser {
             failed = failures,
             skipped = skipped,
             errors = errors,
-            duration = Duration.ofMillis((time * 1000).toLong()),
+            duration = time.toDuration(DurationUnit.SECONDS),
             testCases = testCases,
         )
     }
@@ -156,7 +159,7 @@ class EnhancedReportParser : ReportParser {
             name = name,
             className = className,
             status = status,
-            duration = Duration.ofMillis((time * 1000).toLong()),
+            duration = time.toDuration(DurationUnit.SECONDS),
             errorMessage = errorMessage,
             stackTrace = stackTrace,
             systemOut = null,

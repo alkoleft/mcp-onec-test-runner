@@ -24,26 +24,10 @@ abstract class AbstractBuildAction(
     /**
      * Выполняет полную сборку проекта с измерением времени
      */
-    override suspend fun build(properties: ApplicationProperties): BuildResult = build(properties, properties.sourceSet)
-
-    override suspend fun build(
+    override suspend fun run(
         properties: ApplicationProperties,
         sourceSet: SourceSet,
     ): BuildResult = measureExecutionTime("build") { executeBuildDsl(properties, sourceSet) }
-
-    /**
-     * Выполняет сборку только конфигурации с измерением времени
-     */
-    override suspend fun buildConfiguration(properties: ApplicationProperties): BuildResult =
-        measureExecutionTime("buildConfiguration") { executeConfigurationBuildDsl(properties) }
-
-    /**
-     * Выполняет сборку расширения с измерением времени
-     */
-    override suspend fun buildExtension(
-        name: String,
-        properties: ApplicationProperties,
-    ): BuildResult = measureExecutionTime("buildExtension") { executeExtensionBuildDsl(name, properties) }
 
     /**
      * Измеряет время выполнения операции с обработкой ошибок
@@ -75,18 +59,5 @@ abstract class AbstractBuildAction(
     protected abstract suspend fun executeBuildDsl(
         properties: ApplicationProperties,
         sourceSet: SourceSet,
-    ): BuildResult
-
-    /**
-     * Абстрактный метод для выполнения DSL сборки конфигурации
-     */
-    protected abstract suspend fun executeConfigurationBuildDsl(properties: ApplicationProperties): BuildResult
-
-    /**
-     * Абстрактный метод для выполнения DSL сборки расширения
-     */
-    protected abstract suspend fun executeExtensionBuildDsl(
-        extensionName: String,
-        properties: ApplicationProperties,
     ): BuildResult
 }

@@ -1,7 +1,6 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.common
 
 import io.github.alkoleft.mcp.core.modules.UtilityType
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.ConnectionSpeed
 import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
 import java.nio.file.Path
 import kotlin.time.Duration
@@ -20,8 +19,6 @@ abstract class BasePlatformContext(
     protected var localization: String? = null
     protected var disableStartupDialogs: Boolean = false
     protected var disableStartupMessages: Boolean = false
-    protected var additionalParams: MutableList<String> = mutableListOf()
-    protected var connectionSpeed: ConnectionSpeed? = null
     protected var noTruncate: Boolean = false
 
     fun connect(connectionString: String) {
@@ -67,17 +64,6 @@ abstract class BasePlatformContext(
         this.disableStartupMessages = true
     }
 
-    fun param(param: String) {
-        additionalParams.add(param)
-    }
-
-    /**
-     * Устанавливает скорость соединения
-     */
-    fun connectionSpeed(speed: ConnectionSpeed) {
-        this.connectionSpeed = speed
-    }
-
     /**
      * Не очищает файл вывода при записи
      */
@@ -85,14 +71,16 @@ abstract class BasePlatformContext(
         this.noTruncate = true
     }
 
-    protected suspend fun buildCommonArgs(
+    protected fun buildCommonArgs(
         utilityType: UtilityType,
         mode: String,
     ): MutableList<String> {
         val args = mutableListOf<String>()
-        val location = platformContext.locateUtility(utilityType)
-        args.add(location.executablePath.toString())
-        args.add(mode)
+        val location = platformContext.locateUtilitySync(utilityType).executablePath
+        args.add(location.toString())
+        if (mode.isNotBlank()) {
+            args.add(mode)
+        }
 
         connectionString.ifNoBlank {
             args.add("/IBConnectionString")
@@ -114,9 +102,6 @@ abstract class BasePlatformContext(
         if (disableStartupDialogs) args.add("/DisableStartupDialogs")
         if (disableStartupMessages) args.add("/DisableStartupMessages")
 
-        connectionSpeed?.let { args.add("/O$it") }
-
-        args.addAll(additionalParams.toList())
         return args
     }
 

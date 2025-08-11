@@ -6,7 +6,7 @@ import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult
 import io.github.alkoleft.mcp.core.modules.YaXUnitRunner
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityResult
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
@@ -101,9 +101,9 @@ class YaXUnitRunner(
     private suspend fun executeTests(
         request: TestExecutionRequest,
         configPath: Path,
-    ): PlatformUtilityResult =
+    ): ProcessResult =
         platformDsl
-            .enterprise(request.platformVersion) {
+            .enterprise {
                 connect(request.ibConnection)
                 request.user?.ifNoBlank { user(it) }
                 request.password?.ifNoBlank { password(it) }

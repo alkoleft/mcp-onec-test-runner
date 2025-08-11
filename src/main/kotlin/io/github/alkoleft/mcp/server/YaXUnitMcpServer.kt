@@ -2,11 +2,14 @@ package io.github.alkoleft.mcp.server
 
 import io.github.alkoleft.mcp.application.services.LauncherService
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
+import io.github.alkoleft.mcp.configuration.properties.ProjectFormat
 import io.github.alkoleft.mcp.core.modules.GenericTestCase
 import io.github.alkoleft.mcp.core.modules.GenericTestReport
 import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
+import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
 import org.springframework.ai.tool.annotation.Tool
@@ -23,6 +26,7 @@ private val logger = KotlinLogging.logger { }
 class YaXUnitMcpServer(
     private val launcherService: LauncherService,
     private val properties: ApplicationProperties,
+    private val platformUtilityContext: PlatformUtilityContext,
 ) {
     /**
      * Запускает все тесты в проекте
@@ -32,29 +36,30 @@ class YaXUnitMcpServer(
         name = "yaxunit_run_all_tests",
         description = "Запускает все тесты YaXUnit в проекте. Возвращает подробный отчет о выполнении тестов.",
     )
-    fun runAllTests(): TestExecutionResult {
+    fun runAllTests(): McpTestResponse {
         logger.info { "Запуск всех тестов YaXUnit" }
 
         return runBlocking {
             try {
                 val request = RunAllTestsRequest(properties)
                 val result = launcherService.run(request)
-                TestExecutionResult(
+                McpTestResponse(
                     success = result.success,
                     message = if (result.success) "Все тесты выполнены успешно" else "Ошибка при выполнении тестов",
                     totalTests = result.report.summary.totalTests,
                     passedTests = result.report.summary.passed,
                     failedTests = result.report.summary.failed,
-                    executionTime = result.duration.toMillis(),
+                    executionTime = result.duration.inWholeMilliseconds,
                     details =
                         mapOf(
                             "duration" to result.duration.toString(),
                             "successRate" to result.successRate,
                         ),
+                    testDetail = collectTestDetails(result.report),
                 )
             } catch (e: Exception) {
                 logger.error(e) { "Ошибка при запуске всех тестов" }
-                TestExecutionResult(
+                McpTestResponse(
                     success = false,
                     message = "Ошибка при выполнении тестов: ${e.message}",
                     totalTests = 0,
@@ -78,20 +83,20 @@ class YaXUnitMcpServer(
     )
     fun runModuleTests(
         @ToolParam(description = "Имя модуля для тестирования") moduleName: String,
-    ): TestExecutionResult {
+    ): McpTestResponse {
         logger.info { "Запуск тестов модуля: $moduleName" }
 
         return runBlocking {
             try {
                 val request = RunModuleTestsRequest(moduleName, properties)
                 val result = launcherService.run(request)
-                TestExecutionResult(
+                McpTestResponse(
                     success = result.success,
                     message = if (result.success) "Тесты модуля '$moduleName' выполнены" else "Ошибка при выполнении тестов модуля",
                     totalTests = result.report.summary.totalTests,
                     passedTests = result.report.summary.passed,
                     failedTests = result.report.summary.failed,
-                    executionTime = result.duration.toMillis(),
+                    executionTime = result.duration.inWholeMilliseconds,
                     details =
                         mapOf(
                             "duration" to result.duration.toString(),
@@ -102,7 +107,7 @@ class YaXUnitMcpServer(
                 )
             } catch (e: Exception) {
                 logger.error(e) { "Ошибка при запуске тестов модуля: $moduleName" }
-                TestExecutionResult(
+                McpTestResponse(
                     success = false,
                     message = "Ошибка при выполнении тестов модуля '$moduleName': ${e.message}",
                     totalTests = 0,
@@ -128,14 +133,14 @@ class YaXUnitMcpServer(
     )
     fun runListTests(
         @ToolParam(description = "Список имен модулей для тестирования") moduleNames: List<String>,
-    ): TestExecutionResult {
+    ): McpTestResponse {
         logger.info { "Запуск тестов модулей: $moduleNames" }
 
         return runBlocking {
             try {
                 val request = RunListTestsRequest(moduleNames, properties)
                 val result = launcherService.run(request)
-                TestExecutionResult(
+                McpTestResponse(
                     success = result.success,
                     message =
                         if (result.success) {
@@ -146,7 +151,7 @@ class YaXUnitMcpServer(
                     totalTests = result.report.summary.totalTests,
                     passedTests = result.report.summary.passed,
                     failedTests = result.report.summary.failed,
-                    executionTime = result.duration.toMillis(),
+                    executionTime = result.duration.inWholeMilliseconds,
                     details =
                         mapOf(
                             "duration" to result.duration.toString(),
@@ -156,7 +161,7 @@ class YaXUnitMcpServer(
                 )
             } catch (e: Exception) {
                 logger.error(e) { "Ошибка при запуске тестов модулей: $moduleNames" }
-                TestExecutionResult(
+                McpTestResponse(
                     success = false,
                     message = "Ошибка при выполнении тестов модулей '${moduleNames.joinToString(", ")}': ${e.message}",
                     totalTests = 0,
@@ -177,21 +182,38 @@ class YaXUnitMcpServer(
         name = "yaxunit_build_project",
         description = "Выполняет сборку проекта YaXUnit. Возвращает результат сборки.",
     )
-    fun buildProject(): BuildResult {
+    fun buildProject(): McpBuildResponse {
         logger.info { "Выполнение сборки проекта" }
 
         return runBlocking {
             try {
-                launcherService.build()
-                BuildResult(
-                    success = true,
-                    message = "Сборка выполнена успешно",
-                    buildTime = 0L,
-                    details = emptyMap(),
-                )
+                val buildResult = launcherService.build()
+                if (buildResult.success) {
+                    McpBuildResponse(
+                        success = true,
+                        message = "Сборка выполнена успешно",
+                        buildTime = buildResult.duration.inWholeMilliseconds,
+                        details =
+                            mapOf(
+                                "configurationBuilt" to buildResult.configurationBuilt,
+                                "errors" to buildResult.errors,
+                            ),
+                    )
+                } else {
+                    McpBuildResponse(
+                        success = false,
+                        message = if (buildResult.errors.isNotEmpty()) buildResult.errors.joinToString("; ") else "Ошибки сборки",
+                        buildTime = buildResult.duration.inWholeMilliseconds,
+                        details =
+                            mapOf(
+                                "configurationBuilt" to buildResult.configurationBuilt,
+                                "errors" to buildResult.errors,
+                            ),
+                    )
+                }
             } catch (e: Exception) {
                 logger.error(e) { "Ошибка при сборке проекта" }
-                BuildResult(
+                McpBuildResponse(
                     success = false,
                     message = "Ошибка при сборке: ${e.message}",
                     buildTime = 0,
@@ -213,14 +235,29 @@ class YaXUnitMcpServer(
         logger.info { "Проверка статуса платформы 1С" }
 
         return try {
-            // TODO: Implement platform status check
+            val utilityTypes =
+                UtilityType.entries.filter { it.isPlatform() } +
+                    if (properties.format == ProjectFormat.EDT) {
+                        listOf(UtilityType.EDT_CLI)
+                    } else {
+                        emptyList()
+                    }
+
+            val utilityStates =
+                utilityTypes.associateWith {
+                    runCatching {
+                        platformUtilityContext.locateUtilitySync(it).version
+                    }.getOrNull()
+                }
+            val isAvailable = utilityStates.values.find { it != null } != null
+
             PlatformStatusResult(
                 success = true,
                 message = "Платформа 1С доступна",
-                version = "8.3.24.1482",
+                version = properties.platformVersion,
                 path = "/usr/local/1cv8/8.3.24.1482/1cv8c",
-                isAvailable = true,
-                details = mapOf("platform" to "1C:Enterprise", "version" to "8.3.24.1482"),
+                isAvailable = isAvailable,
+                details = utilityStates,
             )
         } catch (e: Exception) {
             logger.error(e) { "Ошибка при проверке платформы" }
@@ -230,7 +267,6 @@ class YaXUnitMcpServer(
                 version = null,
                 path = null,
                 isAvailable = false,
-                details = mapOf("error" to e.message.toString()),
             )
         }
     }
@@ -239,7 +275,7 @@ class YaXUnitMcpServer(
 /**
  * Результат выполнения тестов
  */
-data class TestExecutionResult(
+data class McpTestResponse(
     val success: Boolean,
     val message: String,
     val totalTests: Int,
@@ -253,34 +289,11 @@ data class TestExecutionResult(
 /**
  * Результат сборки проекта
  */
-data class BuildResult(
+data class McpBuildResponse(
     val success: Boolean,
     val message: String,
     val buildTime: Long,
     val details: Map<String, Any>,
-)
-
-/**
- * Результат списка модулей
- */
-data class ModuleListResult(
-    val success: Boolean,
-    val message: String,
-    val modules: List<String>,
-    val totalCount: Int,
-)
-
-/**
- * Результат конфигурации
- */
-data class ConfigurationResult(
-    val success: Boolean,
-    val message: String,
-    val projectSettings: Any?,
-    val platformSettings: Any?,
-    val buildSettings: Any?,
-    val loggingSettings: Any?,
-    val serverSettings: Any?,
 )
 
 /**
@@ -292,5 +305,5 @@ data class PlatformStatusResult(
     val version: String?,
     val path: String?,
     val isAvailable: Boolean,
-    val details: Map<String, Any>,
+    val details: Map<UtilityType, String?> = emptyMap(),
 )

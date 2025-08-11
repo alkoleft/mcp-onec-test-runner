@@ -23,6 +23,10 @@ enum class UtilityType(
     IBSRV("ibsrv"),
     THIN_CLIENT("1cv8c"),
     THICK_CLIENT("1cv8"),
+    EDT_CLI("1cedtcli"),
+    ;
+
+    fun isPlatform() = this != EDT_CLI
 }
 
 enum class ClientMode {

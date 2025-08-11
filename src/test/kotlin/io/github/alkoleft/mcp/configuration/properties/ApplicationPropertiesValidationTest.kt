@@ -18,13 +18,14 @@ class ApplicationPropertiesValidationTest {
                 basePath = tempDir,
                 sourceSet =
                     SourceSet(
-                        listOf(
-                            SourceSetItem(
-                                path = "config",
-                                name = "Configuration",
-                                type = SourceSetType.CONFIGURATION,
+                        items =
+                            listOf(
+                                SourceSetItem(
+                                    path = "config",
+                                    name = "Configuration",
+                                    type = SourceSetType.CONFIGURATION,
+                                ),
                             ),
-                        ),
                     ),
                 connection =
                     ConnectionProperties(
@@ -48,13 +49,14 @@ class ApplicationPropertiesValidationTest {
                 basePath = nonExistentPath,
                 sourceSet =
                     SourceSet(
-                        listOf(
-                            SourceSetItem(
-                                path = "config",
-                                name = "Configuration",
-                                type = SourceSetType.CONFIGURATION,
+                        items =
+                            listOf(
+                                SourceSetItem(
+                                    path = "config",
+                                    name = "Configuration",
+                                    type = SourceSetType.CONFIGURATION,
+                                ),
                             ),
-                        ),
                     ),
                 connection = ConnectionProperties(connectionString = "File=test.db;"),
             )
@@ -83,13 +85,14 @@ class ApplicationPropertiesValidationTest {
                 basePath = tempDir,
                 sourceSet =
                     SourceSet(
-                        listOf(
-                            SourceSetItem(
-                                path = "extensions",
-                                name = "Extensions",
-                                type = SourceSetType.EXTENSION,
+                        items =
+                            listOf(
+                                SourceSetItem(
+                                    path = "extensions",
+                                    name = "Extensions",
+                                    type = SourceSetType.EXTENSION,
+                                ),
                             ),
-                        ),
                     ),
                 connection = ConnectionProperties(connectionString = "File=test.db;"),
             )
@@ -107,13 +110,14 @@ class ApplicationPropertiesValidationTest {
                 basePath = tempDir,
                 sourceSet =
                     SourceSet(
-                        listOf(
-                            SourceSetItem(
-                                path = "config",
-                                name = "Configuration",
-                                type = SourceSetType.CONFIGURATION,
+                        items =
+                            listOf(
+                                SourceSetItem(
+                                    path = "config",
+                                    name = "Configuration",
+                                    type = SourceSetType.CONFIGURATION,
+                                ),
                             ),
-                        ),
                     ),
                 connection = ConnectionProperties(connectionString = ""),
             )
@@ -131,13 +135,14 @@ class ApplicationPropertiesValidationTest {
                 basePath = tempDir,
                 sourceSet =
                     SourceSet(
-                        listOf(
-                            SourceSetItem(
-                                path = "config",
-                                name = "Configuration",
-                                type = SourceSetType.CONFIGURATION,
+                        items =
+                            listOf(
+                                SourceSetItem(
+                                    path = "config",
+                                    name = "Configuration",
+                                    type = SourceSetType.CONFIGURATION,
+                                ),
                             ),
-                        ),
                     ),
                 connection = ConnectionProperties(connectionString = "File=test.db;"),
                 platformVersion = "invalid-version",

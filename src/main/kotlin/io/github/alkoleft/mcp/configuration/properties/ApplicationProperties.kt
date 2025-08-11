@@ -1,6 +1,7 @@
 package io.github.alkoleft.mcp.configuration.properties
 
 import io.github.alkoleft.mcp.core.modules.TEST_PATH
+import io.github.alkoleft.mcp.infrastructure.storage.calculateStringHash
 import org.springframework.boot.context.properties.ConfigurationProperties
 import java.nio.file.Files
 import java.nio.file.Path
@@ -11,12 +12,23 @@ import java.nio.file.Path
 @ConfigurationProperties(prefix = "app")
 data class ApplicationProperties(
     val id: String? = null,
+    val format: ProjectFormat = ProjectFormat.DESIGNER,
     val basePath: Path,
     val sourceSet: SourceSet = SourceSet(),
     val connection: ConnectionProperties = ConnectionProperties(),
     val platformVersion: String = "",
     val tools: ToolsProperties = ToolsProperties(),
 ) {
+    val workPath: Path by lazy {
+        val path =
+            if (id != null && id.isNotBlank()) {
+                id
+            } else {
+                calculateStringHash(basePath.toString())
+            }
+        Path.of(System.getProperty("java.io.tmpdir"), "mcp-yaxunit-runner", path)
+    }
+
     init {
         validateConfiguration()
     }
@@ -115,35 +127,10 @@ data class ApplicationProperties(
         }
     }
 
-    // Упрощенные вычисляемые свойства с lazy инициализацией
-    val configurationPath: Path? by lazy {
-        sourceSet
-            .find { it.type == SourceSetType.CONFIGURATION }
-            ?.let { basePath.resolve(it.path) }
-    }
-
     val testsPath: Path by lazy {
         sourceSet
             .find { it.purpose.contains(SourceSetPurpose.TESTS) }
             ?.let { basePath.resolve(it.path) }
             ?: basePath.resolve(TEST_PATH)
-    }
-
-    val yaxunitEnginePath: Path? by lazy {
-        sourceSet
-            .find { it.purpose.contains(SourceSetPurpose.YAXUNIT) }
-            ?.let { basePath.resolve(it.path) }
-    }
-
-    val mainCodePath: Path? by lazy {
-        sourceSet
-            .find { it.purpose.contains(SourceSetPurpose.MAIN) }
-            ?.let { basePath.resolve(it.path) }
-    }
-
-    val extensions: List<String> by lazy {
-        sourceSet
-            .filter { it.type == SourceSetType.EXTENSION }
-            .map { it.name }
     }
 }

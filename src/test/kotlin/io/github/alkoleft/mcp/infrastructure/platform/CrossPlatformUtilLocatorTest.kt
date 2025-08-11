@@ -36,7 +36,10 @@ class CrossPlatformUtilLocatorTest {
                 }
             }
 
-        assertTrue(exception.utility.contains(UtilityType.DESIGNER.name), "Exception should contain correct utility type")
+        assertTrue(
+            exception.utility.contains(UtilityType.DESIGNER.name),
+            "Exception should contain correct utility type",
+        )
     }
 
     @Test
@@ -52,7 +55,10 @@ class CrossPlatformUtilLocatorTest {
                 }
             }
 
-        assertTrue(exception.utility.contains(UtilityType.DESIGNER.name), "Exception should contain correct utility type")
+        assertTrue(
+            exception.utility.contains(UtilityType.DESIGNER.name),
+            "Exception should contain correct utility type",
+        )
     }
 
     @Test
@@ -105,7 +111,10 @@ class CrossPlatformUtilLocatorTest {
                 }
             }
 
-        assertTrue(exception.utility.contains(UtilityType.DESIGNER.name), "Exception should contain correct utility type")
+        assertTrue(
+            exception.utility.contains(UtilityType.DESIGNER.name),
+            "Exception should contain correct utility type",
+        )
     }
 
     @Test
@@ -121,7 +130,10 @@ class CrossPlatformUtilLocatorTest {
                 }
             }
 
-        assertTrue(exception.utility.contains(UtilityType.DESIGNER.name), "Exception should contain correct utility type")
+        assertTrue(
+            exception.utility.contains(UtilityType.DESIGNER.name),
+            "Exception should contain correct utility type",
+        )
     }
 
     @Test

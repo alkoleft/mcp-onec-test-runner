@@ -2,8 +2,8 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.enterprise
 
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.BasePlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Component
@@ -22,7 +22,7 @@ class EnterpriseDsl(
     /**
      * Запускает 1С:Предприятие с указанными параметрами
      */
-    suspend fun run(): PlatformUtilityResult =
+    suspend fun run(): ProcessResult =
         withContext(Dispatchers.IO) {
             try {
                 val args = context.buildBaseArgs()
