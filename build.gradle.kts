@@ -120,8 +120,11 @@ publishing {
         }
     }
     publications {
-        register<MavenPublication>("gpr") {
-            from(components["java"])
+        create<MavenPublication>("gpr") {
+            groupId = project.group.toString()
+            artifactId = project.name
+            version = project.version.toString()
+            artifact(tasks.named("bootJar"))
         }
     }
 }
@@ -144,21 +147,4 @@ tasks.jacocoTestReport {
     }
 }
 
-publishing {
-    repositories {
-        maven {
-            name = "mcp-onec-test-runner"
-            url = uri("https://maven.pkg.github.com/alkoleft/mcp-onec-test-runner")
-            credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
-            }
-        }
-    }
-    publications {
-        register<MavenPublication>("gpr") {
-            from(components["java"])
-        }
-    }
-}
-
+// (removed duplicate publishing block for a different repository)
