@@ -30,7 +30,10 @@ class PlatformUtilityContext(
     /**
      * Получает локацию утилиты указанного типа
      */
-    private suspend fun locateUtility(utilityType: UtilityType, version: String): UtilityLocation =
+    private suspend fun locateUtility(
+        utilityType: UtilityType,
+        version: String,
+    ): UtilityLocation =
         utilLocator.locateUtility(
             utilityType,
             version = version,
@@ -39,7 +42,10 @@ class PlatformUtilityContext(
     /**
      * Синхронная версия получения локации утилиты
      */
-    private fun locateUtilitySync(utilityType: UtilityType, version: String): UtilityLocation =
+    private fun locateUtilitySync(
+        utilityType: UtilityType,
+        version: String,
+    ): UtilityLocation =
         runBlocking {
             locateUtility(utilityType, version)
         }
@@ -75,13 +81,17 @@ class PlatformUtilityContext(
     /**
      * Получает путь к указанной утилите
      */
-    fun getUtilityPath(utilityType: UtilityType, version: String = "default"): String =
+    fun getUtilityPath(
+        utilityType: UtilityType,
+        version: String = "default",
+    ): String =
         try {
-            val actualVersion: String = if (version == "default") {
-                if (utilityType.isPlatform()) properties.platformVersion else properties.tools.edtCli.version
-            } else {
-                version
-            }
+            val actualVersion: String =
+                if (version == "default") {
+                    if (utilityType.isPlatform()) properties.platformVersion else properties.tools.edtCli.version
+                } else {
+                    version
+                }
             val location = locateUtilitySync(utilityType, actualVersion)
             location.executablePath.toString()
         } catch (e: Exception) {

@@ -234,8 +234,9 @@ fun SearchStrategy.search(
     }
 
     val resolver = DefaultVersionResolver()
-    val bestPath = resolver.selectBest(existing, requirement)
-        ?: throw TestExecutionError.UtilNotFound("$utility not found for version requirement: $requirement")
+    val bestPath =
+        resolver.selectBest(existing, requirement)
+            ?: throw TestExecutionError.UtilNotFound("$utility not found for version requirement: $requirement")
 
     return UtilityLocation(
         executablePath = bestPath,

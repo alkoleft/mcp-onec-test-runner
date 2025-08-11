@@ -15,10 +15,17 @@ class SearchStrategyFactoryTest {
         assertNotNull(strategy, "Strategy should not be null")
         when (PlatformDetector.current) {
             PlatformType.WINDOWS -> {
-                assertTrue(strategy is PlatformWindowsSearchStrategy, "Should create WindowsSearchStrategy for Windows platform")
+                assertTrue(
+                    strategy is PlatformWindowsSearchStrategy,
+                    "Should create WindowsSearchStrategy for Windows platform",
+                )
             }
+
             PlatformType.LINUX, PlatformType.MACOS -> {
-                assertTrue(strategy is PlatformLinuxSearchStrategy, "Should create LinuxSearchStrategy for Linux/MacOS platform")
+                assertTrue(
+                    strategy is PlatformLinuxSearchStrategy,
+                    "Should create LinuxSearchStrategy for Linux/MacOS platform",
+                )
             }
         }
     }
@@ -28,7 +35,10 @@ class SearchStrategyFactoryTest {
         val factory = SearchStrategyFactory()
         if (PlatformDetector.current == PlatformType.WINDOWS) {
             val strategy = factory.createSearchStrategy()
-            assertTrue(strategy is PlatformWindowsSearchStrategy, "Should create WindowsSearchStrategy for Windows platform")
+            assertTrue(
+                strategy is PlatformWindowsSearchStrategy,
+                "Should create WindowsSearchStrategy for Windows platform",
+            )
         } else {
             assertTrue(true, "Test skipped - not on Windows platform")
         }

@@ -123,10 +123,12 @@ class DirectoryEnumeratingLocation(
             Files.newDirectoryStream(baseDir).use { stream ->
                 stream.forEach { entry ->
                     if (Files.isDirectory(entry)) {
-                        val candidate = if (relativeExecutableSubPath != null && relativeExecutableSubPath.isNotBlank())
-                            entry.resolve(relativeExecutableSubPath).resolve(executableName)
-                        else
-                            entry.resolve(executableName)
+                        val candidate =
+                            if (relativeExecutableSubPath != null && relativeExecutableSubPath.isNotBlank()) {
+                                entry.resolve(relativeExecutableSubPath).resolve(executableName)
+                            } else {
+                                entry.resolve(executableName)
+                            }
                         val ver = dirNameToVersion(entry.fileName.toString())
                         result.add(candidate to ver)
                     }

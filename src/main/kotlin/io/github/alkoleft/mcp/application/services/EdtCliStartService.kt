@@ -38,7 +38,7 @@ private val logger = KotlinLogging.logger {}
 @EnableAsync
 class EdtCliStartService(
     private val properties: ApplicationProperties,
-    private val utilityContext: PlatformUtilityContext
+    private val utilityContext: PlatformUtilityContext,
 ) {
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 

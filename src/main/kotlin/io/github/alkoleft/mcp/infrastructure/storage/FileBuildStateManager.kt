@@ -32,7 +32,6 @@ private val logger = KotlinLogging.logger { }
 class FileBuildStateManager(
     private val hashStorage: MapDbHashStorage,
 ) : BuildStateManager {
-
     // Performance tuning parameters
     private val maxConcurrentHashCalculations = 4
 
@@ -44,10 +43,12 @@ class FileBuildStateManager(
 
             try {
                 // Phase 1: Fast timestamp pre-scan
-                val candidateFiles = properties.sourceSet.asFlow()
-                    .map { properties.basePath.resolve(it.path) }
-                    .flatMapMerge { scanForPotentialChanges(it).asFlow() }
-                    .toSet()
+                val candidateFiles =
+                    properties.sourceSet
+                        .asFlow()
+                        .map { properties.basePath.resolve(it.path) }
+                        .flatMapMerge { scanForPotentialChanges(it).asFlow() }
+                        .toSet()
 
                 logger.debug { "Phase 1: Found ${candidateFiles.size} potential changes after timestamp scan" }
 
