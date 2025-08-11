@@ -17,6 +17,22 @@ plugins {
 group = "io.github.alkoleft.mcp"
 version = "1.0-SNAPSHOT"
 
+gitVersioning.apply {
+    refs {
+        considerTagsOnBranches = true
+        tag("v(?<tagVersion>[0-9].*)") {
+            version = "\${ref.tagVersion}\${dirty}"
+        }
+        branch(".+") {
+            version = "\${ref}-\${commit.short}\${dirty}"
+        }
+    }
+
+    rev {
+        version = "\${commit.short}\${dirty}"
+    }
+}
+
 kotlin {
     compilerOptions {
         freeCompilerArgs.addAll("-Xjsr305=strict", "-java-parameters", "-Xemit-jvm-type-annotations")
@@ -108,8 +124,8 @@ tasks.named("startScripts") {
 publishing {
     repositories {
         maven {
-            name = "mcp-yaxunit-runner"
-            url = uri("https://maven.pkg.github.com/alkoleft/mcp-yaxunit-runner")
+            name = "mcp-onec-test-runner"
+            url = uri("https://maven.pkg.github.com/alkoleft/mcp-onec-test-runner")
             credentials {
                 username = System.getenv("GITHUB_ACTOR")
                 password = System.getenv("GITHUB_TOKEN")
