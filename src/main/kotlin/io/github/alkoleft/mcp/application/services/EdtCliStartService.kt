@@ -24,7 +24,6 @@ import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
 import org.springframework.scheduling.annotation.EnableAsync
 import org.springframework.stereotype.Service
-import java.io.File
 
 private val logger = KotlinLogging.logger {}
 
@@ -126,8 +125,8 @@ class EdtCliStartService(
                 logger.info { "Инициализация процесса EDT CLI" }
 
                 // Проверяем наличие исполняемого файла EDT
-                val executablePath = getEdtExecutablePath()
-                if (!File(executablePath).exists()) {
+                val executablePath = utilityContext.locateUtilitySync(UtilityType.EDT_CLI).executablePath
+                if (!executablePath.toFile().exists()) {
                     logger.error { "Исполняемый файл EDT не найден: $executablePath" }
                     return@withContext null
                 }
@@ -135,7 +134,7 @@ class EdtCliStartService(
                 // Создаем процесс EDT CLI
                 val command =
                     buildList {
-                        add(executablePath)
+                        add(executablePath.toString())
                         val workDir = properties.tools.edtCli.workingDirectory
                         if (!workDir.isNullOrBlank()) {
                             add("-data")
@@ -252,11 +251,6 @@ class EdtCliStartService(
             }
             ensureStarted().await()
         }
-
-    /**
-     * Получает путь к исполняемому файлу EDT
-     */
-    private fun getEdtExecutablePath(): String = utilityContext.getUtilityPath(UtilityType.EDT_CLI)
 
     /**
      * Проверяет, запущен ли процесс EDT CLI

@@ -429,8 +429,8 @@ class EdtContext(
      */
     fun buildEdtArgs(commandArgs: List<String>): List<String> {
         val args = mutableListOf<String>()
-        val location = platformContext.getUtilityPath(UtilityType.EDT_CLI)
-        args.add(location)
+        val location = platformContext.locateUtilitySync(UtilityType.EDT_CLI).executablePath
+        args.add(location.toString())
         args.addAll(commandArgs)
         return args
     }

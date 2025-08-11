@@ -2,11 +2,14 @@ package io.github.alkoleft.mcp.server
 
 import io.github.alkoleft.mcp.application.services.LauncherService
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
+import io.github.alkoleft.mcp.configuration.properties.ProjectFormat
 import io.github.alkoleft.mcp.core.modules.GenericTestCase
 import io.github.alkoleft.mcp.core.modules.GenericTestReport
 import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
+import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
 import org.springframework.ai.tool.annotation.Tool
@@ -23,6 +26,7 @@ private val logger = KotlinLogging.logger { }
 class YaXUnitMcpServer(
     private val launcherService: LauncherService,
     private val properties: ApplicationProperties,
+    private val platformUtilityContext: PlatformUtilityContext,
 ) {
     /**
      * Запускает все тесты в проекте
@@ -231,14 +235,29 @@ class YaXUnitMcpServer(
         logger.info { "Проверка статуса платформы 1С" }
 
         return try {
-            // TODO: Implement platform status check
+            val utilityTypes =
+                UtilityType.entries.filter { it.isPlatform() } +
+                    if (properties.format == ProjectFormat.EDT) {
+                        listOf(UtilityType.EDT_CLI)
+                    } else {
+                        emptyList()
+                    }
+
+            val utilityStates =
+                utilityTypes.associateWith {
+                    runCatching {
+                        platformUtilityContext.locateUtilitySync(it).version
+                    }.getOrNull()
+                }
+            val isAvailable = utilityStates.values.find { it != null } != null
+
             PlatformStatusResult(
                 success = true,
                 message = "Платформа 1С доступна",
-                version = "8.3.24.1482",
+                version = properties.platformVersion,
                 path = "/usr/local/1cv8/8.3.24.1482/1cv8c",
-                isAvailable = true,
-                details = mapOf("platform" to "1C:Enterprise", "version" to "8.3.24.1482"),
+                isAvailable = isAvailable,
+                details = utilityStates,
             )
         } catch (e: Exception) {
             logger.error(e) { "Ошибка при проверке платформы" }
@@ -248,7 +267,6 @@ class YaXUnitMcpServer(
                 version = null,
                 path = null,
                 isAvailable = false,
-                details = mapOf("error" to e.message.toString()),
             )
         }
     }
@@ -287,5 +305,5 @@ data class PlatformStatusResult(
     val version: String?,
     val path: String?,
     val isAvailable: Boolean,
-    val details: Map<String, Any>,
+    val details: Map<UtilityType, String?> = emptyMap(),
 )

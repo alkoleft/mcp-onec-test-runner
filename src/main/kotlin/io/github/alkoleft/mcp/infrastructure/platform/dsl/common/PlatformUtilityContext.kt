@@ -13,6 +13,8 @@ import kotlinx.coroutines.runBlocking
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 
+private const val DEFAULT_VERSION = "default"
+
 /**
  * Контекст для работы с утилитами платформы 1С
  */
@@ -42,13 +44,22 @@ class PlatformUtilityContext(
     /**
      * Синхронная версия получения локации утилиты
      */
-    private fun locateUtilitySync(
+    fun locateUtilitySync(
         utilityType: UtilityType,
-        version: String,
+        version: String = DEFAULT_VERSION,
     ): UtilityLocation =
         runBlocking {
-            locateUtility(utilityType, version)
+            locateUtility(utilityType, actualVersion(utilityType, version))
         }
+
+    private fun actualVersion(
+        utilityType: UtilityType,
+        version: String,
+    ) = if (version == DEFAULT_VERSION) {
+        if (utilityType.isPlatform()) properties.platformVersion else properties.tools.edtCli.version
+    } else {
+        version
+    }
 
     /**
      * Устанавливает результат выполнения операции
@@ -83,19 +94,13 @@ class PlatformUtilityContext(
      */
     fun getUtilityPath(
         utilityType: UtilityType,
-        version: String = "default",
-    ): String =
+        version: String = DEFAULT_VERSION,
+    ): String? =
         try {
-            val actualVersion: String =
-                if (version == "default") {
-                    if (utilityType.isPlatform()) properties.platformVersion else properties.tools.edtCli.version
-                } else {
-                    version
-                }
-            val location = locateUtilitySync(utilityType, actualVersion)
+            val location = locateUtilitySync(utilityType, version)
             location.executablePath.toString()
         } catch (e: Exception) {
-            "/path/to/default/utility"
+            null
         }
 
     fun executor(utilityType: UtilityType): CommandExecutor {

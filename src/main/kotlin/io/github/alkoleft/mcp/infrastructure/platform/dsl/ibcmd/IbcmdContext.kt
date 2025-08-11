@@ -14,7 +14,7 @@ class IbcmdContext(
     private var password: String? = null
 
     val utilityPath
-        get() = platformContext.getUtilityPath(UtilityType.IBCMD)
+        get() = platformContext.locateUtilitySync(UtilityType.IBCMD).executablePath.toString()
 
     /**
      * Устанавливает путь к базе данных

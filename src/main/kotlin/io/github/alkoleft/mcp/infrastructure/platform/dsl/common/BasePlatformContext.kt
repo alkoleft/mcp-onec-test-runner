@@ -76,8 +76,8 @@ abstract class BasePlatformContext(
         mode: String,
     ): MutableList<String> {
         val args = mutableListOf<String>()
-        val location = platformContext.getUtilityPath(utilityType)
-        args.add(location)
+        val location = platformContext.locateUtilitySync(utilityType).executablePath
+        args.add(location.toString())
         if (mode.isNotBlank()) {
             args.add(mode)
         }
