@@ -85,58 +85,6 @@ class RealTests(
         }
     }
 
-    @Ignore
-    @Test
-    fun designerBuildActionConfigurationBuild() {
-        val action = DesignerBuildAction(platformDsl)
-        val properties = testApplicationProperties()
-
-        runBlocking {
-            val result = action.buildConfiguration(properties)
-            println("Результат сборки конфигурации: $result")
-        }
-    }
-
-    @Ignore
-    @Test
-    fun designerBuildActionExtensionBuild() {
-        val action = DesignerBuildAction(platformDsl)
-        val properties = testApplicationProperties()
-        val extensionName = "yaxunit"
-
-        runBlocking {
-            val result = action.buildExtension(extensionName, properties)
-            println("Результат сборки расширения $extensionName: $result")
-        }
-    }
-
-    @Ignore
-    @Test
-    fun designerBuildActionMultipleExtensionsBuild() {
-        val action = DesignerBuildAction(platformDsl)
-        val properties = testApplicationProperties()
-        val extensions = listOf("yaxunit", "tests")
-
-        runBlocking {
-            extensions.forEach { extensionName ->
-                val result = action.buildExtension(extensionName, properties)
-                println("Результат сборки расширения $extensionName: $result")
-            }
-        }
-    }
-
-    @Ignore
-    @Test
-    fun designerBuildActionWithCustomPaths() {
-        val action = DesignerBuildAction(platformDsl)
-        val properties = createCustomApplicationProperties()
-
-        runBlocking {
-            val result = action.build(properties)
-            println("Результат сборки с кастомными путями: $result")
-        }
-    }
-
     // Реальные тесты для YaXUnit
     @Ignore
     @Test
@@ -197,20 +145,21 @@ class RealTests(
             basePath = Path("/custom/path/to/project"),
             sourceSet =
                 SourceSet(
-                    listOf(
-                        SourceSetItem(
-                            path = "src/configuration",
-                            name = "main-config",
-                            type = SourceSetType.CONFIGURATION,
-                            purpose = setOf(SourceSetPurpose.MAIN),
+                    items =
+                        listOf(
+                            SourceSetItem(
+                                path = "src/configuration",
+                                name = "main-config",
+                                type = SourceSetType.CONFIGURATION,
+                                purpose = setOf(SourceSetPurpose.MAIN),
+                            ),
+                            SourceSetItem(
+                                path = "src/extensions/custom-extension",
+                                name = "custom-extension",
+                                type = SourceSetType.EXTENSION,
+                                purpose = setOf(SourceSetPurpose.YAXUNIT),
+                            ),
                         ),
-                        SourceSetItem(
-                            path = "src/extensions/custom-extension",
-                            name = "custom-extension",
-                            type = SourceSetType.EXTENSION,
-                            purpose = setOf(SourceSetPurpose.YAXUNIT),
-                        ),
-                    ),
                 ),
             connection =
                 ConnectionProperties(

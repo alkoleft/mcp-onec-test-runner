@@ -1,10 +1,15 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.common
 
+import io.github.alkoleft.mcp.application.services.EdtCliStartService
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.edt.EdtCliExecutor
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.CommandExecutor
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
 import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
 import kotlinx.coroutines.runBlocking
+import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 
 /**
@@ -14,6 +19,7 @@ import org.springframework.stereotype.Component
 class PlatformUtilityContext(
     private val utilLocator: UtilityLocator,
     private val properties: ApplicationProperties,
+    private val applicationContext: ApplicationContext,
 ) {
     private var lastError: String? = null
     private var lastOutput: String = ""
@@ -91,6 +97,17 @@ class PlatformUtilityContext(
      * Получает путь к утилите ibcmd
      */
     fun getUtilityPath(): String = getUtilityPath(UtilityType.IBCMD)
+
+    fun executor(utilityType: UtilityType): CommandExecutor {
+        if (utilityType == UtilityType.EDT_CLI && properties.tools.edtCli.interactiveMode) {
+            val service = applicationContext.getBean(EdtCliStartService::class.java)
+            val executor = service.interactiveExecutor()
+            return executor?.let { EdtCliExecutor(it) }
+                ?: throw IllegalStateException("EDT cli не запущено, попробуйте позже")
+        } else {
+            return ProcessExecutor()
+        }
+    }
 }
 
 /**

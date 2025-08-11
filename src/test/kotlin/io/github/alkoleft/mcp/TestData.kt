@@ -21,26 +21,27 @@ fun testApplicationProperties(): ApplicationProperties =
         basePath = Path(SOURCE_PATH),
         sourceSet =
             SourceSet(
-                listOf(
-                    SourceSetItem(
-                        path = "configuration",
-                        name = "configuration",
-                        type = SourceSetType.CONFIGURATION,
-                        purpose = setOf(SourceSetPurpose.MAIN),
+                items =
+                    listOf(
+                        SourceSetItem(
+                            path = "configuration",
+                            name = "configuration",
+                            type = SourceSetType.CONFIGURATION,
+                            purpose = setOf(SourceSetPurpose.MAIN),
+                        ),
+                        SourceSetItem(
+                            path = "yaxunit",
+                            name = "yaxunit",
+                            type = SourceSetType.EXTENSION,
+                            purpose = setOf(SourceSetPurpose.YAXUNIT),
+                        ),
+                        SourceSetItem(
+                            path = "tests",
+                            name = "tests",
+                            type = SourceSetType.EXTENSION,
+                            purpose = setOf(SourceSetPurpose.TESTS),
+                        ),
                     ),
-                    SourceSetItem(
-                        path = "yaxunit",
-                        name = "yaxunit",
-                        type = SourceSetType.EXTENSION,
-                        purpose = setOf(SourceSetPurpose.YAXUNIT),
-                    ),
-                    SourceSetItem(
-                        path = "tests",
-                        name = "tests",
-                        type = SourceSetType.EXTENSION,
-                        purpose = setOf(SourceSetPurpose.TESTS),
-                    ),
-                ),
             ),
         connection =
             ConnectionProperties(

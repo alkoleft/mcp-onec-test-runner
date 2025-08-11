@@ -12,9 +12,11 @@ import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Component
 import org.w3c.dom.Element
 import java.io.InputStream
-import java.time.Duration
 import java.time.Instant
 import javax.xml.parsers.DocumentBuilderFactory
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 /**
  * Minimal JUnit-only report parser
@@ -116,7 +118,7 @@ class ReportParser {
             failed = failures,
             skipped = skipped,
             errors = errors,
-            duration = Duration.ofMillis((time * 1000).toLong()),
+            duration = time.toDuration(DurationUnit.SECONDS),
             testCases = testCases,
         )
     }
@@ -157,7 +159,7 @@ class ReportParser {
             name = name,
             className = className,
             status = status,
-            duration = Duration.ofMillis((time * 1000).toLong()),
+            duration = time.toDuration(DurationUnit.SECONDS),
             errorMessage = errorMessage,
             stackTrace = stackTrace,
             systemOut = null,

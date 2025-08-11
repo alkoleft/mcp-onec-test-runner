@@ -4,29 +4,35 @@
 # Базовые настройки приложения
 app:
   id: yaxunit
-  format: DESIGNER
+  format: EDT
   # Базовый путь к проекту
-  base-path: "/home/akoryakin@dellin.local/Загрузки/sources/"
+  base-path: "/home/common/develop/repos/yaxunit/yaxunit"
   
   # Набор исходного кода проекта
   source-set:
     # Основная конфигурация YAxUnit (движок)
-    - path: "configuration"
-      name: demo
+    - path: "fixtures/demo-configuration"
+      name: configuration
       type: "CONFIGURATION"
       purpose: [ "TESTS" ]
     
     # Основная конфигурация YAxUnit (движок)
-    - path: "yaxunit"
+    - path: "exts/yaxunit"
       name: yaxunit
       type: "EXTENSION"
       purpose: [ "MAIN", "YAXUNIT" ]
     
+    # Основная конфигурация YAxUnit (движок)
+    - path: "exts/smoke"
+      name: smoke
+      type: "EXTENSION"
+      purpose: [ "MAIN", "YAXUNIT" ]
+
     # Тесты YAxUnit
     - path: "tests"
       name: tests
       type: "EXTENSION"
-      purpose: [ "TESTS", "YAXUNIT" ]
+      purpose: [ "TESTS" ]
 
   # Настройки подключения к информационной базе
   connection:
@@ -39,3 +45,11 @@ app:
   tools:
     # Тип сборщика: DESIGNER или IBMCMD
     builder: DESIGNER
+    # Настройки EDT CLI
+    edt-cli:
+      auto-start: true
+      executable-path: "/opt/1C/1CE/components/1c-edt-2025.1.0+656-x86_64/1cedtcli"
+      working-directory: "/home/common/develop/edt-ws/yaxunit"
+      startup-timeout-ms: 300000 # 5 минут
+      command-timeout-ms: 600000 # 10 минут
+      ready-check-timeout-ms: 5000

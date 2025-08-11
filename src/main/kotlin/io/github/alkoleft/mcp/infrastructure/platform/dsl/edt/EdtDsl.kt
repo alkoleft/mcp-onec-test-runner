@@ -1,11 +1,15 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.edt
 
+import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
+import java.nio.file.Path
 import kotlin.time.Duration
 import kotlin.time.measureTime
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * DSL for 1C:EDT CLI commands with immediate execution.
@@ -31,7 +35,7 @@ import kotlin.time.measureTime
  * - version: версия EDT и компонентов
  */
 class EdtDsl(
-    utilityContext: PlatformUtilityContext,
+    private val utilityContext: PlatformUtilityContext,
 ) {
     private val context = EdtContext(utilityContext)
 
@@ -139,14 +143,16 @@ class EdtDsl(
     fun export(
         projectPath: String? = null,
         projectName: String? = null,
-        configurationFiles: String,
+        configurationFiles: Path,
     ): EdtResult {
-        val args = mutableListOf("export", "--configuration-files", configurationFiles)
+        logger.info { "Экспорт проекта $projectName в каталог $configurationFiles" }
+        val args = mutableListOf("export")
         when {
-            projectPath != null -> args.addAll(listOf("--project", projectPath))
-            projectName != null -> args.addAll(listOf("--project-name", projectName))
+            projectPath != null -> args.addAll(listOf("--project", "\"$projectPath\""))
+            projectName != null -> args.addAll(listOf("--project-name", "\"$projectName\""))
             else -> throw IllegalArgumentException("Either projectPath or projectName must be specified")
         }
+        args.addAll(listOf("--configuration-files", "\"$configurationFiles\""))
         return executeEdt(args)
     }
 
@@ -369,12 +375,18 @@ class EdtDsl(
      */
     private fun executeEdt(arguments: List<String>): EdtResult =
         runBlocking {
+            logger.debug { "EDT exec start: args=${arguments.joinToString(" ")}" }
             val duration =
                 measureTime {
                     try {
-                        val executor = ProcessExecutor()
-                        val args = context.buildEdtArgs(arguments)
-                        val result = executor.execute(args)
+                        val executor = utilityContext.executor(UtilityType.EDT_CLI)
+                        val result = executor.execute(arguments)
+                        logger.info { "EDT exec done: exitCode=${result.exitCode}, duration=${result.duration}" }
+                        if (result.exitCode != 0) {
+                            val errorPreview: String? =
+                                result.error?.let { if (it.length > 4000) it.take(4000) + "..." else it }
+                            logger.warn { "EDT exec failed: exitCode=${result.exitCode}, error=$errorPreview" }
+                        }
                         context.setResult(
                             success = result.exitCode == 0,
                             output = result.output,
@@ -383,6 +395,7 @@ class EdtDsl(
                             duration = result.duration,
                         )
                     } catch (e: Exception) {
+                        logger.error(e) { "EDT exec threw exception for args=${arguments.joinToString(" ")}" }
                         context.setResult(
                             success = false,
                             output = "",
@@ -393,6 +406,7 @@ class EdtDsl(
                     }
                 }
 
+            logger.debug { "EDT exec total duration=$duration" }
             EdtResult(
                 success = context.buildResult().success,
                 output = context.buildResult().output,
@@ -459,12 +473,12 @@ class EdtContext(
  * Result of EDT CLI execution
  */
 data class EdtResult(
-    val success: Boolean,
-    val output: String,
-    val error: String?,
-    val exitCode: Int,
-    val duration: Duration,
-) {
+    override val success: Boolean,
+    override val output: String,
+    override val error: String?,
+    override val exitCode: Int,
+    override val duration: Duration,
+) : ShellCommandResult {
     companion object {
         val EMPTY = EdtResult(false, "", "", -1, Duration.ZERO)
     }

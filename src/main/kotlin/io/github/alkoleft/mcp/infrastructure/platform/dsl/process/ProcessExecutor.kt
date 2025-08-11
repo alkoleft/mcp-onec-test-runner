@@ -1,5 +1,6 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.process
 
+import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -19,7 +20,7 @@ private val logger = KotlinLogging.logger {}
  * Предоставляет асинхронное выполнение команд с захватом вывода
  * и обработкой ошибок. Поддерживает логирование 1С через параметр /Out.
  */
-class ProcessExecutor {
+class ProcessExecutor : CommandExecutor {
     /**
      * Данные о потоках вывода процесса
      */
@@ -381,7 +382,7 @@ class ProcessExecutor {
     /**
      * Выполняет команду с указанными аргументами
      */
-    suspend fun execute(commandArgs: List<String>): ProcessResult =
+    override suspend fun execute(commandArgs: List<String>): ProcessResult =
         executeProcess(
             ExecutionParams(
                 commandArgs = commandArgs,
@@ -454,10 +455,10 @@ class ProcessExecutor {
  * Результат выполнения процесса
  */
 data class ProcessResult(
-    val success: Boolean,
-    val output: String,
-    val error: String?,
-    val exitCode: Int,
-    val duration: Duration,
+    override val success: Boolean,
+    override val output: String,
+    override val error: String?,
+    override val exitCode: Int,
+    override val duration: Duration,
     val logFilePath: Path? = null,
-)
+) : ShellCommandResult

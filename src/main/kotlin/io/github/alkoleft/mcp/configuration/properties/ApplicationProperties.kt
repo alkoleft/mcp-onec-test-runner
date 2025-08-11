@@ -1,6 +1,7 @@
 package io.github.alkoleft.mcp.configuration.properties
 
 import io.github.alkoleft.mcp.core.modules.TEST_PATH
+import io.github.alkoleft.mcp.infrastructure.storage.calculateStringHash
 import org.springframework.boot.context.properties.ConfigurationProperties
 import java.nio.file.Files
 import java.nio.file.Path
@@ -18,6 +19,16 @@ data class ApplicationProperties(
     val platformVersion: String = "",
     val tools: ToolsProperties = ToolsProperties(),
 ) {
+    val workPath: Path by lazy {
+        val path =
+            if (id != null && id.isNotBlank()) {
+                id
+            } else {
+                calculateStringHash(basePath.toString())
+            }
+        Path.of(System.getProperty("java.io.tmpdir"), "mcp-yaxunit-runner", path)
+    }
+
     init {
         validateConfiguration()
     }

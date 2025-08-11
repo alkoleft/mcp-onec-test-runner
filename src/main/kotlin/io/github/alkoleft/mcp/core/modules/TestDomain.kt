@@ -2,8 +2,8 @@ package io.github.alkoleft.mcp.core.modules
 
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import java.nio.file.Path
-import java.time.Duration
 import java.time.Instant
+import kotlin.time.Duration
 
 /**
  * Test execution requests
@@ -44,31 +44,33 @@ data class RunListTestsRequest(
  * Test execution results
  */
 data class TestExecutionResult(
-    val success: Boolean,
+    override val success: Boolean,
     val report: GenericTestReport,
     val reportPath: Path,
-    val duration: Duration,
-) {
+    override val duration: Duration,
+) : ExecuteResult {
     val successRate
         get() = report.summary.successRate.toString()
 }
 
-sealed class TestExecutionError : Exception() {
+sealed class TestExecutionError(
+    message: String,
+) : Exception(message) {
     data class UtilNotFound(
         val utility: String,
-    ) : TestExecutionError()
+    ) : TestExecutionError(utility)
 
     data class BuildFailed(
         val reason: String,
-    ) : TestExecutionError()
+    ) : TestExecutionError(reason)
 
     data class TestRunFailed(
         val details: String,
-    ) : TestExecutionError()
+    ) : TestExecutionError(details)
 
     data class ReportParsingFailed(
         override val message: String,
-    ) : TestExecutionError()
+    ) : TestExecutionError(message)
 }
 
 /**
@@ -126,12 +128,6 @@ enum class TestStatus {
     SKIPPED,
     ERROR,
 }
-
-data class BuildResult(
-    val success: Boolean,
-    val duration: Duration,
-    val error: String? = null,
-)
 
 enum class ChangeType {
     NEW,

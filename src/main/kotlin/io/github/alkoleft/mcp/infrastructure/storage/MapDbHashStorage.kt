@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.ConcurrentMap
 
 /**
@@ -36,7 +35,7 @@ class MapDbHashStorage(
     private lateinit var hashMap: ConcurrentMap<String, String>
     private lateinit var timestampMap: ConcurrentMap<String, Long>
 
-    private val dbPath = getDbPath()
+    private val dbPath = properties.workPath.resolve("file-hashes.db")
 
     @PostConstruct
     private fun initialize() {
@@ -298,13 +297,6 @@ class MapDbHashStorage(
             close()
         }
     }
-
-    private fun getDbPath(): Path =
-        if (properties.id != null && properties.id.isNotBlank()) {
-            properties.id
-        } else {
-            calculateStringHash(properties.basePath.toString())
-        }.let { Paths.get(".$applicationName-$it-storage", "file-hashes.db") }
 }
 
 /**

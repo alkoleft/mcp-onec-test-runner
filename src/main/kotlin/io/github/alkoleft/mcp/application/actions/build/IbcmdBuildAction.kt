@@ -26,27 +26,4 @@ class IbcmdBuildAction(
             sourceSet = emptyMap(),
         )
     }
-
-    override suspend fun executeConfigurationBuildDsl(properties: ApplicationProperties): BuildResult {
-        logger.info { "Executing ibcmd configuration build DSL" }
-        // TODO: Implement actual ibcmd configuration build logic
-        return BuildResult(
-            success = false,
-            errors = listOf("DSL сборки не вернул результат"),
-            sourceSet = emptyMap(),
-        )
-    }
-
-    override suspend fun executeExtensionBuildDsl(
-        extensionName: String,
-        properties: ApplicationProperties,
-    ): BuildResult {
-        logger.info { "Executing ibcmd extension build DSL for: $extensionName" }
-        // TODO: Implement actual ibcmd extension build logic
-        return BuildResult(
-            success = false,
-            errors = listOf("DSL сборки не вернул результат"),
-            sourceSet = emptyMap(),
-        )
-    }
 }

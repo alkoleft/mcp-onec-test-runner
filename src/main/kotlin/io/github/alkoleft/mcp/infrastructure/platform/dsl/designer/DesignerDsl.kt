@@ -1,5 +1,6 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.designer
 
+import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.BasePlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.ApplyCfgCommand
@@ -130,12 +131,12 @@ enum class ConnectionSpeed(
  * Результат выполнения операций с конфигуратором
  */
 data class ConfiguratorResult(
-    val success: Boolean,
-    val output: String,
-    val error: String?,
-    val exitCode: Int,
-    val duration: Duration,
-) {
+    override val success: Boolean,
+    override val output: String,
+    override val error: String?,
+    override val exitCode: Int,
+    override val duration: Duration,
+) : ShellCommandResult {
     companion object {
         val EMPTY =
             ConfiguratorResult(

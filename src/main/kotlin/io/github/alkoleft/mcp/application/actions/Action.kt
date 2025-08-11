@@ -5,6 +5,7 @@ import io.github.alkoleft.mcp.application.actions.change.SourceSetChanges
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
 import io.github.alkoleft.mcp.core.modules.GenericTestReport
+import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
 import io.github.alkoleft.mcp.core.modules.TestExecutionResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.ConfiguratorResult
@@ -16,19 +17,18 @@ import java.time.Instant
  * Интерфейс для сборки конфигурации и расширений
  */
 interface BuildAction {
-    suspend fun build(properties: ApplicationProperties): BuildResult
-
     suspend fun build(
         properties: ApplicationProperties,
         sourceSet: SourceSet,
     ): BuildResult
+}
 
-    suspend fun buildConfiguration(properties: ApplicationProperties): BuildResult
-
-    suspend fun buildExtension(
-        name: String,
+interface ConvertAction {
+    suspend fun run(
         properties: ApplicationProperties,
-    ): BuildResult
+        sourceSet: SourceSet,
+        destination: SourceSet,
+    ): ConvertResult
 }
 
 /**
@@ -76,6 +76,16 @@ data class BuildResult(
     val errors: List<String> = emptyList(),
     val duration: Duration = Duration.ZERO,
     val sourceSet: Map<String, ConfiguratorResult> = emptyMap(),
+)
+
+/**
+ * Результат сборки
+ */
+data class ConvertResult(
+    val success: Boolean,
+    val errors: List<String> = emptyList(),
+    val duration: Duration = Duration.ZERO,
+    val sourceSet: Map<String, ShellCommandResult> = emptyMap(),
 )
 
 /**

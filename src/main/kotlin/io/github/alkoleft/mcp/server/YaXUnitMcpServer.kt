@@ -45,7 +45,7 @@ class YaXUnitMcpServer(
                     totalTests = result.report.summary.totalTests,
                     passedTests = result.report.summary.passed,
                     failedTests = result.report.summary.failed,
-                    executionTime = result.duration.toMillis(),
+                    executionTime = result.duration.inWholeMilliseconds,
                     details =
                         mapOf(
                             "duration" to result.duration.toString(),
@@ -91,7 +91,7 @@ class YaXUnitMcpServer(
                     totalTests = result.report.summary.totalTests,
                     passedTests = result.report.summary.passed,
                     failedTests = result.report.summary.failed,
-                    executionTime = result.duration.toMillis(),
+                    executionTime = result.duration.inWholeMilliseconds,
                     details =
                         mapOf(
                             "duration" to result.duration.toString(),
@@ -146,7 +146,7 @@ class YaXUnitMcpServer(
                     totalTests = result.report.summary.totalTests,
                     passedTests = result.report.summary.passed,
                     failedTests = result.report.summary.failed,
-                    executionTime = result.duration.toMillis(),
+                    executionTime = result.duration.inWholeMilliseconds,
                     details =
                         mapOf(
                             "duration" to result.duration.toString(),
@@ -182,13 +182,30 @@ class YaXUnitMcpServer(
 
         return runBlocking {
             try {
-                launcherService.build()
-                BuildResult(
-                    success = true,
-                    message = "Сборка выполнена успешно",
-                    buildTime = 0L,
-                    details = emptyMap(),
-                )
+                val buildResult = launcherService.build()
+                if (buildResult.success) {
+                    BuildResult(
+                        success = true,
+                        message = "Сборка выполнена успешно",
+                        buildTime = buildResult.duration.toMillis(),
+                        details =
+                            mapOf(
+                                "configurationBuilt" to buildResult.configurationBuilt,
+                                "errors" to buildResult.errors,
+                            ),
+                    )
+                } else {
+                    BuildResult(
+                        success = false,
+                        message = if (buildResult.errors.isNotEmpty()) buildResult.errors.joinToString("; ") else "Ошибки сборки",
+                        buildTime = buildResult.duration.toMillis(),
+                        details =
+                            mapOf(
+                                "configurationBuilt" to buildResult.configurationBuilt,
+                                "errors" to buildResult.errors,
+                            ),
+                    )
+                }
             } catch (e: Exception) {
                 logger.error(e) { "Ошибка при сборке проекта" }
                 BuildResult(
@@ -258,29 +275,6 @@ data class BuildResult(
     val message: String,
     val buildTime: Long,
     val details: Map<String, Any>,
-)
-
-/**
- * Результат списка модулей
- */
-data class ModuleListResult(
-    val success: Boolean,
-    val message: String,
-    val modules: List<String>,
-    val totalCount: Int,
-)
-
-/**
- * Результат конфигурации
- */
-data class ConfigurationResult(
-    val success: Boolean,
-    val message: String,
-    val projectSettings: Any?,
-    val platformSettings: Any?,
-    val buildSettings: Any?,
-    val loggingSettings: Any?,
-    val serverSettings: Any?,
 )
 
 /**

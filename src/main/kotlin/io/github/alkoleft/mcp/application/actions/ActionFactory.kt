@@ -5,6 +5,7 @@ import io.github.alkoleft.mcp.application.actions.build.EdtBuildAction
 import io.github.alkoleft.mcp.application.actions.build.IbcmdBuildAction
 import io.github.alkoleft.mcp.application.actions.change.FileSystemChangeAnalysisAction
 import io.github.alkoleft.mcp.application.actions.change.SourceSetChangeAnalyzer
+import io.github.alkoleft.mcp.application.actions.convert.InteractiveSessionConvertAction
 import io.github.alkoleft.mcp.application.actions.test.YaXUnitTestAction
 import io.github.alkoleft.mcp.configuration.properties.BuilderType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
@@ -31,6 +32,8 @@ class ActionFactory(
             BuilderType.IBMCMD -> IbcmdBuildAction(platformDsl)
             BuilderType.EDT -> EdtBuildAction(platformDsl)
         }
+
+    fun convertAction(): ConvertAction = InteractiveSessionConvertAction(platformDsl)
 
     fun createChangeAnalysisAction(): ChangeAnalysisAction = FileSystemChangeAnalysisAction(buildStateManager, sourceSetAnalyzer)
 
