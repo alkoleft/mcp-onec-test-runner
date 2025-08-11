@@ -127,35 +127,10 @@ data class ApplicationProperties(
         }
     }
 
-    // Упрощенные вычисляемые свойства с lazy инициализацией
-    val configurationPath: Path? by lazy {
-        sourceSet
-            .find { it.type == SourceSetType.CONFIGURATION }
-            ?.let { basePath.resolve(it.path) }
-    }
-
     val testsPath: Path by lazy {
         sourceSet
             .find { it.purpose.contains(SourceSetPurpose.TESTS) }
             ?.let { basePath.resolve(it.path) }
             ?: basePath.resolve(TEST_PATH)
-    }
-
-    val yaxunitEnginePath: Path? by lazy {
-        sourceSet
-            .find { it.purpose.contains(SourceSetPurpose.YAXUNIT) }
-            ?.let { basePath.resolve(it.path) }
-    }
-
-    val mainCodePath: Path? by lazy {
-        sourceSet
-            .find { it.purpose.contains(SourceSetPurpose.MAIN) }
-            ?.let { basePath.resolve(it.path) }
-    }
-
-    val extensions: List<String> by lazy {
-        sourceSet
-            .filter { it.type == SourceSetType.EXTENSION }
-            .map { it.name }
     }
 }

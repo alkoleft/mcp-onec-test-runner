@@ -16,6 +16,7 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.Load
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.LoadConfigFromFilesCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.UpdateDBCfgCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration
 import kotlin.time.measureTime
@@ -55,7 +56,7 @@ class DesignerDsl(
     /**
      * Выполняет команду конфигуратора с произвольными аргументами
      */
-    private suspend fun executeCommand(command: ConfiguratorCommand): ConfiguratorResult {
+    private suspend fun executeCommand(command: ConfiguratorCommand): ShellCommandResult {
         val duration =
             measureTime {
                 try {
@@ -82,7 +83,7 @@ class DesignerDsl(
                 }
             }
 
-        return ConfiguratorResult(
+        return ProcessResult(
             success = context.buildResult().success,
             output = context.buildResult().output,
             error = context.buildResult().error,
@@ -109,42 +110,10 @@ class DesignerDsl(
     private fun <C : ConfiguratorCommand> configureAndExecute(
         command: C,
         configure: (C.() -> Unit),
-    ): ConfiguratorResult {
+    ): ShellCommandResult {
         command.configure()
         return runBlocking {
             executeCommand(command)
         }
-    }
-}
-
-/**
- * Скорость соединения
- */
-enum class ConnectionSpeed(
-    val value: String,
-) {
-    NORMAL("Normal"),
-    LOW("Low"),
-}
-
-/**
- * Результат выполнения операций с конфигуратором
- */
-data class ConfiguratorResult(
-    override val success: Boolean,
-    override val output: String,
-    override val error: String?,
-    override val exitCode: Int,
-    override val duration: Duration,
-) : ShellCommandResult {
-    companion object {
-        val EMPTY =
-            ConfiguratorResult(
-                false,
-                "",
-                "",
-                -1,
-                Duration.ZERO,
-            )
     }
 }

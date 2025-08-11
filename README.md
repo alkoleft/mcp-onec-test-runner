@@ -83,6 +83,7 @@ flowchart LR
 - Gradle 8.5+
 - Платформа 1С:Предприятие 8.3.10+
 - YaXUnit фреймворк
+- 1С:Enterprise Development Tools 2025.1+
 
 ## Установка и сборка
 

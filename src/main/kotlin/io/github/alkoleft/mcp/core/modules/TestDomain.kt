@@ -63,14 +63,6 @@ sealed class TestExecutionError(
     data class BuildFailed(
         val reason: String,
     ) : TestExecutionError(reason)
-
-    data class TestRunFailed(
-        val details: String,
-    ) : TestExecutionError(details)
-
-    data class ReportParsingFailed(
-        override val message: String,
-    ) : TestExecutionError(message)
 }
 
 /**

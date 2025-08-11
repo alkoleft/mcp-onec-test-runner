@@ -7,6 +7,7 @@ import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.edt.EdtCliExecutor
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.CommandExecutor
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
 import kotlinx.coroutines.runBlocking
 import org.springframework.context.ApplicationContext
@@ -62,8 +63,8 @@ class PlatformUtilityContext(
     /**
      * Строит результат выполнения операций
      */
-    fun buildResult(): PlatformUtilityResult =
-        PlatformUtilityResult(
+    fun buildResult(): ProcessResult =
+        ProcessResult(
             success = lastExitCode == 0,
             output = lastOutput,
             error = lastError,
@@ -110,13 +111,4 @@ class PlatformUtilityContext(
     }
 }
 
-/**
- * Общий результат выполнения операций с утилитами платформы
- */
-data class PlatformUtilityResult(
-    val success: Boolean,
-    val output: String,
-    val error: String?,
-    val exitCode: Int,
-    val duration: kotlin.time.Duration,
-)
+// Removed PlatformUtilityResult in favor of generic ProcessResult

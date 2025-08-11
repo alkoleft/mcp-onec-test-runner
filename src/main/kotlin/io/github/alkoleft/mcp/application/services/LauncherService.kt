@@ -3,6 +3,7 @@ package io.github.alkoleft.mcp.application.services
 import io.github.alkoleft.mcp.application.actions.ActionFactory
 import io.github.alkoleft.mcp.application.actions.BuildResult
 import io.github.alkoleft.mcp.application.actions.ConvertResult
+import io.github.alkoleft.mcp.application.actions.exceptions.AnalysisError
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.ProjectFormat
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
@@ -11,7 +12,7 @@ import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
 import io.github.alkoleft.mcp.core.modules.TestExecutionResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
-import java.time.Duration
+import kotlin.time.Duration
 
 private val logger = KotlinLogging.logger { }
 
@@ -34,7 +35,7 @@ class LauncherService(
 
     suspend fun build(): BuildResult {
         val changeAnalyzer = actionFactory.createChangeAnalysisAction()
-        val changes = changeAnalyzer.analyzeBySourceSet(properties)
+        val changes = changeAnalyzer.run(properties)
         if (!changes.hasChanges) {
             logger.info { "Исходные файлы не изменены. Обновление базы пропущено" }
             return BuildResult(
@@ -45,16 +46,16 @@ class LauncherService(
                 sourceSet = emptyMap(),
             )
         }
-        val changedSourceSets =
-            properties.sourceSet.subSourceSet { sourceSetItem ->
-                changes.sourceSetChanges.contains(sourceSetItem.name)
-            }
+        val changedSourceSets = properties.sourceSet.subSourceSet { it.name in changes.sourceSetChanges.keys }
 
+        if (changedSourceSets.isEmpty()) {
+            throw AnalysisError("Не удалось распределить изменения по субпроектам.")
+        }
         logger.info { "Обнаружены изменения: ${changedSourceSets.joinToString { it.name }}" }
 
         if (properties.format == ProjectFormat.EDT) {
             val convertResult = convertSources(changedSourceSets, designerSourceSet)
-            if (convertResult.success.not()) {
+            if (!convertResult.success) {
                 logger.error { "Ошибки конвертации исходников EDT: ${convertResult.errors.joinToString()}" }
                 return BuildResult(
                     success = false,
@@ -70,12 +71,12 @@ class LauncherService(
 
         var success = true
         val errors = mutableListOf<String>()
-        result.sourceSet.forEach { (name, cfgResult) ->
-            success = success && cfgResult.success
-            if (cfgResult.success) {
+        result.sourceSet.forEach { (name, result) ->
+            success = success && result.success
+            if (result.success) {
                 changeAnalyzer.saveSourceSetState(properties, changes.sourceSetChanges[name]!!)
-            } else if (!cfgResult.success && !cfgResult.error.isNullOrBlank()) {
-                errors += cfgResult.error
+            } else {
+                result.error?.takeIf { it.isNotBlank() }?.let { errors.add(it) }
             }
         }
 
@@ -104,7 +105,7 @@ class LauncherService(
 
     private suspend fun updateIB(changedSourceSets: SourceSet): BuildResult {
         val builder = actionFactory.createBuildAction(properties.tools.builder)
-        return builder.build(
+        return builder.run(
             properties,
             designerSourceSet.subSourceSet { changedSourceSets.find { item -> item.name == it.name } != null },
         )

@@ -1,6 +1,5 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.common
 
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.ConnectionSpeed
 import java.nio.file.Path
 
 abstract class BasePlatformDsl<T : BasePlatformContext>(
@@ -41,10 +40,6 @@ abstract class BasePlatformDsl<T : BasePlatformContext>(
         context.localization(code)
     }
 
-    fun connectionSpeed(speed: ConnectionSpeed) {
-        context.connectionSpeed(speed)
-    }
-
     fun disableStartupDialogs() {
         context.disableStartupDialogs()
     }
@@ -55,9 +50,5 @@ abstract class BasePlatformDsl<T : BasePlatformContext>(
 
     fun noTruncate() {
         context.noTruncate()
-    }
-
-    fun param(param: String) {
-        context.param(param)
     }
 }

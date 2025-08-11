@@ -14,8 +14,7 @@ class SourceSet(
 
     fun subSourceSet(predicate: (SourceSetItem) -> Boolean) = SourceSet(basePath, filter(predicate))
 
-    fun byName(name: String) =
-        find { it.name == name } ?: throw ClassNotFoundException("Не обнаружен набор исходников с именем $name")
+    fun byName(name: String) = find { it.name == name } ?: throw ClassNotFoundException("Не обнаружен набор исходников с именем $name")
 
     fun pathByName(name: String): Path = basePath.resolve(byName(name).path)
 

@@ -2,7 +2,6 @@ package io.github.alkoleft.mcp.application.actions.change
 
 import io.github.alkoleft.mcp.application.actions.ChangeAnalysisAction
 import io.github.alkoleft.mcp.application.actions.ChangeAnalysisResult
-import io.github.alkoleft.mcp.application.actions.FileSystemChangeAnalysisResult
 import io.github.alkoleft.mcp.application.actions.exceptions.AnalyzeException
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.infrastructure.storage.FileBuildStateManager
@@ -10,7 +9,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Component
-import java.nio.file.Path
 import java.time.Instant
 
 private val logger = KotlinLogging.logger { }
@@ -24,40 +22,7 @@ class FileSystemChangeAnalysisAction(
     private val buildStateManager: FileBuildStateManager,
     private val sourceSetAnalyzer: SourceSetChangeAnalyzer,
 ) : ChangeAnalysisAction {
-    override suspend fun analyze(properties: ApplicationProperties): ChangeAnalysisResult {
-        logger.info { "Analyzing changes for project: ${properties.basePath}" }
-
-        return withContext(Dispatchers.IO) {
-            try {
-                // Use FileBuildStateManager's Enhanced Hybrid Hash Detection
-                val changes = buildStateManager.checkChanges(properties.basePath)
-
-                if (changes.isEmpty()) {
-                    logger.info { "No changes detected in project" }
-                    return@withContext ChangeAnalysisResult(hasChanges = false)
-                }
-
-                logger.info { "Found ${changes.size} changed files using Enhanced Hybrid Hash Detection" }
-
-                val changedFiles = changes.keys
-                val affectedModules = determineAffectedModules(changedFiles, properties)
-
-                logger.info { "Affected modules: ${affectedModules.joinToString(", ")}" }
-
-                ChangeAnalysisResult(
-                    hasChanges = true,
-                    changedFiles = changedFiles,
-                    affectedModules = affectedModules,
-                    changeTypes = changes,
-                )
-            } catch (e: Exception) {
-                logger.error(e) { "Change analysis failed" }
-                throw AnalyzeException("Change analysis failed: ${e.message}", e)
-            }
-        }
-    }
-
-    override suspend fun analyzeBySourceSet(properties: ApplicationProperties): FileSystemChangeAnalysisResult {
+    override suspend fun run(properties: ApplicationProperties): ChangeAnalysisResult {
         logger.info { "Analyzing changes by source set for project: ${properties.basePath}" }
 
         return withContext(Dispatchers.IO) {
@@ -67,11 +32,11 @@ class FileSystemChangeAnalysisAction(
 
                 if (changes.isEmpty()) {
                     logger.info { "No changes detected in project" }
-                    return@withContext FileSystemChangeAnalysisResult(
-                        hasChangesFlag = false,
-                        changedFilesSet = emptySet(),
+                    return@withContext ChangeAnalysisResult(
+                        hasChanges = false,
+                        changedFiles = emptySet(),
+                        changeTypes = emptyMap(),
                         sourceSetChanges = emptyMap(),
-                        changeTypesMap = emptyMap(),
                         analysisTimestamp = Instant.now(),
                     )
                 }
@@ -83,11 +48,11 @@ class FileSystemChangeAnalysisAction(
 
                 logger.info { "Changes grouped into ${sourceSetChanges.size} affected source sets" }
 
-                FileSystemChangeAnalysisResult(
-                    hasChangesFlag = true,
-                    changedFilesSet = changes.keys,
+                ChangeAnalysisResult(
+                    hasChanges = true,
+                    changedFiles = changes.keys,
+                    changeTypes = changes,
                     sourceSetChanges = sourceSetChanges,
-                    changeTypesMap = changes,
                     analysisTimestamp = Instant.now(),
                 )
             } catch (e: Exception) {
@@ -123,22 +88,4 @@ class FileSystemChangeAnalysisAction(
             }
         }
     }
-
-    private fun determineAffectedModules(
-        changedFiles: Set<Path>,
-        properties: ApplicationProperties,
-    ): Set<String> =
-        properties.sourceSet
-            .filter { sourceItem ->
-                val sourcePath = properties.basePath.resolve(sourceItem.path)
-                changedFiles.any { changedFile ->
-                    try {
-                        changedFile.startsWith(sourcePath)
-                    } catch (e: Exception) {
-                        logger.debug(e) { "Error checking if file $changedFile belongs to source set ${sourceItem.path}" }
-                        false
-                    }
-                }
-            }.map { it.path }
-            .toSet()
 }

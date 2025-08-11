@@ -1,7 +1,6 @@
 package io.github.alkoleft.mcp.application.actions
 
 import io.github.alkoleft.mcp.application.actions.build.DesignerBuildAction
-import io.github.alkoleft.mcp.application.actions.build.EdtBuildAction
 import io.github.alkoleft.mcp.application.actions.build.IbcmdBuildAction
 import io.github.alkoleft.mcp.application.actions.change.FileSystemChangeAnalysisAction
 import io.github.alkoleft.mcp.application.actions.change.SourceSetChangeAnalyzer
@@ -30,7 +29,6 @@ class ActionFactory(
         when (type) {
             BuilderType.DESIGNER -> DesignerBuildAction(platformDsl)
             BuilderType.IBMCMD -> IbcmdBuildAction(platformDsl)
-            BuilderType.EDT -> EdtBuildAction(platformDsl)
         }
 
     fun convertAction(): ConvertAction = InteractiveSessionConvertAction(platformDsl)

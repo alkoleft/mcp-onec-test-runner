@@ -32,14 +32,14 @@ class YaXUnitMcpServer(
         name = "yaxunit_run_all_tests",
         description = "Запускает все тесты YaXUnit в проекте. Возвращает подробный отчет о выполнении тестов.",
     )
-    fun runAllTests(): TestExecutionResult {
+    fun runAllTests(): McpTestResponse {
         logger.info { "Запуск всех тестов YaXUnit" }
 
         return runBlocking {
             try {
                 val request = RunAllTestsRequest(properties)
                 val result = launcherService.run(request)
-                TestExecutionResult(
+                McpTestResponse(
                     success = result.success,
                     message = if (result.success) "Все тесты выполнены успешно" else "Ошибка при выполнении тестов",
                     totalTests = result.report.summary.totalTests,
@@ -51,10 +51,11 @@ class YaXUnitMcpServer(
                             "duration" to result.duration.toString(),
                             "successRate" to result.successRate,
                         ),
+                    testDetail = collectTestDetails(result.report),
                 )
             } catch (e: Exception) {
                 logger.error(e) { "Ошибка при запуске всех тестов" }
-                TestExecutionResult(
+                McpTestResponse(
                     success = false,
                     message = "Ошибка при выполнении тестов: ${e.message}",
                     totalTests = 0,
@@ -78,14 +79,14 @@ class YaXUnitMcpServer(
     )
     fun runModuleTests(
         @ToolParam(description = "Имя модуля для тестирования") moduleName: String,
-    ): TestExecutionResult {
+    ): McpTestResponse {
         logger.info { "Запуск тестов модуля: $moduleName" }
 
         return runBlocking {
             try {
                 val request = RunModuleTestsRequest(moduleName, properties)
                 val result = launcherService.run(request)
-                TestExecutionResult(
+                McpTestResponse(
                     success = result.success,
                     message = if (result.success) "Тесты модуля '$moduleName' выполнены" else "Ошибка при выполнении тестов модуля",
                     totalTests = result.report.summary.totalTests,
@@ -102,7 +103,7 @@ class YaXUnitMcpServer(
                 )
             } catch (e: Exception) {
                 logger.error(e) { "Ошибка при запуске тестов модуля: $moduleName" }
-                TestExecutionResult(
+                McpTestResponse(
                     success = false,
                     message = "Ошибка при выполнении тестов модуля '$moduleName': ${e.message}",
                     totalTests = 0,
@@ -128,14 +129,14 @@ class YaXUnitMcpServer(
     )
     fun runListTests(
         @ToolParam(description = "Список имен модулей для тестирования") moduleNames: List<String>,
-    ): TestExecutionResult {
+    ): McpTestResponse {
         logger.info { "Запуск тестов модулей: $moduleNames" }
 
         return runBlocking {
             try {
                 val request = RunListTestsRequest(moduleNames, properties)
                 val result = launcherService.run(request)
-                TestExecutionResult(
+                McpTestResponse(
                     success = result.success,
                     message =
                         if (result.success) {
@@ -156,7 +157,7 @@ class YaXUnitMcpServer(
                 )
             } catch (e: Exception) {
                 logger.error(e) { "Ошибка при запуске тестов модулей: $moduleNames" }
-                TestExecutionResult(
+                McpTestResponse(
                     success = false,
                     message = "Ошибка при выполнении тестов модулей '${moduleNames.joinToString(", ")}': ${e.message}",
                     totalTests = 0,
@@ -177,17 +178,17 @@ class YaXUnitMcpServer(
         name = "yaxunit_build_project",
         description = "Выполняет сборку проекта YaXUnit. Возвращает результат сборки.",
     )
-    fun buildProject(): BuildResult {
+    fun buildProject(): McpBuildResponse {
         logger.info { "Выполнение сборки проекта" }
 
         return runBlocking {
             try {
                 val buildResult = launcherService.build()
                 if (buildResult.success) {
-                    BuildResult(
+                    McpBuildResponse(
                         success = true,
                         message = "Сборка выполнена успешно",
-                        buildTime = buildResult.duration.toMillis(),
+                        buildTime = buildResult.duration.inWholeMilliseconds,
                         details =
                             mapOf(
                                 "configurationBuilt" to buildResult.configurationBuilt,
@@ -195,10 +196,10 @@ class YaXUnitMcpServer(
                             ),
                     )
                 } else {
-                    BuildResult(
+                    McpBuildResponse(
                         success = false,
                         message = if (buildResult.errors.isNotEmpty()) buildResult.errors.joinToString("; ") else "Ошибки сборки",
-                        buildTime = buildResult.duration.toMillis(),
+                        buildTime = buildResult.duration.inWholeMilliseconds,
                         details =
                             mapOf(
                                 "configurationBuilt" to buildResult.configurationBuilt,
@@ -208,7 +209,7 @@ class YaXUnitMcpServer(
                 }
             } catch (e: Exception) {
                 logger.error(e) { "Ошибка при сборке проекта" }
-                BuildResult(
+                McpBuildResponse(
                     success = false,
                     message = "Ошибка при сборке: ${e.message}",
                     buildTime = 0,
@@ -256,7 +257,7 @@ class YaXUnitMcpServer(
 /**
  * Результат выполнения тестов
  */
-data class TestExecutionResult(
+data class McpTestResponse(
     val success: Boolean,
     val message: String,
     val totalTests: Int,
@@ -270,7 +271,7 @@ data class TestExecutionResult(
 /**
  * Результат сборки проекта
  */
-data class BuildResult(
+data class McpBuildResponse(
     val success: Boolean,
     val message: String,
     val buildTime: Long,

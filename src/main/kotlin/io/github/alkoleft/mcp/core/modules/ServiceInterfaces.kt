@@ -4,13 +4,6 @@ import io.github.alkoleft.mcp.application.actions.change.ChangesSet
 import java.nio.file.Path
 
 /**
- * Test execution facade
- */
-interface TestLauncher {
-    suspend fun run(request: TestExecutionRequest): TestExecutionResult
-}
-
-/**
  * Build state management
  */
 interface BuildStateManager {
@@ -47,7 +40,4 @@ data class YaXUnitExecutionResult(
 
 enum class ReportFormat {
     JUNIT_XML,
-    JSON,
-    YAXUNIT_JSON,
-    PLAIN_TEXT,
 }

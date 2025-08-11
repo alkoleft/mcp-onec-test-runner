@@ -3,8 +3,8 @@ package io.github.alkoleft.mcp.application.actions.build
 import io.github.alkoleft.mcp.application.actions.BuildResult
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
+import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.ConfiguratorResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
@@ -28,8 +28,7 @@ class DesignerBuildAction(
     ): BuildResult {
         logger.debug { "Формирую единый DSL для сборки проекта" }
 
-        val results = mutableMapOf<String, ConfiguratorResult>()
-        sourceSet.associateTo(results) { it.name to ConfiguratorResult.EMPTY }
+        val results = mutableMapOf<String, ShellCommandResult>()
 
         var buildResult: BuildResult? = null
 
@@ -44,7 +43,7 @@ class DesignerBuildAction(
             // Загружаем основную конфигурацию
             sourceSet.configuration?.also { configuration ->
                 logger.info { "Загружаю основную конфигурацию" }
-                val result: ConfiguratorResult =
+                val result: ShellCommandResult =
                     loadConfigFromFiles {
                         fromPath(sourceSet.basePath.resolve(configuration.path))
                         updateConfigDumpInfo()

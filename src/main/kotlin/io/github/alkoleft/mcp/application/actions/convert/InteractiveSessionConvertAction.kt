@@ -4,8 +4,8 @@ import io.github.alkoleft.mcp.application.actions.ConvertAction
 import io.github.alkoleft.mcp.application.actions.ConvertResult
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
+import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.edt.EdtResult
 
 class InteractiveSessionConvertAction(
     private val dsl: PlatformDsl,
@@ -15,7 +15,7 @@ class InteractiveSessionConvertAction(
         sourceSet: SourceSet,
         destination: SourceSet,
     ): ConvertResult {
-        val results = mutableMapOf<String, EdtResult>()
+        val results = mutableMapOf<String, ShellCommandResult>()
         dsl.edt {
             sourceSet.forEach {
                 results[it.name] =
@@ -25,6 +25,6 @@ class InteractiveSessionConvertAction(
                     )
             }
         }
-        return ConvertResult(success = results.values.find { !it.success } == null, sourceSet = results.toMap())
+        return ConvertResult(success = results.values.none { !it.success }, sourceSet = results.toMap())
     }
 }

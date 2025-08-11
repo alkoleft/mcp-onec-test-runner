@@ -235,7 +235,7 @@ class InteractiveProcessExecutor(
         withContext(Dispatchers.IO) {
             try {
                 logger.debug { "Отправка команды exit для корректного завершения" }
-                executeCommand("exit", DEFAULT_EXIT_TIMEOUT)
+                executeCommand("exit --yes", DEFAULT_EXIT_TIMEOUT)
 
                 // Даем процессу время на корректное завершение
                 kotlinx.coroutines.delay(params.exitDelayMs)

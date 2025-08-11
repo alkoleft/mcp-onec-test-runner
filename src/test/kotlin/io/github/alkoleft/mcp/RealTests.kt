@@ -80,7 +80,7 @@ class RealTests(
         val properties = testApplicationProperties()
 
         runBlocking {
-            val result = action.build(properties, properties.sourceSet)
+            val result = action.run(properties, properties.sourceSet)
             println("Результат полной сборки: $result")
         }
     }

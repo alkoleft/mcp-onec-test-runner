@@ -27,8 +27,6 @@ data class LoggingConfig(
     val file: String? = null,
     val console: Boolean = false,
     val level: String = "info",
-    val includeTimestamp: Boolean = true,
-    val includeTestDetails: Boolean = true,
 )
 
 /**

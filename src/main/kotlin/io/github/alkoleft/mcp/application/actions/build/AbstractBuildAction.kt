@@ -24,7 +24,7 @@ abstract class AbstractBuildAction(
     /**
      * Выполняет полную сборку проекта с измерением времени
      */
-    override suspend fun build(
+    override suspend fun run(
         properties: ApplicationProperties,
         sourceSet: SourceSet,
     ): BuildResult = measureExecutionTime("build") { executeBuildDsl(properties, sourceSet) }

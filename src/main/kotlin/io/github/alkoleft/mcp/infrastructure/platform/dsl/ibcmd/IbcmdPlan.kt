@@ -2,6 +2,7 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd
 
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.IbcmdCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlin.time.Duration
 
@@ -28,8 +29,8 @@ data class IbcmdPlan(
     /**
      * Выполняет все команды последовательно
      */
-    suspend fun execute(): List<IbcmdResult> {
-        val results = mutableListOf<IbcmdResult>()
+    suspend fun execute(): List<ProcessResult> {
+        val results = mutableListOf<ProcessResult>()
 
         commands.forEachIndexed { index, command ->
             logger.info { "Выполняется команда ${index + 1}/${commands.size}: ${command.commandName}" }
@@ -48,22 +49,22 @@ data class IbcmdPlan(
     /**
      * Выполняет одну команду
      */
-    private suspend fun executeCommand(command: IbcmdCommand): IbcmdResult {
+    private suspend fun executeCommand(command: IbcmdCommand): ProcessResult {
         val executor = ProcessExecutor()
         val baseArgs = context.buildBaseArgs()
         val commandArgs = listOf(context.utilityPath, *command.commandName.split(" ").toTypedArray()) + baseArgs + command.arguments
 
         return try {
             val result = executor.execute(commandArgs)
-            IbcmdResult(
+            ProcessResult(
                 success = result.exitCode == 0,
                 output = result.output,
-                error = result.error ?: "",
+                error = result.error,
                 exitCode = result.exitCode,
                 duration = result.duration,
             )
         } catch (e: Exception) {
-            IbcmdResult(
+            ProcessResult(
                 success = false,
                 output = "",
                 error = e.message ?: "Unknown error",

@@ -45,11 +45,6 @@ class EdtDsl(
     fun version(): EdtResult = executeEdt(listOf("version"))
 
     /**
-     * Executes EDT CLI command to show help
-     */
-    fun help(): EdtResult = executeEdt(listOf("help"))
-
-    /**
      * Runs an arbitrary EDT CLI command with provided arguments.
      * Example: edt { run("workspace", "--list") }
      */
