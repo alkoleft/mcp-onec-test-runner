@@ -5,6 +5,7 @@ import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
 import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
+import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
@@ -35,6 +36,8 @@ class DesignerBuildAction(
         dsl.configurator {
             // Подключаемся к информационной базе
             connect(properties.connection.connectionString)
+            properties.connection.user?.ifNoBlank { user(it) }
+            properties.connection.password?.ifNoBlank { password(it) }
 
             // Отключаем диалоги и сообщения для автоматической работы
             disableStartupDialogs()
