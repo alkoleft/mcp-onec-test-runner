@@ -82,3 +82,43 @@
 **Дата:** 2025-08-11 UTC  
 **Статус:** ✅ Завершено  
 **Результат:** Полный анализ текущего состояния проекта, оценка прогресса 60%, планирование следующих этапов
+
+## 📋 NEW TASK FOCUS: Review and Optimization of IBCMD Support
+
+### Task Overview
+Переход к Level 2 задаче: полный ревью и оптимизация недавно реализованной поддержки IBCMD. Это включает анализ кода, удаление ненужного, рефакторинг и улучшения.
+
+### Objectives
+1. **Code Review** - детальный анализ файлов, измененных в коммите
+2. **Optimization** - убрать дубли, оптимизировать логику
+3. **Refactoring** - улучшить структуру, naming, error handling
+4. **Testing** - обеспечить покрытие и отсутствие регрессий
+5. **Integration** - убедиться в seamless интеграции с YaXUnit runner
+
+### Previous Context (YaXUnit Phase 1)
+[Краткий summary предыдущей задачи, 60% complete, on hold while focusing on IBCMD optimization]
+
+### Key Files to Review
+- src/main/kotlin/io/github/alkoleft/mcp/application/actions/build/IbcmdBuildAction.kt
+- src/main/kotlin/io/github/alkoleft/mcp/application/services/LauncherService.kt
+- src/main/kotlin/io/github/alkoleft/mcp/infrastructure/platform/dsl/ibcmd/* (all IBCMD related)
+- src/main/kotlin/io/github/alkoleft/mcp/infrastructure/platform/dsl/PlatformDsl.kt
+- src/main/kotlin/io/github/alkoleft/mcp/infrastructure/platform/dsl/process/ProcessExecutor.kt
+
+### Implementation Strategy
+- Phase 1: Analysis and Planning (current)
+- Phase 2: Refactoring and Optimizations
+- Phase 3: Testing and Validation
+- Phase 4: Reflection and Archiving
+
+### Success Criteria
+- Clean, optimized code
+- Full test coverage for IBCMD features
+- No regressions
+- Documentation updated
+
+### Next Steps
+1. Read and analyze key files
+2. Identify improvements
+3. Plan changes
+4. Implement and test
