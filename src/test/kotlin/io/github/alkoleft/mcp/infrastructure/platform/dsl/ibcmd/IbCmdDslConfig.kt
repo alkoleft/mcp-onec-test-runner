@@ -1,6 +1,6 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd
 
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.ConfigCommandBuilder
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.config.ConfigCommandBuilder
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.config.ConfigApplyCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.config.ConfigCheckCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.config.ConfigDataSeparationListCommand

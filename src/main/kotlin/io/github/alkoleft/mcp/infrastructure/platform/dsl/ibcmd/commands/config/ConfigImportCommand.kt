@@ -1,6 +1,7 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.config
 
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.IbcmdCommand
+import java.nio.file.Path
 
 /**
  * 8. import — Импорт конфигурации из XML
@@ -46,7 +47,7 @@ class ConfigImportCommand(
     /**
      * Путь к каталогу или архиву XML
      */
-    val path: String,
+    val path: Path,
 ) : IbcmdCommand {
     override val mode: String = "config"
     override val subCommand: String = "import" + (importSubCommand?.let { " $it" } ?: "")
@@ -63,7 +64,7 @@ class ConfigImportCommand(
             archivePath?.let { args.addAll(listOf("--archive", it)) }
             if (noCheck) args.add("--no-check")
             if (partial) args.add("--partial")
-            args.add(path)
+            args.add(path.toString())
             return args
         }
 

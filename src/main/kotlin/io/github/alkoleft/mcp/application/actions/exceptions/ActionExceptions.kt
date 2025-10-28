@@ -10,7 +10,7 @@ sealed class ActionError(
 ) : Exception(message, cause)
 
 /**
- * Ошибка сборки с контекстом
+ * Ошибка сборки проекта
  */
 class BuildError(
     message: String,

@@ -6,7 +6,7 @@ import java.nio.file.Path
 /**
  * Команда DumpConfigToFiles с DSL функциональностью
  */
-class DumpConfigToFilesCommand : ConfiguratorCommand() {
+class DumpConfigToFilesCommand : DesignerCommand() {
     override val name: String = "DumpConfigToFiles"
     override val description: String = "Выгрузка конфигурации в файлы"
 

@@ -4,8 +4,7 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtility
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.DesignerDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.edt.EdtDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.enterprise.EnterpriseDsl
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdPlan
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdPlanDsl
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdDsl
 import org.springframework.stereotype.Component
 
 /**
@@ -30,10 +29,10 @@ class PlatformDsl(
     /**
      * DSL для формирования плана команд ibcmd с поддержкой иерархической структуры
      */
-    fun ibcmd(block: IbcmdPlanDsl.() -> Unit): IbcmdPlan {
-        val ibcmdPlanDsl = IbcmdPlanDsl(context)
-        ibcmdPlanDsl.block()
-        return ibcmdPlanDsl.buildPlan()
+    fun ibcmd(block: IbcmdDsl.() -> Unit): IbcmdDsl {
+        val ibcmdDsl = IbcmdDsl(context)
+        ibcmdDsl.block()
+        return ibcmdDsl
     }
 
     /**

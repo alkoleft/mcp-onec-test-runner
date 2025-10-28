@@ -5,7 +5,7 @@ import java.nio.file.Path
 /**
  * Команда CreateCfg с DSL функциональностью
  */
-class CreateCfgCommand : ConfiguratorCommand() {
+class CreateCfgCommand : DesignerCommand() {
     override val name: String = "CreateCfg"
     override val description: String = "Создание конфигурации"
 

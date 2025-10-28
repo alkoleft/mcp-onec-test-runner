@@ -1,7 +1,9 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.enterprise
 
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.BasePlatformDsl
+import io.github.alkoleft.mcp.core.modules.ShellCommandResult
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.Command
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.V8Dsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +16,7 @@ import org.springframework.stereotype.Component
 @Component
 class EnterpriseDsl(
     utilityContext: PlatformUtilityContext,
-) : BasePlatformDsl<EnterpriseContext>(EnterpriseContext(utilityContext)) {
+) : V8Dsl<EnterpriseContext, Command>(EnterpriseContext(utilityContext)) {
     fun runArguments(value: String) {
         context.runArguments = value
     }
@@ -42,4 +44,8 @@ class EnterpriseDsl(
                 context.buildResult()
             }
         }
+
+    override suspend fun executeCommand(command: Command): ShellCommandResult {
+        TODO("Not yet implemented")
+    }
 }

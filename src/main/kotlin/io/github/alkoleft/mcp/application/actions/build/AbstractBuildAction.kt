@@ -5,10 +5,12 @@ import io.github.alkoleft.mcp.application.actions.BuildResult
 import io.github.alkoleft.mcp.application.actions.exceptions.BuildException
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
+import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
 
@@ -54,10 +56,50 @@ abstract class AbstractBuildAction(
     }
 
     /**
-     * Абстрактный метод для выполнения DSL полной сборки
+     * Метод для выполнения DSL сборки
      */
-    protected abstract suspend fun executeBuildDsl(
+    fun executeBuildDsl(
         properties: ApplicationProperties,
         sourceSet: SourceSet,
-    ): BuildResult
+    ): BuildResult {
+        logger.debug { "Формирую единый DSL для сборки проекта" }
+
+        initDsl(properties)
+        val results = mutableMapOf<String, ShellCommandResult>()
+
+        // Загружаем основную конфигурацию
+        sourceSet.configuration?.also { configuration ->
+            logger.info { "Загружаю основную конфигурацию" }
+            val result = loadConfiguration(configuration.name, sourceSet.basePath.resolve(configuration.path))
+            if (!result.success) {
+                return result
+            }
+
+            results.putAll(result.sourceSet)
+        }
+
+        // Загружаем расширения
+        val extensions = sourceSet.extensions
+        logger.info { "Загружаю ${extensions.size} расширений: ${extensions.joinToString(", ") { it.name }}" }
+        extensions.forEach {
+            val result = loadExtension(it.name, sourceSet.basePath.resolve(it.path))
+            if (!result.success) {
+                return result
+            }
+
+            results.putAll(result.sourceSet)
+        }
+
+        return BuildResult(
+            success = true,
+            sourceSet = results.toMap(),
+        )
+    }
+
+
+    protected abstract fun initDsl(properties: ApplicationProperties): Unit
+
+    protected abstract fun loadConfiguration(name: String, path: Path): BuildResult
+
+    protected abstract fun loadExtension(name: String, path: Path): BuildResult
 }

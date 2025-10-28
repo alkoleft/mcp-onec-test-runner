@@ -6,7 +6,7 @@ import java.nio.file.Path
 /**
  * Команда DumpExtensionToFiles с DSL функциональностью
  */
-class DumpExtensionToFilesCommand : ConfiguratorCommand() {
+class DumpExtensionToFilesCommand : DesignerCommand() {
     override val name: String = "DumpExtensionToFiles"
     override val description: String = "Выгрузка расширения в файлы"
 

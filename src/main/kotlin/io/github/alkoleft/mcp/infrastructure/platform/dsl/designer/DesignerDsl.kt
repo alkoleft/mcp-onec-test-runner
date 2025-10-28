@@ -1,15 +1,15 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.designer
 
 import io.github.alkoleft.mcp.core.modules.ShellCommandResult
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.BasePlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.V8Dsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.ApplyCfgCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.CheckCanApplyConfigurationExtensionsCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.CheckConfigCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.CheckModulesCommand
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.ConfiguratorCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.CreateCfgCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.DeleteCfgCommand
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.DesignerCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.DumpConfigToFilesCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.DumpExtensionToFilesCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.LoadCfgCommand
@@ -28,8 +28,8 @@ import kotlin.time.measureTime
  * через fluent API и DSL синтаксис с немедленным выполнением команд.
  */
 class DesignerDsl(
-    utilityContext: PlatformUtilityContext,
-) : BasePlatformDsl<DesignerContext>(DesignerContext(utilityContext)) {
+    context: PlatformUtilityContext,
+) : V8Dsl<DesignerContext, DesignerCommand>(DesignerContext(context)) {
     fun loadCfg(block: LoadCfgCommand.() -> Unit) = configureAndExecute(LoadCfgCommand(), block)
 
     fun loadConfigFromFiles(block: LoadConfigFromFilesCommand.() -> Unit) = configureAndExecute(LoadConfigFromFilesCommand(), block)
@@ -56,7 +56,7 @@ class DesignerDsl(
     /**
      * Выполняет команду конфигуратора с произвольными аргументами
      */
-    private suspend fun executeCommand(command: ConfiguratorCommand): ShellCommandResult {
+    override suspend fun executeCommand(command: DesignerCommand): ShellCommandResult {
         val duration =
             measureTime {
                 try {
@@ -92,22 +92,7 @@ class DesignerDsl(
         )
     }
 
-    /**
-     * Строит аргументы команды для конфигуратора с произвольными аргументами
-     */
-    private suspend fun buildCommandArgsWithArgs(commandArgs: List<String>): List<String> {
-        val args = mutableListOf<String>()
-
-        // Базовые аргументы конфигуратора
-        args.addAll(context.buildBaseArgs())
-
-        // Команда и её аргументы (команда уже включена в commandArgs)
-        args.addAll(commandArgs)
-
-        return args
-    }
-
-    private fun <C : ConfiguratorCommand> configureAndExecute(
+    private fun <C : DesignerCommand> configureAndExecute(
         command: C,
         configure: (C.() -> Unit),
     ): ShellCommandResult {
