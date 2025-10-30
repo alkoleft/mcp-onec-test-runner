@@ -35,12 +35,7 @@ class InteractiveProcessExecutor(
     private val startTime = System.currentTimeMillis()
 
     // Определяем кодировку в зависимости от платформы
-    private val consoleEncoding: String =
-        if (System.getProperty("os.name").lowercase().contains("windows")) {
-            "CP866" // Windows console encoding
-        } else {
-            "UTF-8" // Linux/Mac
-        }
+    private val consoleEncoding: String = detectConsoleEncoding()
 
     enum class ProcessStatus {
         PENDING,
@@ -66,6 +61,7 @@ class InteractiveProcessExecutor(
         private const val DEFAULT_EXIT_TIMEOUT = 5000L
         private const val DEFAULT_READ_DELAY = 50L
         private const val DEFAULT_EXIT_DELAY = 1000L
+        private const val PROMPT_LOG_OUTPUT_LENGTH = 1000
     }
 
     /**
@@ -156,8 +152,7 @@ class InteractiveProcessExecutor(
                         val currentOutput = output.toString()
                         val promptCount = currentOutput.split(params.promptPattern).size - 1
                         logger.debug { "Найдено приглашений: $promptCount" }
-                        logger.info { "Приглашение EDT: '${params.promptPattern}'" }
-                        logger.info { "Последние 1000 символов вывода: ${currentOutput.takeLast(1000)}" }
+                        logger.info { "Приглашение EDT: '${params.promptPattern}', последние $PROMPT_LOG_OUTPUT_LENGTH символов: ${currentOutput.takeLast(PROMPT_LOG_OUTPUT_LENGTH)}" }                     
                         return@withContext currentOutput
                     }
                 }
@@ -329,4 +324,11 @@ class InteractiveProcessExecutor(
         processWriter?.newLine()
         processWriter?.flush()
     }
+
+    private fun detectConsoleEncoding(): String =
+        if (System.getProperty("os.name").lowercase().contains("windows")) {
+            "CP866" // Windows console encoding
+        } else {
+            "UTF-8" // Linux/Mac
+        }
 }
