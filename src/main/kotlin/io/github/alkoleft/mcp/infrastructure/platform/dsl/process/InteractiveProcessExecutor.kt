@@ -35,7 +35,7 @@ class InteractiveProcessExecutor(
     private val startTime = System.currentTimeMillis()
 
     // Определяем кодировку в зависимости от платформы
-    private val consoleEncoding: String = detectConsoleEncoding()
+    private val consoleEncoding: String = getValidatedConsoleEncoding()
 
     enum class ProcessStatus {
         PENDING,
@@ -152,7 +152,11 @@ class InteractiveProcessExecutor(
                         val currentOutput = output.toString()
                         val promptCount = currentOutput.split(params.promptPattern).size - 1
                         logger.debug { "Найдено приглашений: $promptCount" }
-                        logger.info { "Приглашение EDT: '${params.promptPattern}', последние $PROMPT_LOG_OUTPUT_LENGTH символов: ${currentOutput.takeLast(PROMPT_LOG_OUTPUT_LENGTH)}" }                     
+                        logger.info {
+                            "Приглашение EDT: '${params.promptPattern}', " +
+                                "последние $PROMPT_LOG_OUTPUT_LENGTH символов: " +
+                                "${currentOutput.takeLast(PROMPT_LOG_OUTPUT_LENGTH)}"
+                        }
                         return@withContext currentOutput
                     }
                 }
@@ -323,6 +327,17 @@ class InteractiveProcessExecutor(
         processWriter?.write(command)
         processWriter?.newLine()
         processWriter?.flush()
+    }
+
+    private fun getValidatedConsoleEncoding(): String {
+        val encoding = detectConsoleEncoding()
+        return try {
+            charset(encoding) // Validate charset exists
+            encoding
+        } catch (e: Exception) {
+            logger.warn { "Недопустимая кодировка $encoding, используется UTF-8" }
+            "UTF-8"
+        }
     }
 
     private fun detectConsoleEncoding(): String =
