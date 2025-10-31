@@ -34,6 +34,9 @@ class InteractiveProcessExecutor(
     private val isRunning = AtomicBoolean(false)
     private val startTime = System.currentTimeMillis()
 
+    // Определяем кодировку в зависимости от платформы
+    private val consoleEncoding: String = getValidatedConsoleEncoding()
+
     enum class ProcessStatus {
         PENDING,
         STARTED,
@@ -58,6 +61,7 @@ class InteractiveProcessExecutor(
         private const val DEFAULT_EXIT_TIMEOUT = 5000L
         private const val DEFAULT_READ_DELAY = 50L
         private const val DEFAULT_EXIT_DELAY = 1000L
+        private const val PROMPT_LOG_OUTPUT_LENGTH = 1000
     }
 
     /**
@@ -98,6 +102,7 @@ class InteractiveProcessExecutor(
             processStatus = ProcessStatus.STARTED
             try {
                 logger.debug { "Инициализация интерактивного процесса EDT CLI" }
+                logger.debug { "Используется кодировка консоли: $consoleEncoding" }
 
                 // Инициализируем потоки ввода-вывода
                 isRunning.set(true)
@@ -140,12 +145,19 @@ class InteractiveProcessExecutor(
                 val available = process!!.inputStream.available()
                 if (available > 0) {
                     val readed = process!!.inputStream.read(byteBuffer)
-                    output.append(String(byteBuffer, 0, readed, Charsets.UTF_8))
+                    output.append(String(byteBuffer, 0, readed, charset(consoleEncoding)))
 
                     // Проверяем prompt если нужно
                     if (output.contains(params.promptPattern)) {
-                        logger.debug { "Найдено приглашение, завершение чтения" }
-                        return@withContext output.toString()
+                        val currentOutput = output.toString()
+                        val promptCount = currentOutput.split(params.promptPattern).size - 1
+                        logger.debug { "Найдено приглашений: $promptCount" }
+                        logger.info {
+                            "Приглашение EDT: '${params.promptPattern}', " +
+                                "последние $PROMPT_LOG_OUTPUT_LENGTH символов: " +
+                                "${currentOutput.takeLast(PROMPT_LOG_OUTPUT_LENGTH)}"
+                        }
+                        return@withContext currentOutput
                     }
                 }
 
@@ -168,8 +180,8 @@ class InteractiveProcessExecutor(
     private suspend fun waitForPrompt(timeoutMs: Long): Boolean =
         withContext(Dispatchers.IO) {
             // Инициализируем потоки один раз
-            processWriter = BufferedWriter(OutputStreamWriter(process!!.outputStream, "UTF-8"))
-            errorReader = BufferedReader(InputStreamReader(process!!.errorStream, "UTF-8"))
+            processWriter = BufferedWriter(OutputStreamWriter(process!!.outputStream, consoleEncoding))
+            errorReader = BufferedReader(InputStreamReader(process!!.errorStream, consoleEncoding))
 
             try {
                 readStreamData(timeoutMs)
@@ -316,4 +328,22 @@ class InteractiveProcessExecutor(
         processWriter?.newLine()
         processWriter?.flush()
     }
+
+    private fun getValidatedConsoleEncoding(): String {
+        val encoding = detectConsoleEncoding()
+        return try {
+            charset(encoding) // Validate charset exists
+            encoding
+        } catch (e: Exception) {
+            logger.warn { "Недопустимая кодировка $encoding, используется UTF-8" }
+            "UTF-8"
+        }
+    }
+
+    private fun detectConsoleEncoding(): String =
+        if (System.getProperty("os.name").lowercase().contains("windows")) {
+            "CP866" // Windows console encoding
+        } else {
+            "UTF-8" // Linux/Mac
+        }
 }
