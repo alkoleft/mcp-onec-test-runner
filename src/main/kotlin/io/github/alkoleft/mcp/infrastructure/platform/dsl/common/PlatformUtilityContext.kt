@@ -24,6 +24,8 @@ class PlatformUtilityContext(
     private val properties: ApplicationProperties,
     private val applicationContext: ApplicationContext,
 ) {
+    val applicationProperties: ApplicationProperties = properties
+
     private var lastError: String? = null
     private var lastOutput: String = ""
     private var lastExitCode: Int = 0
