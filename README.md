@@ -3,19 +3,16 @@
 [![Release](https://img.shields.io/github/v/release/alkoleft/mcp-onec-test-runner?sort=semver)](https://github.com/alkoleft/mcp-onec-test-runner/releases)
 [![Downloads](https://img.shields.io/github/downloads/alkoleft/mcp-onec-test-runner/total)](https://github.com/alkoleft/mcp-onec-test-runner/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Stars](https://img.shields.io/github/stars/alkoleft/mcp-onec-test-runner)](https://github.com/alkoleft/mcp-onec-test-runner/stargazers)
 [![Issues](https://img.shields.io/github/issues/alkoleft/mcp-onec-test-runner)](https://github.com/alkoleft/mcp-onec-test-runner/issues)
 [![PRs](https://img.shields.io/github/issues-pr/alkoleft/mcp-onec-test-runner)](https://github.com/alkoleft/mcp-onec-test-runner/pulls)
 [![Last commit](https://img.shields.io/github/last-commit/alkoleft/mcp-onec-test-runner)](https://github.com/alkoleft/mcp-onec-test-runner/commits/master)
-[![Top language](https://img.shields.io/github/languages/top/alkoleft/mcp-onec-test-runner?logo=kotlin)](https://github.com/alkoleft/mcp-onec-test-runner)
+[![Stars](https://img.shields.io/github/stars/alkoleft/mcp-onec-test-runner)](https://github.com/alkoleft/mcp-onec-test-runner/stargazers)
 
+[![Top language](https://img.shields.io/github/languages/top/alkoleft/mcp-onec-test-runner?logo=kotlin)](https://github.com/alkoleft/mcp-onec-test-runner)
 ![JDK](https://img.shields.io/badge/JDK-17%2B-007396?logo=openjdk)
 ![Gradle](https://img.shields.io/badge/Gradle-8.5%2B-02303A?logo=gradle)
 ![1C:Enterprise](https://img.shields.io/badge/1C%3AEnterprise-8.3.10%2B-F6C915)
 [![1C:EDT](https://img.shields.io/badge/1C%3AEDT-2025.1%2B-4D77CF)](https://github.com/1C-Company/1c-edt-issues/issues/1758)
-![Maintenance](https://img.shields.io/maintenance/yes/2025)
-
-![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/alkoleft/mcp-onec-test-runner?utm_source=oss&utm_medium=github&utm_campaign=alkoleft%2Fmcp-onec-test-runner&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
 Инструмент, который позволяет запускать тесты YaXUnit и собирать проекты 1С прямо из AI‑ассистентов (Claude, GPT, Cursor, VS Code и др.) с помощью протокола MCP (Model Context Protocol).
 
