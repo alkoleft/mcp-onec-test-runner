@@ -31,35 +31,35 @@ class YaXUnitRunner(
         request: TestExecutionRequest,
     ): YaXUnitExecutionResult {
         val startTime = Instant.now()
-        logger.info { "Starting YaXUnit test execution for ${request.javaClass.simpleName}" }
+        logger.info { "Запуск выполнения тестов YaXUnit для ${request.javaClass.simpleName}" }
 
         // Создаем временную конфигурацию
         val (configPath, config) = createConfigFile(request)
         try {
             // Запускаем тесты через EnterpriseDsl
-            logger.debug { "Executing tests via EnterpriseDsl" }
+            logger.debug { "Выполнение тестов через EnterpriseDsl" }
             val result =
                 executeTests(
                     request = request,
                     configPath = configPath,
                 )
 
-            logger.info { "Process completed with exit code: ${result.exitCode}" }
+            logger.info { "Процесс завершен с кодом выхода: ${result.exitCode}" }
 
             val duration = Duration.between(startTime, Instant.now())
-            logger.info { "Test execution completed in ${duration.toSeconds()}s" }
+            logger.info { "Выполнение тестов завершено за ${duration.toSeconds()}с" }
 
             // Определяем путь к отчету
             val reportPath = Path(config.reportPath)
             if (Files.exists(reportPath)) {
-                logger.info { "Test report found at: $reportPath" }
+                logger.info { "Отчет о тестах найден по пути: $reportPath" }
             } else {
-                logger.warn { "Test report not found at expected location" }
+                logger.warn { "Отчет о тестах не найден по ожидаемому пути" }
             }
 
             return YaXUnitExecutionResult(
                 success = result.success,
-                reportPath = if (result.success) reportPath else null,
+                reportPath = reportPath,
                 exitCode = result.exitCode,
                 standardOutput = result.output,
                 errorOutput = result.error ?: "",
@@ -67,13 +67,13 @@ class YaXUnitRunner(
             )
         } catch (e: Exception) {
             val duration = Duration.between(startTime, Instant.now())
-            logger.error(e) { "YaXUnit test execution failed after ${duration.toSeconds()}s" }
+            logger.error(e) { "Выполнение тестов YaXUnit завершилось с ошибкой после ${duration.toSeconds()}с" }
             return YaXUnitExecutionResult(
                 success = false,
                 reportPath = null,
                 exitCode = -1,
                 standardOutput = "",
-                errorOutput = e.message ?: "Unknown error",
+                errorOutput = e.message ?: "Неизвестная ошибка",
                 duration = duration,
             )
         }
@@ -83,7 +83,7 @@ class YaXUnitRunner(
         val config = request.toConfig()
         config.validate().also {
             if (!it.isValid) {
-                logger.warn { "Configuration validation failed: ${it.errors.joinToString(", ")}" }
+                logger.warn { "Проверка конфигурации не пройдена: ${it.errors.joinToString(", ")}" }
             }
         }
         val configPath = configPath()

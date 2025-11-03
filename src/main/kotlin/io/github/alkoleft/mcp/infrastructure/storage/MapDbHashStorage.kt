@@ -30,7 +30,7 @@ class MapDbHashStorage(
 
     @PostConstruct
     private fun initialize() {
-        logger.info { "Initializing MapDB hash storage at: $dbPath" }
+        logger.info { "Инициализация хранилища хешей MapDB по пути: $dbPath" }
 
         try {
             // Ensure directory exists
@@ -61,10 +61,10 @@ class MapDbHashStorage(
                     .valueSerializer(Serializer.LONG)
                     .createOrOpen()
 
-            logger.info { "MapDB hash storage initialized with ${hashMap.size} existing file hashes" }
+            logger.info { "Хранилище хешей MapDB инициализировано с ${hashMap.size} существующими хешами файлов" }
         } catch (e: Exception) {
-            logger.error(e) { "Failed to initialize MapDB hash storage" }
-            throw RuntimeException("Hash storage initialization failed", e)
+            logger.error(e) { "Не удалось инициализировать хранилище хешей MapDB" }
+            throw RuntimeException("Не удалось инициализировать хранилище хешей", e)
         }
     }
 
@@ -75,7 +75,7 @@ class MapDbHashStorage(
             val key = normalizeKey(file)
             hashMap[key]
         } catch (e: Exception) {
-            logger.debug(e) { "Failed to get hash for file: $file" }
+            logger.debug(e) { "Не удалось получить хеш для файла: $file" }
             null
         }
 
@@ -91,9 +91,9 @@ class MapDbHashStorage(
 
         db.commit()
 
-        logger.debug { "Stored hash for file: $file" }
+        logger.debug { "Хеш сохранен для файла: $file" }
     } catch (e: Exception) {
-        logger.error(e) { "Failed to store hash for file: $file" }
+        logger.error(e) { "Не удалось сохранить хеш для файла: $file" }
         db.rollback()
         throw e
     }
@@ -101,7 +101,7 @@ class MapDbHashStorage(
     fun batchUpdate(updates: Map<Path, String>) {
         if (updates.isEmpty()) return
         try {
-            logger.debug { "Starting batch update for ${updates.size} files" }
+            logger.debug { "Начало пакетного обновления для ${updates.size} файлов" }
 
             for ((file, hash) in updates) {
                 val key = normalizeKey(file)
@@ -118,9 +118,9 @@ class MapDbHashStorage(
 
             db.commit()
 
-            logger.info { "Batch updated ${updates.size} file hashes" }
+            logger.info { "Пакетно обновлено ${updates.size} хешей файлов" }
         } catch (e: Exception) {
-            logger.error(e) { "Failed to batch update file hashes" }
+            logger.error(e) { "Не удалось выполнить пакетное обновление хешей файлов" }
             db.rollback()
             throw e
         }
@@ -135,9 +135,9 @@ class MapDbHashStorage(
 
             db.commit()
 
-            logger.debug { "Removed hash for file: $file" }
+            logger.debug { "Хеш удален для файла: $file" }
         } catch (e: Exception) {
-            logger.error(e) { "Failed to remove hash for file: $file" }
+            logger.error(e) { "Не удалось удалить хеш для файла: $file" }
             db.rollback()
             throw e
         }
@@ -146,7 +146,7 @@ class MapDbHashStorage(
         try {
             HashMap(hashMap)
         } catch (e: Exception) {
-            logger.error(e) { "Failed to get all hashes" }
+            logger.error(e) { "Не удалось получить все хеши" }
             emptyMap()
         }
 
@@ -158,7 +158,7 @@ class MapDbHashStorage(
             val key = normalizeKey(file)
             timestampMap[key]
         } catch (e: Exception) {
-            logger.debug(e) { "Failed to get timestamp for file: $file" }
+            logger.debug(e) { "Не удалось получить временную метку для файла: $file" }
             null
         }
 
@@ -173,9 +173,9 @@ class MapDbHashStorage(
         timestampMap[key] = timestamp
         db.commit()
 
-        logger.debug { "Stored timestamp for file: $file" }
+        logger.debug { "Временная метка сохранена для файла: $file" }
     } catch (e: Exception) {
-        logger.error(e) { "Failed to store timestamp for file: $file" }
+        logger.error(e) { "Не удалось сохранить временную метку для файла: $file" }
         db.rollback()
         throw e
     }
@@ -192,7 +192,7 @@ class MapDbHashStorage(
                 newestTimestamp = timestampMap.values.maxOrNull(),
             )
         } catch (e: Exception) {
-            logger.error(e) { "Failed to get storage stats" }
+            logger.error(e) { "Не удалось получить статистику хранилища" }
             HashStorageStats(0, 0, null, null)
         }
 
@@ -217,9 +217,9 @@ class MapDbHashStorage(
 
             db.commit()
 
-            logger.info { "Cleaned up ${keysToRemove.size} old hash entries (retention: $retentionDays days)" }
+            logger.info { "Очищено ${keysToRemove.size} старых записей хешей (срок хранения: $retentionDays дней)" }
         } catch (e: Exception) {
-            logger.error(e) { "Failed to cleanup old hash entries" }
+            logger.error(e) { "Не удалось очистить старые записи хешей" }
             db.rollback()
         }
     }
@@ -231,16 +231,16 @@ class MapDbHashStorage(
 
     fun close() {
         try {
-            logger.info { "Closing MapDB hash storage" }
+            logger.info { "Закрытие хранилища хешей MapDB" }
 
             if (::db.isInitialized && !db.isClosed()) {
                 db.commit()
                 db.close()
             }
 
-            logger.info { "MapDB hash storage closed successfully" }
+            logger.info { "Хранилище хешей MapDB успешно закрыто" }
         } catch (e: Exception) {
-            logger.error(e) { "Error closing MapDB hash storage" }
+            logger.error(e) { "Ошибка при закрытии хранилища хешей MapDB" }
         }
     }
 

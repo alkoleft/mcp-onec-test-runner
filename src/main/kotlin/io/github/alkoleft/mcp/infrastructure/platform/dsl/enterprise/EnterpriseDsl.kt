@@ -1,7 +1,7 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.enterprise
 
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.Command
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.V8Dsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
@@ -13,7 +13,7 @@ import kotlin.time.Duration
  */
 @Component
 class EnterpriseDsl(
-    utilityContext: PlatformUtilityContext,
+    utilityContext: PlatformUtilities,
 ) : V8Dsl<EnterpriseContext, Command>(EnterpriseContext(utilityContext)) {
     fun runArguments(value: String) {
         context.runArguments = value

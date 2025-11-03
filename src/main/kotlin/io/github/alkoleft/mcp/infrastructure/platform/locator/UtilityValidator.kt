@@ -18,18 +18,18 @@ class UtilityValidator {
         return try {
             // Basic existence check
             if (!location.executablePath.exists()) {
-                logger.debug { "Utility not found at: ${location.executablePath}" }
+                logger.debug { "Утилита не найдена по пути: ${location.executablePath}" }
                 return false
             }
 
             // Permission check
             if (!location.executablePath.isExecutable()) {
-                logger.debug { "Utility not executable: ${location.executablePath}" }
+                logger.debug { "Утилита не исполняемая (нет прав на выполнение): ${location.executablePath}" }
                 return false
             }
             return true
         } catch (e: Exception) {
-            logger.debug { "Validation failed for ${location.executablePath}: ${e.message}" }
+            logger.debug { "Проверка не пройдена для ${location.executablePath}: ${e.message}" }
             false
         }
     }

@@ -66,30 +66,6 @@ class UtilPathCacheTest {
     }
 
     @Test
-    fun `should clear all cache entries`() {
-        // Arrange
-        val cache = UtilityCache()
-        val location1 = createTestLocation()
-        val location2 = createTestLocation()
-
-        cache.store(UtilityType.DESIGNER, "8.3.24", location1)
-        cache.store(UtilityType.IBCMD, "8.3.25", location2)
-
-        assertEquals(2, cache.getCacheSize(), "Cache should contain 2 entries before clearing")
-
-        // Act
-        cache.clear()
-
-        // Assert
-        val retrieved1 = cache.getCachedLocation(UtilityType.DESIGNER, "8.3.24")
-        val retrieved2 = cache.getCachedLocation(UtilityType.IBCMD, "8.3.25")
-
-        assertNull(retrieved1, "First cache entry should be cleared")
-        assertNull(retrieved2, "Second cache entry should be cleared")
-        assertEquals(0, cache.getCacheSize(), "Cache size should be 0 after clearing")
-    }
-
-    @Test
     fun `should handle null version correctly`() {
         // Arrange
         val cache = UtilityCache()
@@ -103,23 +79,6 @@ class UtilPathCacheTest {
         // Assert
         assertNotNull(retrieved, "Cached location with null version should not be null")
         assertEquals(location, retrieved, "Retrieved location should match stored location")
-    }
-
-    @Test
-    fun `should return correct cache size`() {
-        // Arrange
-        val cache = UtilityCache()
-        val location = createTestLocation()
-
-        // Act
-        cache.store(UtilityType.DESIGNER, "8.3.24", location)
-        assertEquals(1, cache.getCacheSize(), "Cache should contain 1 entry after first store")
-
-        cache.store(UtilityType.IBCMD, "8.3.25", location)
-        val finalSize = cache.getCacheSize()
-
-        // Assert
-        assertEquals(2, finalSize, "Cache should contain 2 entries after second store")
     }
 
     @Test

@@ -6,9 +6,6 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd
  * Определяет назначение расширения и влияет на правила его применения.
  *
  * @param value строковое представление типа для использования в командах ibcmd
- *
- * @author alkoleft
- * @since 1.0
  */
 enum class ExtensionPurpose(
     val value: String,

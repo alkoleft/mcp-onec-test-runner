@@ -2,7 +2,7 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd
 
 import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.Dsl
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.CommandBuilder
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.IbcmdCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.config.ConfigCommandBuilder
@@ -50,12 +50,9 @@ import java.nio.file.Path
  *
  * @see [IbcmdContext] для параметров подключения к базе данных
  * @see [IbcmdCommand] базовый интерфейс команд
- *
- * @author alkoleft
- * @since 1.0
  */
 class IbcmdDsl(
-    context: PlatformUtilityContext,
+    context: PlatformUtilities,
 ) : Dsl<IbcmdContext, IbcmdCommand>(IbcmdContext(context)) {
     private val commands = mutableListOf<IbcmdCommand>()
 

@@ -2,7 +2,7 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd
 
 import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.DslContext
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 
 /**
  * Контекст для выполнения команд ibcmd.
@@ -10,24 +10,21 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtility
  * Этот класс предоставляет контекст для работы с утилитой ibcmd и управляет общими параметрами,
  * которые используются во всех командах: путь к базе данных, пользователь и пароль.
  *
- * Контекст наследует от [DslContext] и предоставляет доступ к утилите ibcmd через [PlatformUtilityContext].
+ * Контекст наследует от [DslContext] и предоставляет доступ к утилите ibcmd через [PlatformUtilities].
  *
  * @param platformContext контекст платформы, содержащий информацию о доступных утилитах
  *
  * @see [buildBaseArgs] для получения базовых аргументов команды
- *
- * @author alkoleft
- * @since 1.0
  */
 class IbcmdContext(
-    platformContext: PlatformUtilityContext,
+    platformContext: PlatformUtilities,
 ) : DslContext(platformContext) {
     private var dbPath: String? = null
 
     /**
      * Путь к исполняемому файлу утилиты ibcmd.
      *
-     * Автоматически определяется через [PlatformUtilityContext] по типу утилиты [UtilityType.IBCMD].
+     * Автоматически определяется через [PlatformUtilities] по типу утилиты [UtilityType.IBCMD].
      */
     val utilityPath
         get() = platformContext.locateUtility(UtilityType.IBCMD).executablePath.toString()

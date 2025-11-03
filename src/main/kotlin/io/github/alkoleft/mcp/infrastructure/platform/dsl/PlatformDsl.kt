@@ -1,6 +1,6 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl
 
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.DesignerDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.edt.EdtDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.enterprise.EnterpriseDsl
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component
  */
 @Component
 class PlatformDsl(
-    private val context: PlatformUtilityContext,
+    private val context: PlatformUtilities,
 ) {
     /**
      * DSL для работы с конфигуратором 1С

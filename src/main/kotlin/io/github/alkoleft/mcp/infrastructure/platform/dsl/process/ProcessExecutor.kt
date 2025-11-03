@@ -133,7 +133,7 @@ class ProcessExecutor : CommandExecutor {
             if (logContent.isNotBlank()) {
                 logger.info { "Логи 1С: $logContent" }
             }
-            logger.warn { "=== ПРОЦЕСС ЗАВЕРШИЛСЯ С ОШИБКОЙ! ===" }
+            logger.warn { "============ ПРОЦЕСС ЗАВЕРШИЛСЯ С ОШИБКОЙ! ============" }
         } else {
 //            if (streamData.stdout.isNotEmpty()) {
 //                logger.info { "STDOUT вывод: ${streamData.stdout.toString().trim()}" }
@@ -144,7 +144,7 @@ class ProcessExecutor : CommandExecutor {
             if (logContent.isNotBlank()) {
                 logger.debug { "Логи 1С: $logContent" }
             }
-            logger.debug { "=== ПРОЦЕСС ВЫПОЛНЕН УСПЕШНО ===" }
+            logger.debug { "============ ПРОЦЕСС ВЫПОЛНЕН УСПЕШНО ============" }
         }
     }
 
@@ -160,7 +160,7 @@ class ProcessExecutor : CommandExecutor {
         ProcessResult(
             success = exitCode == 0,
             output = combinedOutput,
-            error = if (exitCode != 0) "Process exited with code $exitCode" else null,
+            error = if (exitCode != 0) "Процесс завершился с кодом $exitCode" else null,
             exitCode = exitCode,
             duration = duration,
             logFilePath = logFilePath,
@@ -179,7 +179,7 @@ class ProcessExecutor : CommandExecutor {
         return ProcessResult(
             success = false,
             output = "",
-            error = exception.message ?: "Unknown error",
+            error = exception.message ?: "Неизвестная ошибка",
             exitCode = -1,
             duration = duration,
             logFilePath = logFilePath,
@@ -226,7 +226,7 @@ class ProcessExecutor : CommandExecutor {
         logPath: Path?,
         commandString: String,
     ) {
-        logger.debug { "\n=== ЗАПУСК ПРОЦЕССА ===" }
+        logger.debug { "============ ЗАПУСК ПРОЦЕССА ============" }
         logger.debug { "Команда: $commandString" }
 
         if (logPath != null) {

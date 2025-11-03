@@ -48,17 +48,17 @@ data class ApplicationProperties(
      * Валидация базового пути
      */
     private fun validateBasePath() {
-        require(basePath.toString().isNotBlank()) { "Base path cannot be empty" }
-        require(Files.exists(basePath)) { "Base path does not exist: $basePath" }
-        require(Files.isDirectory(basePath)) { "Base path must be a directory: $basePath" }
-        require(Files.isReadable(basePath)) { "Base path must be readable: $basePath" }
+        require(basePath.toString().isNotBlank()) { "Базовый путь не может быть пустым" }
+        require(Files.exists(basePath)) { "Базовый путь не существует: $basePath" }
+        require(Files.isDirectory(basePath)) { "Базовый путь должен быть директорией: $basePath" }
+        require(Files.isReadable(basePath)) { "Базовый путь должен быть доступен для чтения: $basePath" }
     }
 
     /**
      * Валидация набора исходного кода
      */
     private fun validateSourceSet() {
-        require(sourceSet.isNotEmpty()) { "Source set cannot be empty" }
+        require(sourceSet.isNotEmpty()) { "Набор исходников не может быть пустым" }
 
         sourceSet.forEach { item ->
             validateSourceSetItem(item)
@@ -66,13 +66,13 @@ data class ApplicationProperties(
 
         // Проверяем наличие обязательных элементов
         require(sourceSet.any { it.type == SourceSetType.CONFIGURATION }) {
-            "Configuration source set is required"
+            "Требуется source set типа CONFIGURATION"
         }
 
         // Проверяем уникальность путей
         val paths = sourceSet.map { it.path }
         require(paths.size == paths.toSet().size) {
-            "Source set paths must be unique"
+            "Пути в source set должны быть уникальными"
         }
     }
 
@@ -80,13 +80,13 @@ data class ApplicationProperties(
      * Валидация элемента набора исходного кода
      */
     private fun validateSourceSetItem(item: SourceSetItem) {
-        require(item.path.isNotBlank()) { "Source set item path cannot be empty" }
-        require(item.name.isNotBlank()) { "Source set item name cannot be empty" }
+        require(item.path.isNotBlank()) { "Путь элемента source set не может быть пустым" }
+        require(item.name.isNotBlank()) { "Имя элемента source set не может быть пустым" }
 
         // Проверяем, что путь существует относительно basePath
         val fullPath = basePath.resolve(item.path)
         require(Files.exists(fullPath)) {
-            "Source set path does not exist: ${item.path}"
+            "Путь source set не существует: ${item.path}"
         }
     }
 
@@ -95,12 +95,12 @@ data class ApplicationProperties(
      */
     private fun validateConnection() {
         require(connection.connectionString.isNotBlank()) {
-            "Connection string cannot be empty"
+            "Строка подключения не может быть пустой"
         }
 
         // Проверяем формат строки подключения
         require(connection.connectionString.contains("=")) {
-            "Connection string must contain '=' character"
+            "Строка подключения должна содержать символ '='"
         }
     }
 
@@ -112,7 +112,7 @@ data class ApplicationProperties(
             // Простая проверка формата версии (x.x.x.x)
             val versionPattern = Regex("^\\d+(\\.\\d+)*$")
             require(versionPattern.matches(platformVersion)) {
-                "Platform version must be in format x.x.x.x: $platformVersion"
+                "Версия платформы должна быть в формате x.x.x.x: $platformVersion"
             }
         }
     }
@@ -123,7 +123,7 @@ data class ApplicationProperties(
     private fun validateTools() {
         // Проверяем, что builder имеет допустимое значение
         require(tools.builder in BuilderType.entries.toTypedArray()) {
-            "Invalid builder type: ${tools.builder}"
+            "Недопустимый тип сборщика: ${tools.builder}"
         }
     }
 

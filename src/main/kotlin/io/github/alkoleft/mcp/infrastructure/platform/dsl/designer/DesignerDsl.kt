@@ -1,7 +1,7 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.designer
 
 import io.github.alkoleft.mcp.core.modules.ShellCommandResult
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.V8Dsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.ApplyCfgCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.CheckCanApplyConfigurationExtensionsCommand
@@ -23,7 +23,7 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.Upda
  * через fluent API и DSL синтаксис с немедленным выполнением команд.
  */
 class DesignerDsl(
-    context: PlatformUtilityContext,
+    context: PlatformUtilities,
 ) : V8Dsl<DesignerContext, DesignerCommand>(DesignerContext(context)) {
     fun loadCfg(block: LoadCfgCommand.() -> Unit) = configureAndExecute(LoadCfgCommand(), block)
 

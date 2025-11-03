@@ -227,7 +227,7 @@ class InteractiveProcessExecutor(
             return CommandResult(
                 success = false,
                 output = "",
-                error = e.message ?: "Unknown error",
+                error = e.message ?: "Неизвестная ошибка",
                 duration = duration,
                 command = command,
             )

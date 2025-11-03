@@ -6,7 +6,7 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.common
  * @param platformContext контекст для работы с утилитами платформы
  */
 abstract class DslContext(
-    protected val platformContext: PlatformUtilityContext,
+    protected val platformContext: PlatformUtilities,
 ) {
     /** Имя пользователя для подключения */
     protected var user: String? = null

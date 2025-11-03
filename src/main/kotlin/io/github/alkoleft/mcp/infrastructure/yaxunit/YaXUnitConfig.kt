@@ -60,45 +60,45 @@ fun filter(request: TestExecutionRequest) =
     }
 
 fun YaXUnitConfig.validate(): ValidationResult {
-    logger.debug { "Validating YaXUnit configuration" }
+    logger.debug { "Проверка конфигурации YaXUnit" }
 
     val errors = mutableListOf<String>()
     val warnings = mutableListOf<String>()
 
     // Проверяем обязательные поля
     if (reportFormat.isBlank()) {
-        errors.add("Report format is required")
+        errors.add("Требуется указать формат отчета")
     }
 
     if (reportPath.isEmpty()) {
-        errors.add("Report path not specified, will use default")
+        errors.add("Путь к отчету не указан, будет использован путь по умолчанию")
     }
 
     // Проверяем формат отчета
     if (reportFormat != "jUnit" && reportFormat != "json" && reportFormat != "xml") {
-        errors.add("Unsupported report format: $reportFormat")
+        errors.add("Неподдерживаемый формат отчета: $reportFormat")
     }
 
     // Проверяем фильтры
     filter?.modules?.also {
         if (it.isEmpty()) {
-            warnings.add("Empty modules filter specified")
+            warnings.add("Указан пустой фильтр модулей")
         }
     }
     filter?.tests?.also {
         if (it.isEmpty()) {
-            warnings.add("Empty tests filter specified")
+            warnings.add("Указан пустой фильтр тестов")
         }
     }
 
     // Проверяем логирование
     if (logging.file == null && !logging.console) {
-        warnings.add("No logging output specified")
+        warnings.add("Не указан вывод логирования")
     }
 
     val isValid = errors.isEmpty()
 
-    logger.debug { "Configuration validation completed: isValid=$isValid, errors=${errors.size}, warnings=${warnings.size}" }
+    logger.debug { "Проверка конфигурации завершена: isValid=$isValid, ошибок=${errors.size}, предупреждений=${warnings.size}" }
 
     return ValidationResult(
         isValid = isValid,

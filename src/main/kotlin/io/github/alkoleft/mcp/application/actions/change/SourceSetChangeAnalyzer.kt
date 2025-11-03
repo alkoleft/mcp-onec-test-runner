@@ -23,10 +23,10 @@ class SourceSetChangeAnalyzer {
         properties: ApplicationProperties,
         allChanges: ChangesSet,
     ): Map<String, SourceSetChanges> {
-        logger.debug { "Analyzing ${allChanges.size} changes for source set grouping" }
+        logger.debug { "Анализ ${allChanges.size} изменений для группировки по source set" }
 
         if (allChanges.isEmpty()) {
-            logger.debug { "No changes to analyze" }
+            logger.debug { "Нет изменений для анализа" }
             return emptyMap()
         }
 
@@ -41,7 +41,7 @@ class SourceSetChangeAnalyzer {
                     try {
                         changedFile.startsWith(sourceSetPath)
                     } catch (e: Exception) {
-                        logger.debug(e) { "Error checking if file $changedFile belongs to source set ${sourceItem.name}" }
+                        logger.debug(e) { "Ошибка при проверке принадлежности файла $changedFile к source set ${sourceItem.name}" }
                         false
                     }
                 }
@@ -66,7 +66,9 @@ class SourceSetChangeAnalyzer {
             }
         }
 
-        logger.info { "Analyzed changes for ${sourceSetChanges.size} affected source sets out of ${properties.sourceSet.size} total" }
+        logger.info {
+            "Проанализированы изменения для ${sourceSetChanges.size} затронутых source sets из ${properties.sourceSet.size} всего"
+        }
         return sourceSetChanges
     }
 }

@@ -36,7 +36,6 @@ class EdtCliExecutor(
      */
     override fun execute(commandArgs: List<String>): EdtCommandResult {
         val command = commandArgs.joinToString(" ")
-        logger.debug { "Выполнение команды $command" }
         return processCommandResult(interactiveExecutor.executeCommand(command, 600000))
     }
 

@@ -25,7 +25,7 @@ class ReportParser {
         input: InputStream,
         format: ReportFormat,
     ): GenericTestReport {
-        require(format == ReportFormat.JUNIT_XML) { "Only JUNIT_XML format is supported" }
+        require(format == ReportFormat.JUNIT_XML) { "Поддерживается только формат JUNIT_XML" }
         return parseJUnitXml(input)
     }
 

@@ -2,7 +2,7 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.edt
 
 import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.core.modules.UtilityType
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Path
 import kotlin.time.Duration
@@ -34,7 +34,7 @@ private val logger = KotlinLogging.logger {}
  * - version: версия EDT и компонентов
  */
 class EdtDsl(
-    private val utilityContext: PlatformUtilityContext,
+    private val utilityContext: PlatformUtilities,
 ) {
     private val context = EdtContext(utilityContext)
 
@@ -98,7 +98,7 @@ class EdtDsl(
         when {
             projectPath != null -> args.addAll(listOf("--project", projectPath))
             projectName != null -> args.addAll(listOf("--project-name", projectName))
-            else -> throw IllegalArgumentException("Either projectPath or projectName must be specified")
+            else -> throw IllegalArgumentException("Должен быть указан либо projectPath, либо projectName")
         }
         if (includeFullSupportObjects) {
             args.addAll(listOf("--include-full-support-objects", "true"))
@@ -144,7 +144,7 @@ class EdtDsl(
         when {
             projectPath != null -> args.addAll(listOf("--project", "\"$projectPath\""))
             projectName != null -> args.addAll(listOf("--project-name", "\"$projectName\""))
-            else -> throw IllegalArgumentException("Either projectPath or projectName must be specified")
+            else -> throw IllegalArgumentException("Должен быть указан либо projectPath, либо projectName")
         }
         args.addAll(listOf("--configuration-files", "\"$configurationFiles\""))
         return executeEdt(args)
@@ -163,7 +163,7 @@ class EdtDsl(
         when {
             projectPath != null -> args.addAll(listOf("--project", projectPath))
             projectName != null -> args.addAll(listOf("--project-name", projectName))
-            else -> throw IllegalArgumentException("Either projectPath or projectName must be specified")
+            else -> throw IllegalArgumentException("Должен быть указан либо projectPath, либо projectName")
         }
         return executeEdt(args)
     }
@@ -190,7 +190,7 @@ class EdtDsl(
         when {
             projectPath != null -> args.addAll(listOf("--project", projectPath))
             projectName != null -> args.addAll(listOf("--project-name", projectName))
-            else -> throw IllegalArgumentException("Either projectPath or projectName must be specified")
+            else -> throw IllegalArgumentException("Должен быть указан либо projectPath, либо projectName")
         }
         version?.let { args.addAll(listOf("--version", it)) }
         baseProjectName?.let { args.addAll(listOf("--base-project-name", it)) }
@@ -242,7 +242,7 @@ class EdtDsl(
         when {
             names != null -> args.addAll(names)
             name != null -> args.addAll(listOf("--name", name))
-            else -> throw IllegalArgumentException("Either names or name must be specified")
+            else -> throw IllegalArgumentException("Должен быть указан либо names, либо name")
         }
         if (yes) args.addAll(listOf("--yes", "true"))
         if (deleteContent) args.addAll(listOf("--delete-content", "true"))
@@ -340,7 +340,7 @@ class EdtDsl(
         when {
             projectPaths != null -> args.addAll(listOf("--project-list") + projectPaths)
             projectNames != null -> args.addAll(listOf("--project-name-list") + projectNames)
-            else -> throw IllegalArgumentException("Either projectPaths or projectNames must be specified")
+            else -> throw IllegalArgumentException("Должен быть указан либо projectPaths, либо projectNames")
         }
         return executeEdt(args)
     }
@@ -359,7 +359,7 @@ class EdtDsl(
         when {
             projectPaths != null -> args.addAll(listOf("--project-list") + projectPaths)
             projectNames != null -> args.addAll(listOf("--project-name-list") + projectNames)
-            else -> throw IllegalArgumentException("Either projectPaths or projectNames must be specified")
+            else -> throw IllegalArgumentException("Должен быть указан либо projectPaths, либо projectNames")
         }
         return executeEdt(args)
     }
@@ -368,17 +368,17 @@ class EdtDsl(
      * Executes an EDT CLI command with specified arguments immediately.
      */
     private fun executeEdt(arguments: List<String>): EdtResult {
-        logger.debug { "EDT exec start: args=${arguments.joinToString(" ")}" }
+        logger.debug { "Запуск 1C:EDT: args=${arguments.joinToString(" ")}" }
         val duration =
             measureTime {
                 try {
                     val executor = utilityContext.executor(UtilityType.EDT_CLI)
                     val result = executor.execute(arguments)
-                    logger.info { "EDT exec done: exitCode=${result.exitCode}, duration=${result.duration}" }
+                    logger.info { "Команда 1C:EDT выполнен: exitCode=${result.exitCode}, длительность=${result.duration}" }
                     if (result.exitCode != 0) {
                         val errorPreview: String? =
                             result.error?.let { if (it.length > 4000) it.take(4000) + "..." else it }
-                        logger.warn { "EDT exec failed: exitCode=${result.exitCode}, error=$errorPreview" }
+                        logger.warn { "Команда 1C:EDT завершилась с ошибкой: exitCode=${result.exitCode}, ошибка=$errorPreview" }
                     }
                     context.setResult(
                         success = result.exitCode == 0,
@@ -388,18 +388,18 @@ class EdtDsl(
                         duration = result.duration,
                     )
                 } catch (e: Exception) {
-                    logger.error(e) { "EDT exec threw exception for args=${arguments.joinToString(" ")}" }
+                    logger.error(e) { "Команда 1C:EDT выбросила исключение для args=${arguments.joinToString(" ")}" }
                     context.setResult(
                         success = false,
                         output = "",
-                        error = e.message ?: "Unknown error",
+                        error = e.message ?: "Неизвестная ошибка",
                         exitCode = -1,
                         duration = Duration.ZERO,
                     )
                 }
             }
 
-        logger.debug { "EDT exec total duration=$duration" }
+        logger.debug { "Команда 1C:EDT общая длительность=$duration" }
         return EdtResult(
             success = context.buildResult().success,
             output = context.buildResult().output,
@@ -414,7 +414,7 @@ class EdtDsl(
  * Context for EDT CLI.
  */
 class EdtContext(
-    val platformContext: PlatformUtilityContext,
+    val platformContext: PlatformUtilities,
 ) {
     private var lastError: String? = null
     private var lastOutput: String = ""

@@ -1,7 +1,7 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.designer
 
 import io.github.alkoleft.mcp.core.modules.UtilityType
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.V8Context
 
 /**
@@ -10,7 +10,7 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.V8Context
  * Содержит базовые настройки и методы для построения аргументов команд
  */
 class DesignerContext(
-    platformContext: PlatformUtilityContext,
+    platformContext: PlatformUtilities,
 ) : V8Context(platformContext) {
     /**
      * Строит базовые аргументы для команд конфигуратора

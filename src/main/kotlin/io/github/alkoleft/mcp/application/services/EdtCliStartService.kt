@@ -3,7 +3,7 @@ package io.github.alkoleft.mcp.application.services
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.ProjectFormat
 import io.github.alkoleft.mcp.core.modules.UtilityType
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.InteractiveProcessExecutor
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CompletableDeferred
@@ -28,16 +28,16 @@ import org.springframework.stereotype.Service
 private val logger = KotlinLogging.logger {}
 
 /**
- * Сервис для автозапуска EDT CLI при старте приложения
+ * Сервис для автозапуска 1C:EDT CLI при старте приложения
  *
- * Запускает EDT CLI и инициализирует интерактивную сессию.
+ * Запускает 1C:EDT CLI и инициализирует интерактивную сессию.
  * Поддерживает single-flight запуск по запросу: один процесс и одна инициализация одновременно.
  */
 @Service
 @EnableAsync
 class EdtCliStartService(
     private val properties: ApplicationProperties,
-    private val utilityContext: PlatformUtilityContext,
+    private val utilityContext: PlatformUtilities,
 ) {
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -73,17 +73,17 @@ class EdtCliStartService(
             return
         }
         if (!properties.tools.edtCli.autoStart) {
-            logger.info { "Автозапуск EDT CLI отключен" }
+            logger.info { "Автозапуск 1C:EDT CLI отключен" }
             return
         }
 
         isAutoStartEnabled = true
-        logger.info { "Запуск EDT CLI в фоновом режиме (автозапуск)" }
+        logger.info { "Запуск 1C:EDT CLI в фоновом режиме (автозапуск)" }
         coroutineScope.launch {
             try {
                 ensureStarted().start()
             } catch (e: Exception) {
-                logger.error(e) { "Ошибка при автозапуске EDT CLI" }
+                logger.error(e) { "Ошибка при автозапуске 1C:EDT CLI" }
             }
         }
     }
@@ -117,21 +117,21 @@ class EdtCliStartService(
         }
 
     /**
-     * Реальный запуск процесса EDT CLI и инициализация интерактивного исполнителя.
+     * Реальный запуск процесса 1C:EDT CLI и инициализация интерактивного исполнителя.
      */
     private suspend fun startAndInitialize(): InteractiveProcessExecutor? =
         withContext(Dispatchers.IO) {
             try {
-                logger.info { "Инициализация процесса EDT CLI" }
+                logger.info { "Инициализация процесса 1C:EDT CLI" }
 
                 // Проверяем наличие исполняемого файла EDT
                 val executablePath = utilityContext.locateUtility(UtilityType.EDT_CLI).executablePath
                 if (!executablePath.toFile().exists()) {
-                    logger.error { "Исполняемый файл EDT не найден: $executablePath" }
+                    logger.error { "Исполняемый файл 1C:EDT CLI не найден: $executablePath" }
                     return@withContext null
                 }
 
-                // Создаем процесс EDT CLI
+                // Создаем процесс 1C:EDT CLI
                 val command =
                     buildList {
                         add(executablePath.toString())
@@ -145,7 +145,7 @@ class EdtCliStartService(
 
                 val process = processBuilder.start()
                 logger.info {
-                    "Процесс EDT CLI запущен с PID: ${process.pid()}. Команда запуска: ${
+                    "Процесс 1C:EDT CLI запущен с PID: ${process.pid()}. Команда запуска: ${
                         processBuilder.command().joinToString(" ")
                     }"
                 }
@@ -164,7 +164,7 @@ class EdtCliStartService(
                 // Инициализируем процесс
                 val initialized = executor.initialize()
                 if (!initialized) {
-                    logger.error { "Не удалось инициализировать EDT CLI процесс" }
+                    logger.error { "Не удалось инициализировать 1C:EDT CLI процесс" }
                     process.destroyForcibly()
                     return@withContext null
                 }
@@ -175,7 +175,7 @@ class EdtCliStartService(
                     initJob = null
                 }
 
-                logger.info { "EDT CLI процесс успешно запущен и инициализирован" }
+                logger.info { "1C:EDT CLI процесс успешно запущен и инициализирован" }
 
                 // Мониторинг — только если включен автозапуск (сохраняем прежнюю семантику)
                 if (isAutoStartEnabled) {
@@ -184,7 +184,7 @@ class EdtCliStartService(
 
                 return@withContext executor
             } catch (e: Exception) {
-                logger.error(e) { "Ошибка при запуске EDT CLI процесса" }
+                logger.error(e) { "Ошибка при запуске 1C:EDT CLI процесса" }
                 // Снимем зависшую задачу
                 initMutex.withLock { initJob = null }
                 return@withContext null
@@ -192,7 +192,7 @@ class EdtCliStartService(
         }
 
     /**
-     * Запускает мониторинг процесса EDT CLI в фоновом режиме
+     * Запускает мониторинг процесса 1C:EDT CLI в фоновом режиме
      */
     private suspend fun launchProcessMonitor(
         process: Process,
@@ -202,28 +202,28 @@ class EdtCliStartService(
             while (process.isAlive && isAutoStartEnabled) {
                 delay(5000)
                 if (interactiveExecutor.isInitialized() && interactiveExecutor.isProcessRunning()) {
-                    logger.debug { "EDT CLI процесс работает нормально" }
+                    logger.trace { "1C:EDT CLI процесс работает нормально" }
                 } else {
-                    logger.warn { "EDT CLI процесс не отвечает, перезапуск..." }
+                    logger.warn { "1C:EDT CLI процесс не отвечает, перезапуск..." }
                     restartProcess()
                     break
                 }
             }
         } catch (e: Exception) {
-            logger.error(e) { "Ошибка в мониторинге EDT CLI процесса" }
+            logger.error(e) { "Ошибка в мониторинге 1C:EDT CLI процесса" }
         }
     }
 
     /**
-     * Перезапускает процесс EDT CLI
+     * Перезапускает процесс 1C:EDT CLI
      */
     private suspend fun restartProcess() {
-        logger.info { "Перезапуск EDT CLI процесса" }
+        logger.info { "Перезапуск 1C:EDT CLI процесса" }
         initMutex.withLock {
             try {
                 executorRef?.stopProcess()
             } catch (e: Exception) {
-                logger.warn(e) { "Ошибка при остановке EDT CLI процесса" }
+                logger.warn(e) { "Ошибка при остановке 1C:EDT CLI процесса" }
             } finally {
                 executorRef = null
                 initJob = null
@@ -234,16 +234,16 @@ class EdtCliStartService(
     }
 
     /**
-     * Принудительно перезапускает EDT CLI исполнитель и ожидает готовности
+     * Принудительно перезапускает 1C:EDT CLI исполнитель и ожидает готовности
      */
     fun restartInteractiveExecutor(): InteractiveProcessExecutor? =
         runBlocking {
-            logger.info { "Принудительный перезапуск EDT CLI исполнителя" }
+            logger.info { "Принудительный перезапуск 1C:EDT CLI исполнителя" }
             initMutex.withLock {
                 try {
                     executorRef?.stopProcess()
                 } catch (e: Exception) {
-                    logger.warn(e) { "Ошибка при остановке текущего EDT CLI процесса" }
+                    logger.warn(e) { "Ошибка при остановке текущего 1C:EDT CLI процесса" }
                 } finally {
                     executorRef = null
                     initJob = null
@@ -253,7 +253,7 @@ class EdtCliStartService(
         }
 
     /**
-     * Проверяет, запущен ли процесс EDT CLI
+     * Проверяет, запущен ли процесс 1C:EDT CLI
      */
     fun isProcessStarted(): Boolean = executorRef?.isProcessRunning() == true || (initJob?.isActive == true)
 
@@ -263,7 +263,7 @@ class EdtCliStartService(
     fun isAutoStartEnabled(): Boolean = isAutoStartEnabled
 
     /**
-     * Проверяет состояние EDT CLI исполнителя
+     * Проверяет состояние 1C:EDT CLI исполнителя
      */
     fun getExecutorStatus(): String =
         when {

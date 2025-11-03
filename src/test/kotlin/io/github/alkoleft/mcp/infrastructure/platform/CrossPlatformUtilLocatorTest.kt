@@ -13,16 +13,6 @@ import kotlin.test.assertTrue
 
 class CrossPlatformUtilLocatorTest {
     @Test
-    fun `should clear cache successfully`() {
-        // Arrange
-        val locator = UtilityLocator()
-
-        // Act & Assert - should not throw exception
-        locator.clearCache()
-        assertTrue(true, "Cache clearing should complete without exception")
-    }
-
-    @Test
     fun `should throw UtilNotFound when utility not found`() {
         // Arrange
         val locator = UtilityLocator()

@@ -21,7 +21,7 @@ private const val DEFAULT_VERSION = "default"
  * @param applicationContext контекст приложения Spring
  */
 @Component
-class PlatformUtilityContext(
+class PlatformUtilities(
     private val utilLocator: UtilityLocator,
     private val properties: ApplicationProperties,
     private val applicationContext: ApplicationContext,

@@ -187,7 +187,7 @@ fun SearchStrategy.search(
     utility: UtilityType,
     version: String?,
 ): UtilityLocation {
-    logger.debug { "Searching locations" }
+    logger.debug { "Поиск в локациях" }
 
     // Normalize requirement: EDT_CLI defaults to latest if not provided
     val requirement =
@@ -196,15 +196,15 @@ fun SearchStrategy.search(
     // If platform utility and version is null/blank or invalid, we should fail early
     if (utility.isPlatform()) {
         if (requirement.isNullOrBlank()) {
-            throw TestExecutionError.UtilNotFound("${utility.name} version is required")
+            throw TestExecutionError.UtilNotFound("Для ${utility.name} требуется указать версию")
         }
         val parsedReq = Version.parse(requirement)
         if (parsedReq == null) {
-            throw TestExecutionError.UtilNotFound("${utility.name} invalid version: $requirement")
+            throw TestExecutionError.UtilNotFound("${utility.name} неверная версия: $requirement")
         }
         if (parsedReq.parts.size < 4) {
             // For platform utilities, enforce exact version (major.minor.patch.build)
-            throw TestExecutionError.UtilNotFound("${utility.name} exact version required: $requirement")
+            throw TestExecutionError.UtilNotFound("${utility.name} требуется точная версия (major.minor.patch.build): $requirement")
         }
     }
 
@@ -215,7 +215,7 @@ fun SearchStrategy.search(
             val candidates = location.generateCandidates(utility, requirement)
             allCandidates.addAll(candidates)
         } catch (e: Exception) {
-            logger.debug { "Error searching in location ${location.javaClass.simpleName}: ${e.message}" }
+            logger.debug { "Ошибка при поиске в локации ${location.javaClass.simpleName}: ${e.message}" }
         }
     }
 
@@ -230,13 +230,13 @@ fun SearchStrategy.search(
         }
 
     if (existing.isEmpty()) {
-        throw TestExecutionError.UtilNotFound("$utility not found in any known location")
+        throw TestExecutionError.UtilNotFound("$utility не найден ни в одной известной локации")
     }
 
     val resolver = DefaultVersionResolver()
     val bestPath =
         resolver.selectBest(existing, requirement)
-            ?: throw TestExecutionError.UtilNotFound("$utility not found for version requirement: $requirement")
+            ?: throw TestExecutionError.UtilNotFound("$utility не найден для требования версии: $requirement")
 
     return UtilityLocation(
         executablePath = bestPath,

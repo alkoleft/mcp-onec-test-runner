@@ -21,13 +21,13 @@ class FileSystemChangeAnalysisAction(
     private val sourceSetAnalyzer: SourceSetChangeAnalyzer,
 ) : ChangeAnalysisAction {
     override fun run(properties: ApplicationProperties): ChangeAnalysisResult {
-        logger.info { "Analyzing changes by source set for project: ${properties.basePath}" }
+        logger.info { "Анализ изменений по source set для проекта: ${properties.basePath}" }
         try {
             // Use FileBuildStateManager's Enhanced Hybrid Hash Detection
             val changes = buildStateManager.checkChanges(properties)
 
             if (changes.isEmpty()) {
-                logger.info { "No changes detected in project" }
+                logger.info { "Изменения в проекте не обнаружены" }
                 return ChangeAnalysisResult(
                     hasChanges = false,
                     changedFiles = emptySet(),
@@ -37,12 +37,12 @@ class FileSystemChangeAnalysisAction(
                 )
             }
 
-            logger.info { "Found ${changes.size} changed files, analyzing by source set" }
+            logger.info { "Найдено ${changes.size} измененных файлов, анализ по source set" }
 
             // Group changes by source set
             val sourceSetChanges = sourceSetAnalyzer.analyzeSourceSetChanges(properties, changes)
 
-            logger.info { "Changes grouped into ${sourceSetChanges.size} affected source sets" }
+            logger.info { "Изменения сгруппированы в ${sourceSetChanges.size} затронутых source sets" }
 
             return ChangeAnalysisResult(
                 hasChanges = true,
@@ -52,8 +52,8 @@ class FileSystemChangeAnalysisAction(
                 analysisTimestamp = Instant.now(),
             )
         } catch (e: Exception) {
-            logger.error(e) { "Source set change analysis failed" }
-            throw AnalyzeException("Source set change analysis failed: ${e.message}", e)
+            logger.error(e) { "Анализ изменений source set завершился с ошибкой" }
+            throw AnalyzeException("Анализ изменений source set завершился с ошибкой: ${e.message}", e)
         }
     }
 
@@ -61,7 +61,7 @@ class FileSystemChangeAnalysisAction(
         properties: ApplicationProperties,
         sourceSetChanges: SourceSetChanges,
     ): Boolean {
-        logger.debug { "Saving source set state for: ${sourceSetChanges.sourceSetName} in project: ${properties.basePath}" }
+        logger.debug { "Сохранение состояния source set: ${sourceSetChanges.sourceSetName} в проекте: ${properties.basePath}" }
 
         return try {
             if (sourceSetChanges.changedFiles.isNotEmpty()) {
@@ -69,12 +69,12 @@ class FileSystemChangeAnalysisAction(
                 val hashUpdates = sourceSetChanges.changeTypes.entries.associate { it.key to it.value.second }
 
                 buildStateManager.updateHashes(hashUpdates)
-                logger.info { "Updated ${hashUpdates.size} file hashes for source set: ${sourceSetChanges.sourceSetName}" }
+                logger.info { "Обновлено ${hashUpdates.size} хешей файлов для source set: ${sourceSetChanges.sourceSetName}" }
             }
 
             true
         } catch (e: Exception) {
-            logger.error(e) { "Failed to save source set state for: ${sourceSetChanges.sourceSetName}" }
+            logger.error(e) { "Не удалось сохранить состояние source set: ${sourceSetChanges.sourceSetName}" }
             false
         }
     }

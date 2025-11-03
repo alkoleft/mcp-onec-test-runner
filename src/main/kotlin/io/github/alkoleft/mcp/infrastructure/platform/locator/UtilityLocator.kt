@@ -23,12 +23,12 @@ class UtilityLocator {
         utility: UtilityType,
         version: String?,
     ): UtilityLocation {
-        logger.debug { "Starting utility location for: $utility, version: $version" }
+        logger.debug { "Начало поиска утилиты: $utility, версия: $version" }
 
         // Phase 1: Check cache first
         pathCache.getCachedLocation(utility, version)?.let { cached ->
             if (utilityValidator.validateUtility(cached)) {
-                logger.debug { "Found cached utility location: ${cached.executablePath}" }
+                logger.debug { "Найдена кэшированная локация утилиты: ${cached.executablePath}" }
                 return cached
             } else {
                 pathCache.invalidate(utility, version)
@@ -46,8 +46,4 @@ class UtilityLocator {
     }
 
     fun validateUtility(location: UtilityLocation): Boolean = utilityValidator.validateUtility(location)
-
-    fun clearCache() {
-        pathCache.clear()
-    }
 }

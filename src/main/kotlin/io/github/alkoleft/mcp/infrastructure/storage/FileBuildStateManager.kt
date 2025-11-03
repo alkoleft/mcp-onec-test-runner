@@ -29,7 +29,7 @@ class FileBuildStateManager(
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun checkChanges(properties: ApplicationProperties): ChangesSet {
         val startTime = Instant.now()
-        logger.debug { "Starting Enhanced Hybrid Hash Detection for project: ${properties.basePath}" }
+        logger.debug { "Запуск Enhanced Hybrid Hash Detection для проекта: ${properties.basePath}" }
 
         try {
             // Phase 1: Fast timestamp pre-scan
@@ -39,10 +39,10 @@ class FileBuildStateManager(
                     .flatMap { scanForPotentialChanges(it) }
                     .toSet()
 
-            logger.debug { "Phase 1: Found ${candidateFiles.size} potential changes after timestamp scan" }
+            logger.debug { "Фаза 1: Найдено ${candidateFiles.size} потенциальных изменений после сканирования временных меток" }
 
             if (candidateFiles.isEmpty()) {
-                logger.debug { "No potential changes detected - skipping hash verification" }
+                logger.debug { "Потенциальные изменения не обнаружены - пропуск проверки хешей" }
                 return emptyMap()
             }
 
@@ -51,25 +51,25 @@ class FileBuildStateManager(
 
             val duration = java.time.Duration.between(startTime, Instant.now())
             logger.info {
-                "Change detection completed in ${duration.toMillis()}ms: ${actualChanges.size} actual changes from ${candidateFiles.size} candidates"
+                "Обнаружение изменений завершено за ${duration.toMillis()}мс: ${actualChanges.size} фактических изменений из ${candidateFiles.size} кандидатов"
             }
 
             return actualChanges
         } catch (e: Exception) {
-            logger.error(e) { "Error during change detection" }
+            logger.error(e) { "Ошибка при обнаружении изменений" }
             // Fallback: treat all source files as changed
             return getAllSourceFiles(properties.basePath).associateWith { Pair(ChangeType.MODIFIED, "") }
         }
     }
 
     override fun updateHashes(files: Map<Path, String>) {
-        logger.debug { "Updating hashes for ${files.size} files" }
+        logger.debug { "Обновление хешей для ${files.size} файлов" }
 
         try {
             hashStorage.batchUpdate(files)
-            logger.debug { "Successfully updated ${files.size} file hashes" }
+            logger.debug { "Хеши ${files.size} файлов успешно обновлены" }
         } catch (e: Exception) {
-            logger.error(e) { "Failed to update file hashes" }
+            logger.error(e) { "Не удалось обновить хеши файлов" }
             throw e
         }
     }
@@ -78,7 +78,7 @@ class FileBuildStateManager(
      * Phase 1: Fast timestamp pre-scan to identify potential changes
      */
     private fun scanForPotentialChanges(projectPath: Path): Set<Path> {
-        logger.debug { "Scanning for timestamp changes in: $projectPath" }
+        logger.debug { "Сканирование изменений временных меток в: $projectPath" }
 
         val potentialChanges = mutableSetOf<Path>()
         val sourceFiles = getAllSourceFiles(projectPath)
@@ -92,17 +92,17 @@ class FileBuildStateManager(
                     storedTimestamp == null -> {
                         // New file
                         potentialChanges.add(file)
-                        logger.trace { "New file detected: $file" }
+                        logger.trace { "Обнаружен новый файл: $file" }
                     }
 
                     currentTimestamp > storedTimestamp -> {
                         // Potentially modified file
                         potentialChanges.add(file)
-                        logger.trace { "Potentially modified file: $file (current: $currentTimestamp, stored: $storedTimestamp)" }
+                        logger.trace { "Потенциально измененный файл: $file (текущая: $currentTimestamp, сохраненная: $storedTimestamp)" }
                     }
                 }
             } catch (e: Exception) {
-                logger.debug(e) { "Error checking timestamp for file: $file" }
+                logger.debug(e) { "Ошибка при проверке временной метки для файла: $file" }
                 potentialChanges.add(file) // Include in potential changes if we can't verify
             }
         }
@@ -114,7 +114,7 @@ class FileBuildStateManager(
      * Phase 2: Hash verification for potential changes with parallel processing
      */
     private fun verifyChangesWithHashes(candidates: Set<Path>): ChangesSet {
-        logger.debug { "Verifying ${candidates.size} potential changes with hash calculation" }
+        logger.debug { "Проверка ${candidates.size} потенциальных изменений с вычислением хешей" }
 
         // Process files in batches to avoid overwhelming the system
         val batchSize = maxConcurrentHashCalculations
@@ -131,7 +131,7 @@ class FileBuildStateManager(
             }
         }
 
-        logger.debug { "Hash verification completed: ${results.size} actual changes detected" }
+        logger.debug { "Проверка хешей завершена: обнаружено ${results.size} фактических изменений" }
         return results
     }
 
@@ -146,23 +146,23 @@ class FileBuildStateManager(
             val type =
                 when {
                     storedHash == null -> {
-                        logger.trace { "New file confirmed: $file" }
+                        logger.trace { "Новый файл подтвержден: $file" }
                         ChangeType.NEW
                     }
 
                     currentHash != storedHash -> {
-                        logger.trace { "Modified file confirmed: $file" }
+                        logger.trace { "Измененный файл подтвержден: $file" }
                         ChangeType.MODIFIED
                     }
 
                     else -> {
-                        logger.trace { "File unchanged: $file" }
+                        logger.trace { "Файл не изменен: $file" }
                         ChangeType.UNCHANGED
                     }
                 }
             return Pair(type, currentHash)
         } catch (e: Exception) {
-            logger.debug(e) { "Error verifying file change: $file" }
+            logger.debug(e) { "Ошибка при проверке изменения файла: $file" }
             return Pair(ChangeType.MODIFIED, "") // Assume modified if we can't verify
         }
     }
@@ -173,7 +173,7 @@ class FileBuildStateManager(
     private fun getAllSourceFiles(projectPath: Path): List<Path> {
         try {
             if (!Files.exists(projectPath)) {
-                logger.warn { "Project path does not exist: $projectPath" }
+                logger.warn { "Путь проекта не существует: $projectPath" }
                 return emptyList()
             }
 
@@ -183,7 +183,7 @@ class FileBuildStateManager(
                 .filter { !isIgnoredPath(it, projectPath) }
                 .toList()
         } catch (e: Exception) {
-            logger.error(e) { "Error scanning source files in: $projectPath" }
+            logger.error(e) { "Ошибка при сканировании исходных файлов в: $projectPath" }
             return emptyList()
         }
     }

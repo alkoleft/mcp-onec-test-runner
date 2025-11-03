@@ -31,17 +31,16 @@ class YaXUnitTestAction(
     @OptIn(ExperimentalTime::class)
     override fun run(request: TestExecutionRequest): TestExecutionResult {
         val startTime = Clock.System.now()
-        logger.info { "Starting YaXUnit test execution with filter: $request" }
+        logger.info { "Запуск выполнения тестов YaXUnit с фильтром: $request" }
 
         try {
             // Локализуем утилиту 1С:Предприятие
-            logger.debug { "Locating ENTERPRISE utility for version: ${request.platformVersion}" }
+            logger.debug { "Поиск утилиты 1С:Предприятие для версии: ${request.platformVersion}" }
             val utilityLocation = utilLocator.locateUtility(UtilityType.THIN_CLIENT, request.platformVersion)
-            logger.info { "Found ENTERPRISE utility at: ${utilityLocation.executablePath}" }
+            logger.info { "Утилита 1С:Предприятие найдена по пути: ${utilityLocation.executablePath}" }
 
             // Создаем runner и выполняем тесты
             val runner = YaXUnitRunner(platformDsl)
-            logger.info { "Executing tests via ProcessYaXUnitRunner" }
             val executionResult = runner.executeTests(utilityLocation, request)
 
             // Парсим отчет если он был создан
@@ -55,7 +54,7 @@ class YaXUnitTestAction(
             val testsFailed = report?.summary?.failed ?: 0
 
             logger.info {
-                "YaXUnit test execution completed: $testsRun tests, $testsPassed passed, $testsFailed failed in ${duration.inWholeSeconds}s"
+                "Выполнение тестов YaXUnit завершено: $testsRun тестов, $testsPassed пройдено, $testsFailed провалено за ${duration.inWholeSeconds}с"
             }
 
             return TestExecutionResult(
@@ -66,8 +65,8 @@ class YaXUnitTestAction(
             )
         } catch (e: Exception) {
             val duration = Clock.System.now().minus(startTime)
-            logger.error(e) { "YaXUnit test execution failed after ${duration.inWholeSeconds}s" }
-            throw TestExecuteException("YaXUnit test execution failed: ${e.message}", e)
+            logger.error(e) { "Выполнение тестов YaXUnit завершилось с ошибкой после ${duration.inWholeSeconds}с" }
+            throw TestExecuteException("Выполнение тестов YaXUnit завершилось с ошибкой: ${e.message}", e)
         }
     }
 
@@ -77,25 +76,25 @@ class YaXUnitTestAction(
     private fun parseTestReport(executionResult: YaXUnitExecutionResult): GenericTestReport? =
         if (executionResult.reportPath != null && Files.exists(executionResult.reportPath)) {
             try {
-                logger.debug { "Parsing test report from: ${executionResult.reportPath}" }
+                logger.debug { "Парсинг отчета о тестах из: ${executionResult.reportPath}" }
 
                 val inputStream = Files.newInputStream(executionResult.reportPath)
                 val format = reportParser.detectFormat(inputStream)
                 inputStream.close()
 
-                logger.debug { "Detected report format: $format" }
+                logger.debug { "Обнаружен формат отчета: $format" }
 
                 val reportInputStream = Files.newInputStream(executionResult.reportPath)
                 val report = reportParser.parseReport(reportInputStream, format)
 
-                logger.info { "Successfully parsed test report: ${report.summary.totalTests} tests" }
+                logger.info { "Отчет о тестах успешно проанализирован: ${report.summary.totalTests} тестов" }
                 report
             } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse test report from ${executionResult.reportPath}" }
+                logger.warn(e) { "Не удалось проанализировать отчет о тестах из ${executionResult.reportPath}" }
                 null
             }
         } else {
-            logger.warn { "No test report found at expected location" }
+            logger.warn { "Отчет о тестах не найден по ожидаемому пути" }
             null
         }
 }

@@ -9,7 +9,7 @@ import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
 import io.github.alkoleft.mcp.core.modules.UtilityType
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.ai.tool.annotation.ToolParam
@@ -25,7 +25,7 @@ private val logger = KotlinLogging.logger { }
 class YaXUnitMcpServer(
     private val launcherService: LauncherService,
     private val properties: ApplicationProperties,
-    private val platformUtilityContext: PlatformUtilityContext,
+    private val platformUtilities: PlatformUtilities,
 ) {
     /**
      * Запускает все тесты в проекте
@@ -229,7 +229,7 @@ class YaXUnitMcpServer(
             val utilityStates =
                 utilityTypes.associateWith {
                     runCatching {
-                        platformUtilityContext.locateUtility(it).version
+                        platformUtilities.locateUtility(it).version
                     }.getOrNull()
                 }
             val isAvailable = utilityStates.values.find { it != null } != null
