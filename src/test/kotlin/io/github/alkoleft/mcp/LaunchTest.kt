@@ -3,7 +3,6 @@ package io.github.alkoleft.mcp
 import io.github.alkoleft.mcp.application.services.LauncherService
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -21,8 +20,6 @@ class LaunchTest(
 ) {
     @Test
     fun launchYaxUnit() {
-        runBlocking {
-            launcher.run(RunModuleTestsRequest("ОМ_ЮТКоллекции", properties))
-        }
+        launcher.run(RunModuleTestsRequest("ОМ_ЮТКоллекции", properties))
     }
 }

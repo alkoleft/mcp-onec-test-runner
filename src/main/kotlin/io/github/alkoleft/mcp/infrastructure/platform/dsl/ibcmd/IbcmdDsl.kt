@@ -13,11 +13,6 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.mobile.
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.mobile.MobileClientExportCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.server.ServerConfigInitCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.session.SessionCommandBuilder
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
-import kotlinx.coroutines.runBlocking
-import kotlin.time.Duration
-import kotlin.time.measureTime
 
 /**
  * DSL для формирования и выполнения команд ibcmd с поддержкой иерархической структуры.
@@ -259,58 +254,9 @@ class IbcmdDsl(
     }
 
     /**
-     * Выполняет команду ibcmd с заданными аргументами.
-     *
-     * Формирует полный список аргументов команды (включая базовые параметры),
-     * запускает процесс выполнения с логированием и возвращает результат.
-     *
-     * @param command команда для выполнения
-     * @return результат выполнения команды с метриками
-     *
-     * @see [buildCommandArgsWithArgs] для формирования аргументов
-     * @see [ProcessExecutor] для выполнения команды
-     */
-    override suspend fun executeCommand(command: IbcmdCommand): ShellCommandResult {
-        val duration =
-            measureTime {
-                try {
-                    val executor = ProcessExecutor()
-
-                    val args = buildCommandArgsWithArgs(command.arguments)
-                    val result = executor.executeWithLogging(args)
-
-                    context.setResult(
-                        success = result.exitCode == 0,
-                        output = result.output,
-                        error = result.error,
-                        exitCode = result.exitCode,
-                        duration = result.duration,
-                    )
-                } catch (e: Exception) {
-                    context.setResult(
-                        success = false,
-                        output = "",
-                        error = e.message ?: "Unknown error",
-                        exitCode = -1,
-                        duration = Duration.ZERO,
-                    )
-                }
-            }
-
-        return ProcessResult(
-            success = context.buildResult().success,
-            output = context.buildResult().output,
-            error = context.buildResult().error,
-            exitCode = context.buildResult().exitCode,
-            duration = duration,
-        )
-    }
-
-    /**
      * Настраивает и выполняет команду.
      *
-     * Применяет блок конфигурации к команде и выполняет её синхронно
-     * в блокирующем контексте через [runBlocking].
+     * Применяет блок конфигурации к команде и выполняет её.
      *
      * @param command команда для настройки и выполнения
      * @param configure опциональный блок конфигурации команды
@@ -319,14 +265,7 @@ class IbcmdDsl(
     internal fun <C : IbcmdCommand> configureAndExecute(
         command: C,
         configure: (C.() -> Unit)?,
-    ): ShellCommandResult {
-        if (configure != null) {
-            command.configure()
-        }
-        return runBlocking {
-            executeCommand(command)
-        }
-    }
+    ): ShellCommandResult = executeCommand(command.also { if (configure != null) it.configure() })
 }
 
 /**

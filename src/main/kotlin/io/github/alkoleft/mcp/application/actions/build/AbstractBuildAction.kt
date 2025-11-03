@@ -8,8 +8,6 @@ import io.github.alkoleft.mcp.configuration.properties.SourceSet
 import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
@@ -26,7 +24,7 @@ abstract class AbstractBuildAction(
     /**
      * Выполняет полную сборку проекта с измерением времени
      */
-    override suspend fun run(
+    override fun run(
         properties: ApplicationProperties,
         sourceSet: SourceSet,
     ): BuildResult = measureExecutionTime("build") { executeBuildDsl(properties, sourceSet) }
@@ -34,19 +32,17 @@ abstract class AbstractBuildAction(
     /**
      * Измеряет время выполнения операции с обработкой ошибок
      */
-    private suspend fun <T> measureExecutionTime(
+    private fun <T> measureExecutionTime(
         operation: String,
-        block: suspend () -> T,
+        block: () -> T,
     ): T {
         val startTime = Instant.now()
         logger.info { "Начинаю операцию: $operation" }
 
         return try {
-            withContext(Dispatchers.IO) {
-                block().also {
-                    val duration = Duration.between(startTime, Instant.now())
-                    logger.info { "Операция $operation завершена за $duration" }
-                }
+            block().also {
+                val duration = Duration.between(startTime, Instant.now())
+                logger.info { "Операция $operation завершена за $duration" }
             }
         } catch (e: Exception) {
             val duration = Duration.between(startTime, Instant.now())
@@ -65,17 +61,23 @@ abstract class AbstractBuildAction(
         logger.debug { "Формирую единый DSL для сборки проекта" }
 
         initDsl(properties)
-        val results = mutableMapOf<String, ShellCommandResult>()
+        val state = CurrentBuildState()
 
         // Загружаем основную конфигурацию
         sourceSet.configuration?.also { configuration ->
             logger.info { "Загружаю основную конфигурацию" }
             val result = loadConfiguration(configuration.name, sourceSet.basePath.resolve(configuration.path))
-            if (!result.success) {
-                return result
-            }
+            state.addResult(configuration.name, result)
 
-            results.putAll(result.sourceSet)
+            if (result.success) {
+                logger.info { "Конфигурация загружена успешно" }
+            } else {
+                logger.error { "Не удалось загрузить конфигурацию" }
+            }
+        }
+
+        if (!state.success) {
+            return state.toBuildResult()
         }
 
         // Загружаем расширения
@@ -83,23 +85,57 @@ abstract class AbstractBuildAction(
         logger.info { "Загружаю ${extensions.size} расширений: ${extensions.joinToString(", ") { it.name }}" }
         extensions.forEach {
             val result = loadExtension(it.name, sourceSet.basePath.resolve(it.path))
-            if (!result.success) {
-                return result
-            }
+            state.addResult(it.name, result)
 
-            results.putAll(result.sourceSet)
+            if (result.success) {
+                logger.info { "Расширение ${it.name} загружено успешно" }
+            } else {
+                logger.error { "Не удалось загрузить расширение ${it.name}" }
+            }
+            if (!result.success) {
+                return@forEach
+            }
         }
 
-        return BuildResult(
-            success = true,
-            sourceSet = results.toMap(),
-        )
-    }
+        if (!state.success) {
+            return state.toBuildResult()
+        }
 
+        val updateResult = updateDb().also { state.updateResult = it }
+        if (updateResult.success) {
+            logger.info { "Обновление базы данных завершена успешно" }
+        } else {
+            logger.error { "Обновление базы данных не выполнено" }
+        }
+        logger.info { "Сборка завершена успешно" }
+
+        return state.toBuildResult()
+    }
 
     protected abstract fun initDsl(properties: ApplicationProperties): Unit
 
-    protected abstract fun loadConfiguration(name: String, path: Path): BuildResult
+    protected abstract fun loadConfiguration(name: String, path: Path): ShellCommandResult
 
-    protected abstract fun loadExtension(name: String, path: Path): BuildResult
+    protected abstract fun loadExtension(name: String, path: Path): ShellCommandResult
+
+    protected abstract fun updateDb(): ShellCommandResult
+
+    private class CurrentBuildState {
+        var success: Boolean = true
+        val sourceSet = mutableMapOf<String, ShellCommandResult>()
+        var updateResult: ShellCommandResult? = null
+
+        fun addResult(name: String, result: ShellCommandResult) {
+            sourceSet.put(name, result)
+            if (!result.success) {
+                success = false
+            }
+        }
+
+        fun toBuildResult() = BuildResult(
+            success = !sourceSet.values.any { !it.success },
+            errors = sourceSet.values.mapNotNull { it.error },
+            sourceSet = sourceSet
+        )
+    }
 }

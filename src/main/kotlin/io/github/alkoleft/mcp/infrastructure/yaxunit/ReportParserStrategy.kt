@@ -12,7 +12,7 @@ interface ReportParserStrategy {
     /**
      * Парсит отчет из входного потока
      */
-    suspend fun parse(input: InputStream): GenericTestReport
+    fun parse(input: InputStream): GenericTestReport
 
     /**
      * Проверяет, может ли стратегия обработать указанный формат
@@ -27,5 +27,5 @@ interface ReportParserStrategy {
     /**
      * Определяет формат отчета из содержимого
      */
-    suspend fun detectFormat(input: InputStream): ReportFormat
+    fun detectFormat(input: InputStream): ReportFormat
 }

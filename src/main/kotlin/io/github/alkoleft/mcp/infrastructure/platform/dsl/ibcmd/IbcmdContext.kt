@@ -30,7 +30,7 @@ class IbcmdContext(
      * Автоматически определяется через [PlatformUtilityContext] по типу утилиты [UtilityType.IBCMD].
      */
     val utilityPath
-        get() = platformContext.locateUtilitySync(UtilityType.IBCMD).executablePath.toString()
+        get() = platformContext.locateUtility(UtilityType.IBCMD).executablePath.toString()
 
     /**
      * Устанавливает путь к базе данных.
@@ -85,6 +85,8 @@ class IbcmdContext(
      */
     override fun buildBaseArgs(): List<String> {
         val args = mutableListOf<String>()
+        val location = platformContext.locateUtility(UtilityType.IBCMD).executablePath
+        args.add(location.toString())
 
         // Путь к базе данных
         dbPath?.let {

@@ -15,25 +15,22 @@ import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
 import io.github.alkoleft.mcp.infrastructure.yaxunit.ReportParser
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import kotlin.io.path.Path
-import kotlin.test.Ignore
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.NONE,
 )
 @ActiveProfiles("test")
-@Ignore
+//@Ignore
 class RealTests(
     @Autowired private val platformDsl: PlatformDsl,
     @Autowired private val utilLocator: UtilityLocator,
     @Autowired private val reportParser: ReportParser,
 ) {
-    @Ignore
     @Test
     fun designerRealExecute() {
         platformDsl.configurator {
@@ -52,89 +49,71 @@ class RealTests(
         }
     }
 
-    @Ignore
     @Test
     fun ibcmdRealExecute() {
-        val plan =
-            platformDsl.ibcmd {
-                dbPath(IB_PATH)
-
+        platformDsl.ibcmd {
+            dbPath = IB_PATH
+            config {
+                import(Path("$SOURCE_PATH/configuration"))
+            }
+            listOf("yaxunit", "tests").forEach {
                 config {
-                    import("$SOURCE_PATH/configuration")
-                    listOf("yaxunit", "tests").forEach {
-                        import("$SOURCE_PATH/$it") {
-                            extension = it
-                        }
+                    import(Path("$SOURCE_PATH/$it")) {
+                        extension = it
                     }
                 }
             }
-        plan.printPlan()
-        runBlocking { plan.execute() }
+        }
     }
 
     // Тесты для DesignerBuildAction
-    @Ignore
     @Test
     fun designerBuildActionFullBuild() {
         val action = DesignerBuildAction(platformDsl)
         val properties = testApplicationProperties()
 
-        runBlocking {
-            val result = action.run(properties, properties.sourceSet)
-            println("Результат полной сборки: $result")
-        }
+        val result = action.run(properties, properties.sourceSet)
+        println("Результат полной сборки: $result")
     }
 
     // Реальные тесты для YaXUnit
-    @Ignore
     @Test
     fun yaxunitRealTestRunAll() {
         val properties = testApplicationProperties()
         val action = YaXUnitTestAction(platformDsl, utilLocator, reportParser)
 
-        runBlocking {
-            println("=== Запуск всех тестов YaXUnit ===")
-            action.run(RunAllTestsRequest(properties))
-        }
+        println("=== Запуск всех тестов YaXUnit ===")
+        action.run(RunAllTestsRequest(properties))
     }
 
-    @Ignore
     @Test
     fun yaxunitRealTestRunModule() {
         val properties = testApplicationProperties()
         val action = YaXUnitTestAction(platformDsl, utilLocator, reportParser)
         val moduleName = "ОМ_ЮТКоллекции" // Модуль с тестами
 
-        runBlocking {
-            println("=== Запуск тестов модуля '$moduleName' ===")
-            action.run(RunModuleTestsRequest(moduleName, properties))
-        }
+        println("=== Запуск тестов модуля '$moduleName' ===")
+        action.run(RunModuleTestsRequest(moduleName, properties))
     }
 
-    @Ignore
     @Test
     fun yaxunitRealTestRunSpecificTests() {
         val properties = testApplicationProperties()
         val action = YaXUnitTestAction(platformDsl, utilLocator, reportParser)
         val testNames = listOf("TestExample", "TestCalculator") // Примеры имен тестов
 
-        runBlocking {
-            println("=== Запуск конкретных тестов: ${testNames.joinToString(", ")} ===")
-            action.run(RunListTestsRequest(testNames, properties))
-        }
+        println("=== Запуск конкретных тестов: ${testNames.joinToString(", ")} ===")
+        action.run(RunListTestsRequest(testNames, properties))
     }
 
-    @Ignore
     @Test
     fun yaxunitRealTestRunSingleTest() {
         val properties = testApplicationProperties()
         val action = YaXUnitTestAction(platformDsl, utilLocator, reportParser)
         val testName = "TestExample" // Пример имени теста
 
-        runBlocking {
-            println("=== Запуск одного теста: '$testName' ===")
-            action.run(RunListTestsRequest(listOf(testName), properties))
-        }
+        println("=== Запуск одного теста: '$testName' ===")
+        action.run(RunListTestsRequest(listOf(testName), properties))
     }
 
     /**

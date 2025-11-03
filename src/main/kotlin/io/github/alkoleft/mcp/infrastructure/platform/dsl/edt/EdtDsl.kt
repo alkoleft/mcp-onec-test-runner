@@ -4,7 +4,6 @@ import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import kotlin.time.Duration
 import kotlin.time.measureTime
@@ -368,48 +367,47 @@ class EdtDsl(
     /**
      * Executes an EDT CLI command with specified arguments immediately.
      */
-    private fun executeEdt(arguments: List<String>): EdtResult =
-        runBlocking {
-            logger.debug { "EDT exec start: args=${arguments.joinToString(" ")}" }
-            val duration =
-                measureTime {
-                    try {
-                        val executor = utilityContext.executor(UtilityType.EDT_CLI)
-                        val result = executor.execute(arguments)
-                        logger.info { "EDT exec done: exitCode=${result.exitCode}, duration=${result.duration}" }
-                        if (result.exitCode != 0) {
-                            val errorPreview: String? =
-                                result.error?.let { if (it.length > 4000) it.take(4000) + "..." else it }
-                            logger.warn { "EDT exec failed: exitCode=${result.exitCode}, error=$errorPreview" }
-                        }
-                        context.setResult(
-                            success = result.exitCode == 0,
-                            output = result.output,
-                            error = result.error,
-                            exitCode = result.exitCode,
-                            duration = result.duration,
-                        )
-                    } catch (e: Exception) {
-                        logger.error(e) { "EDT exec threw exception for args=${arguments.joinToString(" ")}" }
-                        context.setResult(
-                            success = false,
-                            output = "",
-                            error = e.message ?: "Unknown error",
-                            exitCode = -1,
-                            duration = Duration.ZERO,
-                        )
+    private fun executeEdt(arguments: List<String>): EdtResult {
+        logger.debug { "EDT exec start: args=${arguments.joinToString(" ")}" }
+        val duration =
+            measureTime {
+                try {
+                    val executor = utilityContext.executor(UtilityType.EDT_CLI)
+                    val result = executor.execute(arguments)
+                    logger.info { "EDT exec done: exitCode=${result.exitCode}, duration=${result.duration}" }
+                    if (result.exitCode != 0) {
+                        val errorPreview: String? =
+                            result.error?.let { if (it.length > 4000) it.take(4000) + "..." else it }
+                        logger.warn { "EDT exec failed: exitCode=${result.exitCode}, error=$errorPreview" }
                     }
+                    context.setResult(
+                        success = result.exitCode == 0,
+                        output = result.output,
+                        error = result.error,
+                        exitCode = result.exitCode,
+                        duration = result.duration,
+                    )
+                } catch (e: Exception) {
+                    logger.error(e) { "EDT exec threw exception for args=${arguments.joinToString(" ")}" }
+                    context.setResult(
+                        success = false,
+                        output = "",
+                        error = e.message ?: "Unknown error",
+                        exitCode = -1,
+                        duration = Duration.ZERO,
+                    )
                 }
+            }
 
-            logger.debug { "EDT exec total duration=$duration" }
-            EdtResult(
-                success = context.buildResult().success,
-                output = context.buildResult().output,
-                error = context.buildResult().error,
-                exitCode = context.buildResult().exitCode,
-                duration = duration,
-            )
-        }
+        logger.debug { "EDT exec total duration=$duration" }
+        return EdtResult(
+            success = context.buildResult().success,
+            output = context.buildResult().output,
+            error = context.buildResult().error,
+            exitCode = context.buildResult().exitCode,
+            duration = duration,
+        )
+    }
 }
 
 /**
@@ -429,7 +427,7 @@ class EdtContext(
      */
     fun buildEdtArgs(commandArgs: List<String>): List<String> {
         val args = mutableListOf<String>()
-        val location = platformContext.locateUtilitySync(UtilityType.EDT_CLI).executablePath
+        val location = platformContext.locateUtility(UtilityType.EDT_CLI).executablePath
         args.add(location.toString())
         args.addAll(commandArgs)
         return args

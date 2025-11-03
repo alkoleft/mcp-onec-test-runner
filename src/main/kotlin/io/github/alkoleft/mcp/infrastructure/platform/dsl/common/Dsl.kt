@@ -1,6 +1,7 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.common
 
 import io.github.alkoleft.mcp.core.modules.ShellCommandResult
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
 
 /**
  * Базовый DSL класс для выполнения команд
@@ -18,8 +19,12 @@ abstract class Dsl<T : DslContext, C : Command>(
      * @param command команда для выполнения
      * @return результат выполнения команды
      */
-    protected abstract suspend fun executeCommand(command: C): ShellCommandResult
+    protected fun executeCommand(command: C): ShellCommandResult {
+        val executor = ProcessExecutor()
+        val args = buildCommandArgs(command.arguments)
 
+        return executor.executeWithLogging(args)
+    }
 
     /**
      * Строит аргументы команды для конфигуратора с произвольными аргументами
@@ -27,10 +32,10 @@ abstract class Dsl<T : DslContext, C : Command>(
      * @param commandArgs аргументы команды
      * @return полный список аргументов для выполнения
      */
-    protected fun buildCommandArgsWithArgs(commandArgs: List<String>): List<String> {
+    protected fun buildCommandArgs(commandArgs: List<String>): List<String> {
         val args = mutableListOf<String>()
 
-        // Базовые аргументы конфигуратора
+        // Базовые аргументы
         args.addAll(context.buildBaseArgs())
 
         // Команда и её аргументы (команда уже включена в commandArgs)

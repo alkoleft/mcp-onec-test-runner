@@ -10,7 +10,7 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 class InteractiveSessionConvertAction(
     private val dsl: PlatformDsl,
 ) : ConvertAction {
-    override suspend fun run(
+    override fun run(
         properties: ApplicationProperties,
         sourceSet: SourceSet,
         destination: SourceSet,

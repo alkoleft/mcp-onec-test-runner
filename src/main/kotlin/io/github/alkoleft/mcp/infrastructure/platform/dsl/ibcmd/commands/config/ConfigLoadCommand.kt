@@ -44,6 +44,6 @@ data class ConfigLoadCommand(
         if (force) details.add("принудительно")
 
         return "Загрузка конфигурации из файла: $path" +
-            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }

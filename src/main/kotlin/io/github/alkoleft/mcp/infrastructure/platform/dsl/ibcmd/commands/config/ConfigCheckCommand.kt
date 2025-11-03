@@ -39,6 +39,6 @@ data class ConfigCheckCommand(
         if (force) details.add("принудительно")
 
         return "Проверка конфигурации" +
-            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }

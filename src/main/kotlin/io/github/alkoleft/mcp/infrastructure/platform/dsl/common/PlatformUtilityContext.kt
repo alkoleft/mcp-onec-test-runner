@@ -9,7 +9,6 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.CommandExecuto
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
-import kotlinx.coroutines.runBlocking
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 
@@ -47,29 +46,14 @@ class PlatformUtilityContext(
      * @param version версия утилиты
      * @return локация утилиты
      */
-    private suspend fun locateUtility(
-        utilityType: UtilityType,
-        version: String,
-    ): UtilityLocation =
-        utilLocator.locateUtility(
-            utilityType,
-            version = version,
-        )
-
-    /**
-     * Синхронная версия получения локации утилиты
-     *
-     * @param utilityType тип утилиты
-     * @param version версия утилиты
-     * @return локация утилиты
-     */
-    fun locateUtilitySync(
+    fun locateUtility(
         utilityType: UtilityType,
         version: String = DEFAULT_VERSION,
     ): UtilityLocation =
-        runBlocking {
-            locateUtility(utilityType, actualVersion(utilityType, version))
-        }
+        utilLocator.locateUtility(
+            utilityType,
+            version = actualVersion(utilityType, version),
+        )
 
     /**
      * Определяет фактическую версию утилиты
@@ -135,7 +119,7 @@ class PlatformUtilityContext(
         version: String = DEFAULT_VERSION,
     ): String? =
         try {
-            val location = locateUtilitySync(utilityType, version)
+            val location = locateUtility(utilityType, version)
             location.executablePath.toString()
         } catch (e: Exception) {
             null
@@ -152,8 +136,7 @@ class PlatformUtilityContext(
         if (utilityType == UtilityType.EDT_CLI && properties.tools.edtCli.interactiveMode) {
             val service = applicationContext.getBean(EdtCliStartService::class.java)
             val executor = service.interactiveExecutor()
-            return executor?.let { EdtCliExecutor(it) }
-                ?: throw IllegalStateException("EDT cli не запущено, попробуйте позже")
+            return executor?.let { EdtCliExecutor(it) } ?: throw IllegalStateException("EDT cli не запущено, попробуйте позже")
         } else {
             return ProcessExecutor()
         }

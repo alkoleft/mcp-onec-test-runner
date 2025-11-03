@@ -48,5 +48,4 @@ abstract class DslContext(
      * @return список базовых аргументов
      */
     abstract fun buildBaseArgs(): List<String>
-
 }

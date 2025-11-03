@@ -141,7 +141,7 @@ abstract class V8Context(platformContext: PlatformUtilityContext) : DslContext(p
         mode: String,
     ): MutableList<String> {
         val args = mutableListOf<String>()
-        val location = platformContext.locateUtilitySync(utilityType).executablePath
+        val location = platformContext.locateUtility(utilityType).executablePath
         args.add(location.toString())
         if (mode.isNotBlank()) {
             args.add(mode)

@@ -5,7 +5,6 @@ import io.github.alkoleft.mcp.core.modules.TestExecutionError
 import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
-import kotlinx.coroutines.runBlocking
 import java.nio.file.Paths
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
@@ -31,9 +30,7 @@ class CrossPlatformUtilLocatorTest {
         // Act & Assert
         val exception =
             assertFailsWith<TestExecutionError.UtilNotFound> {
-                runBlocking {
-                    locator.locateUtility(UtilityType.DESIGNER, "8.3.24")
-                }
+                locator.locateUtility(UtilityType.DESIGNER, "8.3.24")
             }
 
         assertTrue(
@@ -50,9 +47,7 @@ class CrossPlatformUtilLocatorTest {
         // Act & Assert
         val exception =
             assertFailsWith<TestExecutionError.UtilNotFound> {
-                runBlocking {
-                    locator.locateUtility(UtilityType.DESIGNER, null)
-                }
+                locator.locateUtility(UtilityType.DESIGNER, null)
             }
 
         assertTrue(
@@ -69,9 +64,7 @@ class CrossPlatformUtilLocatorTest {
         // Act & Assert
         val exception =
             assertFailsWith<TestExecutionError.UtilNotFound> {
-                runBlocking {
-                    locator.locateUtility(UtilityType.IBCMD, "8.3.24")
-                }
+                locator.locateUtility(UtilityType.IBCMD, "8.3.24")
             }
 
         assertTrue(exception.utility.contains(UtilityType.IBCMD.name), "Exception should contain correct utility type")
@@ -90,9 +83,7 @@ class CrossPlatformUtilLocatorTest {
 
         // Act
         val result =
-            runBlocking {
-                locator.validateUtility(testLocation)
-            }
+            locator.validateUtility(testLocation)
 
         // Assert
         assertFalse(result, "Non-existent utility should fail validation")
@@ -106,9 +97,7 @@ class CrossPlatformUtilLocatorTest {
         // Act & Assert
         val exception =
             assertFailsWith<TestExecutionError.UtilNotFound> {
-                runBlocking {
-                    locator.locateUtility(UtilityType.DESIGNER, "")
-                }
+                locator.locateUtility(UtilityType.DESIGNER, "")
             }
 
         assertTrue(
@@ -125,9 +114,7 @@ class CrossPlatformUtilLocatorTest {
         // Act & Assert
         val exception =
             assertFailsWith<TestExecutionError.UtilNotFound> {
-                runBlocking {
-                    locator.locateUtility(UtilityType.DESIGNER, "invalid-version")
-                }
+                locator.locateUtility(UtilityType.DESIGNER, "invalid-version")
             }
 
         assertTrue(
@@ -144,9 +131,7 @@ class CrossPlatformUtilLocatorTest {
         // Act & Assert
         val exception =
             assertFailsWith<TestExecutionError.UtilNotFound> {
-                runBlocking {
-                    locator.locateUtility(UtilityType.THIN_CLIENT, "8.3.24")
-                }
+                locator.locateUtility(UtilityType.THIN_CLIENT, "8.3.24")
             }
 
         assertTrue(

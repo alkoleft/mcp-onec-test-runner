@@ -44,6 +44,6 @@ data class ConfigSaveCommand(
         if (db) details.add("конфигурация БД")
 
         return "Выгрузка конфигурации в файл: $path" +
-            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }

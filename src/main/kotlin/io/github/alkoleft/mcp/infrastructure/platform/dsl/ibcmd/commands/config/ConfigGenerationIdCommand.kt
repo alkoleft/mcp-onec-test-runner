@@ -28,5 +28,5 @@ data class ConfigGenerationIdCommand(
 
     override fun getFullDescription(): String =
         "Идентификатор поколения конфигурации" +
-            (extension?.let { " (расширение: $it)" } ?: "")
+                (extension?.let { " (расширение: $it)" } ?: "")
 }

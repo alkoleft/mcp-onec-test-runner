@@ -60,6 +60,6 @@ data class ConfigSignCommand(
         path?.let { details.add("файл: $it") }
 
         return "Цифровая подпись конфигурации/расширения" +
-            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }

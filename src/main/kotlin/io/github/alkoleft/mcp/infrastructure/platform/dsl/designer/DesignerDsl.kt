@@ -15,11 +15,6 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.Dump
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.LoadCfgCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.LoadConfigFromFilesCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.UpdateDBCfgCommand
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
-import kotlinx.coroutines.runBlocking
-import kotlin.time.Duration
-import kotlin.time.measureTime
 
 /**
  * DSL для работы с конфигуратором 1С:Предприятие
@@ -53,52 +48,8 @@ class DesignerDsl(
 
     fun deleteExtension(block: DeleteCfgCommand.() -> Unit) = configureAndExecute(DeleteCfgCommand(), block)
 
-    /**
-     * Выполняет команду конфигуратора с произвольными аргументами
-     */
-    override suspend fun executeCommand(command: DesignerCommand): ShellCommandResult {
-        val duration =
-            measureTime {
-                try {
-                    val executor = ProcessExecutor()
-
-                    val args = buildCommandArgsWithArgs(command.arguments)
-                    val result = executor.executeWithLogging(args)
-
-                    context.setResult(
-                        success = result.exitCode == 0,
-                        output = result.output,
-                        error = result.error,
-                        exitCode = result.exitCode,
-                        duration = result.duration,
-                    )
-                } catch (e: Exception) {
-                    context.setResult(
-                        success = false,
-                        output = "",
-                        error = e.message ?: "Unknown error",
-                        exitCode = -1,
-                        duration = Duration.ZERO,
-                    )
-                }
-            }
-
-        return ProcessResult(
-            success = context.buildResult().success,
-            output = context.buildResult().output,
-            error = context.buildResult().error,
-            exitCode = context.buildResult().exitCode,
-            duration = duration,
-        )
-    }
-
     private fun <C : DesignerCommand> configureAndExecute(
         command: C,
-        configure: (C.() -> Unit),
-    ): ShellCommandResult {
-        command.configure()
-        return runBlocking {
-            executeCommand(command)
-        }
-    }
+        configure: ((C.() -> Unit)?),
+    ): ShellCommandResult = executeCommand(command.also { if (configure != null) it.configure() })
 }

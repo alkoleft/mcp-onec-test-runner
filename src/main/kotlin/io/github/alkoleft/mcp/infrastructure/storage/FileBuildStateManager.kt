@@ -5,16 +5,7 @@ import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.core.modules.BuildStateManager
 import io.github.alkoleft.mcp.core.modules.ChangeType
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.flatMapMerge
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.toSet
-import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Component
 import java.nio.file.Files
 import java.nio.file.Path
@@ -36,44 +27,42 @@ class FileBuildStateManager(
     private val maxConcurrentHashCalculations = 4
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override suspend fun checkChanges(properties: ApplicationProperties): ChangesSet =
-        coroutineScope {
-            val startTime = Instant.now()
-            logger.debug { "Starting Enhanced Hybrid Hash Detection for project: ${properties.basePath}" }
+    override fun checkChanges(properties: ApplicationProperties): ChangesSet {
+        val startTime = Instant.now()
+        logger.debug { "Starting Enhanced Hybrid Hash Detection for project: ${properties.basePath}" }
 
-            try {
-                // Phase 1: Fast timestamp pre-scan
-                val candidateFiles =
-                    properties.sourceSet
-                        .asFlow()
-                        .map { properties.basePath.resolve(it.path) }
-                        .flatMapMerge { scanForPotentialChanges(it).asFlow() }
-                        .toSet()
+        try {
+            // Phase 1: Fast timestamp pre-scan
+            val candidateFiles =
+                properties.sourceSet
+                    .map { properties.basePath.resolve(it.path) }
+                    .flatMap { scanForPotentialChanges(it) }
+                    .toSet()
 
-                logger.debug { "Phase 1: Found ${candidateFiles.size} potential changes after timestamp scan" }
+            logger.debug { "Phase 1: Found ${candidateFiles.size} potential changes after timestamp scan" }
 
-                if (candidateFiles.isEmpty()) {
-                    logger.debug { "No potential changes detected - skipping hash verification" }
-                    return@coroutineScope emptyMap()
-                }
-
-                // Phase 2: Hash verification for potential changes
-                val actualChanges = verifyChangesWithHashes(candidateFiles)
-
-                val duration = java.time.Duration.between(startTime, Instant.now())
-                logger.info {
-                    "Change detection completed in ${duration.toMillis()}ms: ${actualChanges.size} actual changes from ${candidateFiles.size} candidates"
-                }
-
-                actualChanges
-            } catch (e: Exception) {
-                logger.error(e) { "Error during change detection" }
-                // Fallback: treat all source files as changed
-                getAllSourceFiles(properties.basePath).associateWith { Pair(ChangeType.MODIFIED, "") }
+            if (candidateFiles.isEmpty()) {
+                logger.debug { "No potential changes detected - skipping hash verification" }
+                return emptyMap()
             }
-        }
 
-    override suspend fun updateHashes(files: Map<Path, String>) {
+            // Phase 2: Hash verification for potential changes
+            val actualChanges = verifyChangesWithHashes(candidateFiles)
+
+            val duration = java.time.Duration.between(startTime, Instant.now())
+            logger.info {
+                "Change detection completed in ${duration.toMillis()}ms: ${actualChanges.size} actual changes from ${candidateFiles.size} candidates"
+            }
+
+            return actualChanges
+        } catch (e: Exception) {
+            logger.error(e) { "Error during change detection" }
+            // Fallback: treat all source files as changed
+            return getAllSourceFiles(properties.basePath).associateWith { Pair(ChangeType.MODIFIED, "") }
+        }
+    }
+
+    override fun updateHashes(files: Map<Path, String>) {
         logger.debug { "Updating hashes for ${files.size} files" }
 
         try {
@@ -88,126 +77,116 @@ class FileBuildStateManager(
     /**
      * Phase 1: Fast timestamp pre-scan to identify potential changes
      */
-    private suspend fun scanForPotentialChanges(projectPath: Path): Set<Path> =
-        withContext(Dispatchers.IO) {
-            logger.debug { "Scanning for timestamp changes in: $projectPath" }
+    private fun scanForPotentialChanges(projectPath: Path): Set<Path> {
+        logger.debug { "Scanning for timestamp changes in: $projectPath" }
 
-            val potentialChanges = mutableSetOf<Path>()
-            val sourceFiles = getAllSourceFiles(projectPath)
+        val potentialChanges = mutableSetOf<Path>()
+        val sourceFiles = getAllSourceFiles(projectPath)
 
-            for (file in sourceFiles) {
-                try {
-                    val currentTimestamp = Files.getLastModifiedTime(file).toMillis()
-                    val storedTimestamp = hashStorage.getTimestamp(file)
+        for (file in sourceFiles) {
+            try {
+                val currentTimestamp = Files.getLastModifiedTime(file).toMillis()
+                val storedTimestamp = hashStorage.getTimestamp(file)
 
-                    when {
-                        storedTimestamp == null -> {
-                            // New file
-                            potentialChanges.add(file)
-                            logger.trace { "New file detected: $file" }
-                        }
-
-                        currentTimestamp > storedTimestamp -> {
-                            // Potentially modified file
-                            potentialChanges.add(file)
-                            logger.trace { "Potentially modified file: $file (current: $currentTimestamp, stored: $storedTimestamp)" }
-                        }
+                when {
+                    storedTimestamp == null -> {
+                        // New file
+                        potentialChanges.add(file)
+                        logger.trace { "New file detected: $file" }
                     }
-                } catch (e: Exception) {
-                    logger.debug(e) { "Error checking timestamp for file: $file" }
-                    potentialChanges.add(file) // Include in potential changes if we can't verify
-                }
-            }
 
-            potentialChanges
+                    currentTimestamp > storedTimestamp -> {
+                        // Potentially modified file
+                        potentialChanges.add(file)
+                        logger.trace { "Potentially modified file: $file (current: $currentTimestamp, stored: $storedTimestamp)" }
+                    }
+                }
+            } catch (e: Exception) {
+                logger.debug(e) { "Error checking timestamp for file: $file" }
+                potentialChanges.add(file) // Include in potential changes if we can't verify
+            }
         }
+
+        return potentialChanges
+    }
 
     /**
      * Phase 2: Hash verification for potential changes with parallel processing
      */
-    private suspend fun verifyChangesWithHashes(candidates: Set<Path>): ChangesSet =
-        coroutineScope {
-            logger.debug { "Verifying ${candidates.size} potential changes with hash calculation" }
+    private fun verifyChangesWithHashes(candidates: Set<Path>): ChangesSet {
+        logger.debug { "Verifying ${candidates.size} potential changes with hash calculation" }
 
-            // Process files in batches to avoid overwhelming the system
-            val batchSize = maxConcurrentHashCalculations
-            val results = mutableMapOf<Path, Pair<ChangeType, String>>()
+        // Process files in batches to avoid overwhelming the system
+        val batchSize = maxConcurrentHashCalculations
+        val results = mutableMapOf<Path, Pair<ChangeType, String>>()
 
-            candidates.chunked(batchSize).forEach { batch ->
-                val batchResults =
-                    batch
-                        .map { file ->
-                            async(Dispatchers.IO) {
-                                verifyFileChange(file)
-                            }
-                        }.awaitAll()
+        candidates.chunked(batchSize).forEach { batch ->
+            val batchResults = batch.map(::verifyFileChange)
 
-                // Collect results
-                batch.zip(batchResults).forEach { (file, result) ->
-                    if (result.first != ChangeType.UNCHANGED) {
-                        results[file] = result
-                    }
+            // Collect results
+            batch.zip(batchResults).forEach { (file, result) ->
+                if (result.first != ChangeType.UNCHANGED) {
+                    results[file] = result
                 }
             }
-
-            logger.debug { "Hash verification completed: ${results.size} actual changes detected" }
-            results
         }
+
+        logger.debug { "Hash verification completed: ${results.size} actual changes detected" }
+        return results
+    }
 
     /**
      * Verifies if a single file has actually changed by comparing content hashes
      */
-    private suspend fun verifyFileChange(file: Path): Pair<ChangeType, String> =
-        withContext(Dispatchers.IO) {
-            try {
-                val currentHash = calculateFileHash(file)
-                val storedHash = hashStorage.getHash(file)
+    private fun verifyFileChange(file: Path): Pair<ChangeType, String> {
+        try {
+            val currentHash = calculateFileHash(file)
+            val storedHash = hashStorage.getHash(file)
 
-                val type =
-                    when {
-                        storedHash == null -> {
-                            logger.trace { "New file confirmed: $file" }
-                            ChangeType.NEW
-                        }
-
-                        currentHash != storedHash -> {
-                            logger.trace { "Modified file confirmed: $file" }
-                            ChangeType.MODIFIED
-                        }
-
-                        else -> {
-                            logger.trace { "File unchanged: $file" }
-                            ChangeType.UNCHANGED
-                        }
+            val type =
+                when {
+                    storedHash == null -> {
+                        logger.trace { "New file confirmed: $file" }
+                        ChangeType.NEW
                     }
-                return@withContext Pair(type, currentHash)
-            } catch (e: Exception) {
-                logger.debug(e) { "Error verifying file change: $file" }
-                Pair(ChangeType.MODIFIED, "") // Assume modified if we can't verify
-            }
+
+                    currentHash != storedHash -> {
+                        logger.trace { "Modified file confirmed: $file" }
+                        ChangeType.MODIFIED
+                    }
+
+                    else -> {
+                        logger.trace { "File unchanged: $file" }
+                        ChangeType.UNCHANGED
+                    }
+                }
+            return Pair(type, currentHash)
+        } catch (e: Exception) {
+            logger.debug(e) { "Error verifying file change: $file" }
+            return Pair(ChangeType.MODIFIED, "") // Assume modified if we can't verify
         }
+    }
 
     /**
      * Gets all source files in the project that should be tracked for changes
      */
-    private suspend fun getAllSourceFiles(projectPath: Path): List<Path> =
-        withContext(Dispatchers.IO) {
-            try {
-                if (!Files.exists(projectPath)) {
-                    logger.warn { "Project path does not exist: $projectPath" }
-                    return@withContext emptyList()
-                }
-
-                projectPath
-                    .walk()
-                    .filter { it.isRegularFile() }
-                    .filter { !isIgnoredPath(it, projectPath) }
-                    .toList()
-            } catch (e: Exception) {
-                logger.error(e) { "Error scanning source files in: $projectPath" }
-                emptyList()
+    private fun getAllSourceFiles(projectPath: Path): List<Path> {
+        try {
+            if (!Files.exists(projectPath)) {
+                logger.warn { "Project path does not exist: $projectPath" }
+                return emptyList()
             }
+
+            return projectPath
+                .walk()
+                .filter { it.isRegularFile() }
+                .filter { !isIgnoredPath(it, projectPath) }
+                .toList()
+        } catch (e: Exception) {
+            logger.error(e) { "Error scanning source files in: $projectPath" }
+            return emptyList()
         }
+    }
 
     /**
      * Determines if a path should be ignored (e.g., build outputs, temp files)

@@ -2,8 +2,6 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.process
 
 import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
@@ -194,36 +192,35 @@ class ProcessExecutor : CommandExecutor {
     /**
      * Базовый метод выполнения процесса с различными параметрами
      */
-    private suspend fun executeProcess(params: ExecutionParams): ProcessResult =
-        withContext(Dispatchers.IO) {
-            val startTime = System.currentTimeMillis()
-            val commandString = params.commandArgs.joinToString(" ")
+    private fun executeProcess(params: ExecutionParams): ProcessResult {
+        val startTime = System.currentTimeMillis()
+        val commandString = params.commandArgs.joinToString(" ")
 
-            // Определяем фактический путь логирования
-            val actualLogPath = params.logFilePath
+        // Определяем фактический путь логирования
+        val actualLogPath = params.logFilePath
 
-            logStartProcess(params, actualLogPath, commandString)
+        logStartProcess(params, actualLogPath, commandString)
 
-            try {
-                val enhancedArgs = prepareCommandArgs(params.commandArgs, actualLogPath)
-                val processBuilder = createProcessBuilder(enhancedArgs, params.workingDirectory)
-                val process = processBuilder.start()
+        try {
+            val enhancedArgs = prepareCommandArgs(params.commandArgs, actualLogPath)
+            val processBuilder = createProcessBuilder(enhancedArgs, params.workingDirectory)
+            val process = processBuilder.start()
 
-                logger.debug { "Процесс запущен с PID: ${process.pid()}" }
+            logger.debug { "Процесс запущен с PID: ${process.pid()}" }
 
-                val result =
-                    if (params.timeoutMs != null) {
-                        executeWithTimeoutLogic(process, params, startTime, actualLogPath)
-                    } else {
-                        executeNormalLogic(process, params, startTime, actualLogPath)
-                    }
+            val result =
+                if (params.timeoutMs != null) {
+                    executeWithTimeoutLogic(process, params, startTime, actualLogPath)
+                } else {
+                    executeNormalLogic(process, params, startTime, actualLogPath)
+                }
 
-                result
-            } catch (e: Exception) {
-                val duration = (System.currentTimeMillis() - startTime).toDuration(kotlin.time.DurationUnit.MILLISECONDS)
-                createErrorResult(e, duration, commandString, actualLogPath)
-            }
+            return result
+        } catch (e: Exception) {
+            val duration = (System.currentTimeMillis() - startTime).toDuration(kotlin.time.DurationUnit.MILLISECONDS)
+            return createErrorResult(e, duration, commandString, actualLogPath)
         }
+    }
 
     /**
      * Логирует начало выполнения процесса
@@ -382,7 +379,7 @@ class ProcessExecutor : CommandExecutor {
     /**
      * Выполняет команду с указанными аргументами
      */
-    override suspend fun execute(commandArgs: List<String>): ProcessResult =
+    override fun execute(commandArgs: List<String>): ProcessResult =
         executeProcess(
             ExecutionParams(
                 commandArgs = commandArgs,
@@ -398,7 +395,7 @@ class ProcessExecutor : CommandExecutor {
      * @param includeStdout включать ли вывод stdout в результат
      * @return результат выполнения с объединенным выводом из файла логов и stdout
      */
-    suspend fun executeWithLogging(
+    fun executeWithLogging(
         commandArgs: List<String>,
         logFilePath: Path? = null,
         includeStdout: Boolean = true,
@@ -415,7 +412,7 @@ class ProcessExecutor : CommandExecutor {
     /**
      * Выполняет команду с таймаутом
      */
-    suspend fun executeWithTimeout(
+    fun executeWithTimeout(
         commandArgs: List<String>,
         timeoutMs: Long = 300000, // 5 минут по умолчанию
     ): ProcessResult =

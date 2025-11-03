@@ -81,7 +81,7 @@ data class InfobaseCreateCommand(
         if (force) details.add("принудительно")
 
         return "Создание информационной базы" +
-            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }
 
@@ -147,7 +147,7 @@ data class InfobaseRestoreCommand(
         if (force) details.add("принудительное завершение сеансов")
 
         return "Загрузка данных информационной базы из файла: $path" +
-            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }
 
@@ -280,6 +280,6 @@ data class InfobaseReplicateCommand(
         targetJobsCount?.let { details.add("потоков загрузки: $it") }
 
         return "Репликация информационной базы" +
-            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }

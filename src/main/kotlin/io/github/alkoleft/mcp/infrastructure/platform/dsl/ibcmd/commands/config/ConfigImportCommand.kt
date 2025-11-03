@@ -80,6 +80,6 @@ class ConfigImportCommand(
 
         if (extension.isNullOrBlank()) "конфигурации" else "расширения"
         return "Импорт ${if (extension.isNullOrBlank()) "конфигурации" else "расширения"} из XML: $path" +
-            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }
