@@ -17,7 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with METR.  If not, see <https://www.gnu.org/licenses/>.
- *
  */
 
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.session
