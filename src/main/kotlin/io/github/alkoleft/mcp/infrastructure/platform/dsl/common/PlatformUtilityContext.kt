@@ -7,7 +7,6 @@ import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.edt.EdtCliExecutor
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.CommandExecutor
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
@@ -27,18 +26,6 @@ class PlatformUtilityContext(
     private val properties: ApplicationProperties,
     private val applicationContext: ApplicationContext,
 ) {
-    /** Последняя ошибка выполнения команды */
-    private var lastError: String? = null
-
-    /** Последний вывод команды */
-    private var lastOutput: String = ""
-
-    /** Последний код завершения команды */
-    private var lastExitCode: Int = 0
-
-    /** Последняя длительность выполнения команды */
-    private var lastDuration: kotlin.time.Duration = kotlin.time.Duration.ZERO
-
     /**
      * Получает локацию утилиты
      *
@@ -46,10 +33,7 @@ class PlatformUtilityContext(
      * @param version версия утилиты
      * @return локация утилиты
      */
-    fun locateUtility(
-        utilityType: UtilityType,
-        version: String = DEFAULT_VERSION,
-    ): UtilityLocation =
+    fun locateUtility(utilityType: UtilityType, version: String = DEFAULT_VERSION): UtilityLocation =
         utilLocator.locateUtility(
             utilityType,
             version = actualVersion(utilityType, version),
@@ -62,50 +46,12 @@ class PlatformUtilityContext(
      * @param version указанная версия
      * @return фактическая версия утилиты
      */
-    private fun actualVersion(
-        utilityType: UtilityType,
-        version: String,
-    ) = if (version == DEFAULT_VERSION) {
-        if (utilityType.isPlatform()) properties.platformVersion else properties.tools.edtCli.version
-    } else {
-        version
-    }
-
-    /**
-     * Устанавливает результат выполнения операции
-     *
-     * @param success флаг успешного выполнения
-     * @param output вывод команды
-     * @param error текст ошибки
-     * @param exitCode код завершения
-     * @param duration длительность выполнения
-     */
-    fun setResult(
-        success: Boolean,
-        output: String,
-        error: String?,
-        exitCode: Int,
-        duration: kotlin.time.Duration,
-    ) {
-        this.lastOutput = output
-        this.lastError = error
-        this.lastExitCode = exitCode
-        this.lastDuration = duration
-    }
-
-    /**
-     * Строит результат выполнения операций
-     *
-     * @return результат выполнения команды
-     */
-    fun buildResult(): ProcessResult =
-        ProcessResult(
-            success = lastExitCode == 0,
-            output = lastOutput,
-            error = lastError,
-            exitCode = lastExitCode,
-            duration = lastDuration,
-        )
+    private fun actualVersion(utilityType: UtilityType, version: String) =
+        if (version == DEFAULT_VERSION) {
+            if (utilityType.isPlatform()) properties.platformVersion else properties.tools.edtCli.version
+        } else {
+            version
+        }
 
     /**
      * Получает путь к указанной утилите
@@ -114,10 +60,7 @@ class PlatformUtilityContext(
      * @param version версия утилиты
      * @return путь к исполняемому файлу утилиты или null если утилита не найдена
      */
-    fun getUtilityPath(
-        utilityType: UtilityType,
-        version: String = DEFAULT_VERSION,
-    ): String? =
+    fun getUtilityPath(utilityType: UtilityType, version: String = DEFAULT_VERSION): String? =
         try {
             val location = locateUtility(utilityType, version)
             location.executablePath.toString()
@@ -142,5 +85,3 @@ class PlatformUtilityContext(
         }
     }
 }
-
-// Removed PlatformUtilityResult in favor of generic ProcessResult

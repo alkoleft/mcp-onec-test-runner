@@ -2,6 +2,11 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.common
 
 import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
+import io.github.oshai.kotlinlogging.KotlinLogging
+import java.io.File
+import java.nio.file.Path
+
+private val logger = KotlinLogging.logger { }
 
 /**
  * Базовый DSL класс для выполнения команд
@@ -19,11 +24,17 @@ abstract class Dsl<T : DslContext, C : Command>(
      * @param command команда для выполнения
      * @return результат выполнения команды
      */
-    protected fun executeCommand(command: C): ShellCommandResult {
+    protected open fun executeCommand(command: C, logPath: Path? = null): ShellCommandResult {
         val executor = ProcessExecutor()
-        val args = buildCommandArgs(command.arguments)
+        val args = buildCommandArgs(command, logPath)
 
-        return executor.executeWithLogging(args)
+        logger.info { command.getFullDescription() }
+
+        return if (logPath != null) {
+            executor.executeWithLogging(args, logPath)
+        } else {
+            executor.execute(args)
+        }
     }
 
     /**
@@ -32,15 +43,23 @@ abstract class Dsl<T : DslContext, C : Command>(
      * @param commandArgs аргументы команды
      * @return полный список аргументов для выполнения
      */
-    protected fun buildCommandArgs(commandArgs: List<String>): List<String> {
+    protected open fun buildCommandArgs(command: C, logPath: Path? = null): List<String> {
+        if (logPath != null) {
+            throw IllegalArgumentException("Не поддерживается работы с файлом лога")
+        }
         val args = mutableListOf<String>()
 
         // Базовые аргументы
         args.addAll(context.buildBaseArgs())
 
         // Команда и её аргументы (команда уже включена в commandArgs)
-        args.addAll(commandArgs)
+        args.addAll(command.arguments)
 
         return args
     }
+
+    /**
+     * Генерирует путь к файлу логов с временной меткой
+     */
+    protected fun generateLogFilePath(): Path = File.createTempFile("onec_log_", ".log").toPath()
 }

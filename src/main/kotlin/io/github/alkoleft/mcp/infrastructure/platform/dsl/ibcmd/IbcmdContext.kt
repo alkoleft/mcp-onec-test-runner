@@ -85,8 +85,6 @@ class IbcmdContext(
      */
     override fun buildBaseArgs(): List<String> {
         val args = mutableListOf<String>()
-        val location = platformContext.locateUtility(UtilityType.IBCMD).executablePath
-        args.add(location.toString())
 
         // Путь к базе данных
         dbPath?.let {

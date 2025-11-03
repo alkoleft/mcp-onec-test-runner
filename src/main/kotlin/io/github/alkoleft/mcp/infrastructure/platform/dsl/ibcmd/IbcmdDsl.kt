@@ -13,6 +13,7 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.mobile.
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.mobile.MobileClientExportCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.server.ServerConfigInitCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.session.SessionCommandBuilder
+import java.nio.file.Path
 
 /**
  * DSL для формирования и выполнения команд ibcmd с поддержкой иерархической структуры.
@@ -56,8 +57,6 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.session
 class IbcmdDsl(
     context: PlatformUtilityContext,
 ) : Dsl<IbcmdContext, IbcmdCommand>(IbcmdContext(context)) {
-    private val ibcmdContext = IbcmdContext(context)
-
     private val commands = mutableListOf<IbcmdCommand>()
 
     /**
@@ -68,7 +67,7 @@ class IbcmdDsl(
     var dbPath: String? = null
         set(value) {
             field = value
-            ibcmdContext.dbPath(value ?: "")
+            context.dbPath(value ?: "")
         }
 
     /**
@@ -79,7 +78,7 @@ class IbcmdDsl(
     var user: String? = null
         set(value) {
             field = value
-            ibcmdContext.user(value ?: "")
+            context.user(value ?: "")
         }
 
     /**
@@ -90,41 +89,8 @@ class IbcmdDsl(
     var password: String? = null
         set(value) {
             field = value
-            ibcmdContext.password(value ?: "")
+            context.password(value ?: "")
         }
-
-    /**
-     * Устанавливает путь к базе данных.
-     *
-     * @param path путь к файлу базы данных или строка подключения
-     *
-     * @see [IbcmdContext.dbPath]
-     */
-    fun dbPath(path: String) {
-        this.dbPath = path
-    }
-
-    /**
-     * Устанавливает имя пользователя для подключения к базе данных.
-     *
-     * @param user имя пользователя
-     *
-     * @see [IbcmdContext.user]
-     */
-    fun user(user: String) {
-        this.user = user
-    }
-
-    /**
-     * Устанавливает пароль для подключения к базе данных.
-     *
-     * @param password пароль пользователя
-     *
-     * @see [IbcmdContext.password]
-     */
-    fun password(password: String) {
-        this.password = password
-    }
 
     /**
      * Добавляет команды конфигурации в план.
@@ -266,6 +232,30 @@ class IbcmdDsl(
         command: C,
         configure: (C.() -> Unit)?,
     ): ShellCommandResult = executeCommand(command.also { if (configure != null) it.configure() })
+
+
+    /**
+     * Строит аргументы команды для конфигуратора с произвольными аргументами
+     *
+     * @param commandArgs аргументы команды
+     * @return полный список аргументов для выполнения
+     */
+    override fun buildCommandArgs(command: IbcmdCommand, logPath: Path?): List<String> {
+        if (logPath != null) {
+            throw IllegalArgumentException("Не поддерживается работы с файлом лога")
+        }
+        val args = mutableListOf(context.utilityPath)
+        args.addAll(command.mode.split(" "))
+        args.addAll(command.subCommand.split(" "))
+
+        // Базовые аргументы
+        args.addAll(context.buildBaseArgs())
+
+        // Команда и её аргументы (команда уже включена в commandArgs)
+        args.addAll(command.arguments)
+
+        return args
+    }
 }
 
 /**

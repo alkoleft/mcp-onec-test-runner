@@ -22,8 +22,8 @@ class IbcmdBuildAction(
         actionDsl = dsl.ibcmd {
             dbPath = extractFilePath(properties.connection.connectionString)
                 ?: throw BuildError("Не удалось определить путь к файлу из строки подключения")
-            properties.connection.user?.ifNoBlank { user(it) }
-            properties.connection.password?.ifNoBlank { password(it) }
+            properties.connection.user?.ifNoBlank { user = it }
+            properties.connection.password?.ifNoBlank { password = it }
         }
     }
 

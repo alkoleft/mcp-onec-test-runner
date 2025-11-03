@@ -27,7 +27,7 @@ class LauncherService(
     fun run(request: TestExecutionRequest): TestExecutionResult {
         val buildResult = build()
         if (!buildResult.success) {
-            val reason = if (buildResult.errors.isNotEmpty()) buildResult.errors.joinToString("; ") else "Build failed"
+            val reason = if (buildResult.errors.isNotEmpty()) buildResult.errors.joinToString("; ") else "Сборка не удалась"
             throw TestExecutionError.BuildFailed(reason)
         }
         return actionFactory.createRunTestAction().run(request)

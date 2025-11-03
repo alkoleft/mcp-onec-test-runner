@@ -20,6 +20,6 @@ abstract class DesignerCommand : Command {
             } else {
                 ""
             }
-        return "$name$params - $description"
+        return "$description: $name$params"
     }
 }

@@ -51,5 +51,5 @@ class DesignerDsl(
     private fun <C : DesignerCommand> configureAndExecute(
         command: C,
         configure: ((C.() -> Unit)?),
-    ): ShellCommandResult = executeCommand(command.also { if (configure != null) it.configure() })
+    ): ShellCommandResult = executeCommand(command.also { if (configure != null) it.configure() }, generateLogFilePath())
 }

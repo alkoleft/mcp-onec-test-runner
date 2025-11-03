@@ -3,6 +3,7 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.enterprise
 import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.V8Context
+import java.nio.file.Path
 
 /**
  * Контекст для работы с 1С:Предприятие
@@ -23,4 +24,6 @@ class EnterpriseContext(
                     args.add(it)
                 }
             }
+
+    fun buildBaseArgs(logPath: Path): List<String> = buildBaseArgs() + listOf("/Out", logPath.toString())
 }

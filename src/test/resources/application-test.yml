@@ -41,3 +41,8 @@ app:
   tools:
     # Тип сборщика: DESIGNER или IBMCMD
     builder: DESIGNER
+
+logging:
+  level:
+    root: INFO
+    io.github.alkoleft: DEBUG
