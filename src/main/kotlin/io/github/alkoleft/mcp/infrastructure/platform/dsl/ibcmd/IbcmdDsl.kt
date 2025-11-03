@@ -214,7 +214,10 @@ class IbcmdDsl(
      * @param builder билдер команд заданного типа
      * @param block блок конфигурации команд
      */
-    private inline fun <reified T : CommandBuilder> appendSubCommands(builder: T, block: T.() -> Unit) {
+    private inline fun <reified T : CommandBuilder> appendSubCommands(
+        builder: T,
+        block: T.() -> Unit,
+    ) {
         builder.block()
         commands.addAll(builder.result)
     }
@@ -233,14 +236,16 @@ class IbcmdDsl(
         configure: (C.() -> Unit)?,
     ): ShellCommandResult = executeCommand(command.also { if (configure != null) it.configure() })
 
-
     /**
      * Строит аргументы команды для конфигуратора с произвольными аргументами
      *
      * @param commandArgs аргументы команды
      * @return полный список аргументов для выполнения
      */
-    override fun buildCommandArgs(command: IbcmdCommand, logPath: Path?): List<String> {
+    override fun buildCommandArgs(
+        command: IbcmdCommand,
+        logPath: Path?,
+    ): List<String> {
         if (logPath != null) {
             throw IllegalArgumentException("Не поддерживается работы с файлом лога")
         }

@@ -52,6 +52,6 @@ data class ConfigApplyCommand(
         if (force) details.add("принудительно")
 
         return "Обновление конфигурации базы данных" +
-                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }

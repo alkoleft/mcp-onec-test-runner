@@ -24,7 +24,10 @@ abstract class Dsl<T : DslContext, C : Command>(
      * @param command команда для выполнения
      * @return результат выполнения команды
      */
-    protected open fun executeCommand(command: C, logPath: Path? = null): ShellCommandResult {
+    protected open fun executeCommand(
+        command: C,
+        logPath: Path? = null,
+    ): ShellCommandResult {
         val executor = ProcessExecutor()
         val args = buildCommandArgs(command, logPath)
 
@@ -43,7 +46,10 @@ abstract class Dsl<T : DslContext, C : Command>(
      * @param commandArgs аргументы команды
      * @return полный список аргументов для выполнения
      */
-    protected open fun buildCommandArgs(command: C, logPath: Path? = null): List<String> {
+    protected open fun buildCommandArgs(
+        command: C,
+        logPath: Path? = null,
+    ): List<String> {
         if (logPath != null) {
             throw IllegalArgumentException("Не поддерживается работы с файлом лога")
         }

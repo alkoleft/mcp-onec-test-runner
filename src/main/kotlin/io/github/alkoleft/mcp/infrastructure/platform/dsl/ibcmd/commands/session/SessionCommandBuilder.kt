@@ -28,7 +28,9 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.
 /**
  * Builder для создания команд режима session
  */
-class SessionCommandBuilder(dsl: IbcmdDsl) : CommandBuilder(dsl) {
+class SessionCommandBuilder(
+    dsl: IbcmdDsl,
+) : CommandBuilder(dsl) {
     /**
      * Создает команду получения информации о сеансе
      */

@@ -46,6 +46,6 @@ data class ConfigRepairCommand(
         if (fixMetadata) details.add("восстановить метаданные")
 
         return "Восстановление конфигурации после незавершённой операции" +
-                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }

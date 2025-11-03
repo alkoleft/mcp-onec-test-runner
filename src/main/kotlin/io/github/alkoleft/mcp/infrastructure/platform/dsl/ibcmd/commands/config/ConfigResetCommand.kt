@@ -29,5 +29,5 @@ data class ConfigResetCommand(
 
     override fun getFullDescription(): String =
         "Возврат к конфигурации базы данных" +
-                (extension?.let { " (расширение: $it)" } ?: "")
+            (extension?.let { " (расширение: $it)" } ?: "")
 }

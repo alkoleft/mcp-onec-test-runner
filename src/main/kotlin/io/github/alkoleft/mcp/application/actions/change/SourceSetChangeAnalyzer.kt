@@ -59,9 +59,9 @@ class SourceSetChangeAnalyzer {
                 val changeTypeSummary = sourceSetFileChanges.values.groupingBy { it.first }.eachCount()
                 logger.debug {
                     "Source set '${sourceItem.name}': ${sourceSetFileChanges.size} changes " +
-                            "(${changeTypeSummary[ChangeType.NEW] ?: 0} new, " +
-                            "${changeTypeSummary[ChangeType.MODIFIED] ?: 0} modified, " +
-                            "${changeTypeSummary[ChangeType.DELETED] ?: 0} deleted)"
+                        "(${changeTypeSummary[ChangeType.NEW] ?: 0} new, " +
+                        "${changeTypeSummary[ChangeType.MODIFIED] ?: 0} modified, " +
+                        "${changeTypeSummary[ChangeType.DELETED] ?: 0} deleted)"
                 }
             }
         }

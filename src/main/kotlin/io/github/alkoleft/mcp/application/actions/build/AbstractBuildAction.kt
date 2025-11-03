@@ -9,8 +9,7 @@ import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Path
-import java.time.Duration
-import java.time.Instant
+import kotlin.time.TimeSource
 
 private val logger = KotlinLogging.logger { }
 
@@ -32,20 +31,20 @@ abstract class AbstractBuildAction(
     /**
      * Измеряет время выполнения операции с обработкой ошибок
      */
-    private fun <T> measureExecutionTime(
+    private fun measureExecutionTime(
         operation: String,
-        block: () -> T,
-    ): T {
-        val startTime = Instant.now()
+        block: () -> BuildResult,
+    ): BuildResult {
+        val startTime = TimeSource.Monotonic.markNow()
         logger.info { "Начинаю операцию: $operation" }
 
         return try {
-            block().also {
-                val duration = Duration.between(startTime, Instant.now())
-                logger.info { "Операция $operation завершена за $duration" }
-            }
+            val result = block()
+            val duration = startTime.elapsedNow()
+            logger.info { "Операция $operation завершена за $duration" }
+            result.copy(duration = duration)
         } catch (e: Exception) {
-            val duration = Duration.between(startTime, Instant.now())
+            val duration = startTime.elapsedNow()
             logger.error(e) { "Операция $operation завершилась с ошибкой после $duration" }
             throw BuildException("Операция $operation завершилась с ошибкой: ${e.message}", e)
         }
@@ -58,7 +57,7 @@ abstract class AbstractBuildAction(
         properties: ApplicationProperties,
         sourceSet: SourceSet,
     ): BuildResult {
-        logger.debug { "Формирую единый DSL для сборки проекта" }
+        logger.debug { "Сборка проекта" }
 
         initDsl(properties)
         val state = CurrentBuildState()
@@ -114,9 +113,15 @@ abstract class AbstractBuildAction(
 
     protected abstract fun initDsl(properties: ApplicationProperties): Unit
 
-    protected abstract fun loadConfiguration(name: String, path: Path): ShellCommandResult
+    protected abstract fun loadConfiguration(
+        name: String,
+        path: Path,
+    ): ShellCommandResult
 
-    protected abstract fun loadExtension(name: String, path: Path): ShellCommandResult
+    protected abstract fun loadExtension(
+        name: String,
+        path: Path,
+    ): ShellCommandResult
 
     protected abstract fun updateDb(): ShellCommandResult
 
@@ -125,17 +130,21 @@ abstract class AbstractBuildAction(
         val sourceSet = mutableMapOf<String, ShellCommandResult>()
         var updateResult: ShellCommandResult? = null
 
-        fun addResult(name: String, result: ShellCommandResult) {
+        fun addResult(
+            name: String,
+            result: ShellCommandResult,
+        ) {
             sourceSet.put(name, result)
             if (!result.success) {
                 success = false
             }
         }
 
-        fun toBuildResult() = BuildResult(
-            success = !sourceSet.values.any { !it.success },
-            errors = sourceSet.values.mapNotNull { it.error },
-            sourceSet = sourceSet
-        )
+        fun toBuildResult() =
+            BuildResult(
+                success = !sourceSet.values.any { !it.success },
+                errors = sourceSet.values.mapNotNull { it.error },
+                sourceSet = sourceSet,
+            )
     }
 }

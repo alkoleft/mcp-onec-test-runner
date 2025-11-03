@@ -36,7 +36,7 @@ class ProcessExecutor : CommandExecutor {
         val workingDirectory: Path? = null,
         val timeoutMs: Long? = null,
         val logFilePath: Path? = null,
-        val includeStdout: Boolean = true
+        val includeStdout: Boolean = true,
     )
 
     /**
@@ -226,8 +226,7 @@ class ProcessExecutor : CommandExecutor {
         logPath: Path?,
         commandString: String,
     ) {
-        println()
-        logger.debug { "=== ЗАПУСК ПРОЦЕССА ===" }
+        logger.debug { "\n=== ЗАПУСК ПРОЦЕССА ===" }
         logger.debug { "Команда: $commandString" }
 
         if (logPath != null) {
@@ -240,11 +239,10 @@ class ProcessExecutor : CommandExecutor {
 
         if (params.workingDirectory != null) {
             logger.debug { "Рабочий каталог: ${params.workingDirectory}" }
-            logger.debug { "Текущий каталог: ${System.getProperty("user.dir")}" }
+            logger.debug { "Текущий каталог: ${System.getProperty("user.dir")}\n" }
         } else {
-            logger.debug { "Рабочий каталог: ${System.getProperty("user.dir")}" }
+            logger.debug { "Рабочий каталог: ${System.getProperty("user.dir")}\n" }
         }
-        println()
     }
 
     /**
@@ -367,7 +365,7 @@ class ProcessExecutor : CommandExecutor {
     override fun execute(commandArgs: List<String>): ProcessResult =
         executeProcess(
             ExecutionParams(
-                commandArgs = commandArgs
+                commandArgs = commandArgs,
             ),
         )
 
@@ -388,7 +386,7 @@ class ProcessExecutor : CommandExecutor {
             ExecutionParams(
                 commandArgs = commandArgs,
                 logFilePath = logFilePath,
-                includeStdout = includeStdout
+                includeStdout = includeStdout,
             ),
         )
 

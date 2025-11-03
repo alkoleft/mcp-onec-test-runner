@@ -19,8 +19,9 @@ import java.util.concurrent.ConcurrentMap
 private val logger = KotlinLogging.logger { }
 
 @Component
-class MapDbHashStorage(properties: ApplicationProperties) {
-
+class MapDbHashStorage(
+    properties: ApplicationProperties,
+) {
     private lateinit var db: DB
     private lateinit var hashMap: ConcurrentMap<String, String>
     private lateinit var timestampMap: ConcurrentMap<String, Long>
@@ -78,22 +79,24 @@ class MapDbHashStorage(properties: ApplicationProperties) {
             null
         }
 
-    fun storeHash(file: Path, hash: String) =
-        try {
-            val key = normalizeKey(file)
-            val timestamp = Files.getLastModifiedTime(file).toMillis()
+    fun storeHash(
+        file: Path,
+        hash: String,
+    ) = try {
+        val key = normalizeKey(file)
+        val timestamp = Files.getLastModifiedTime(file).toMillis()
 
-            hashMap[key] = hash
-            timestampMap[key] = timestamp
+        hashMap[key] = hash
+        timestampMap[key] = timestamp
 
-            db.commit()
+        db.commit()
 
-            logger.debug { "Stored hash for file: $file" }
-        } catch (e: Exception) {
-            logger.error(e) { "Failed to store hash for file: $file" }
-            db.rollback()
-            throw e
-        }
+        logger.debug { "Stored hash for file: $file" }
+    } catch (e: Exception) {
+        logger.error(e) { "Failed to store hash for file: $file" }
+        db.rollback()
+        throw e
+    }
 
     fun batchUpdate(updates: Map<Path, String>) {
         if (updates.isEmpty()) return
@@ -162,18 +165,20 @@ class MapDbHashStorage(properties: ApplicationProperties) {
     /**
      * Stores the timestamp for a file
      */
-    fun storeTimestamp(file: Path, timestamp: Long) =
-        try {
-            val key = normalizeKey(file)
-            timestampMap[key] = timestamp
-            db.commit()
+    fun storeTimestamp(
+        file: Path,
+        timestamp: Long,
+    ) = try {
+        val key = normalizeKey(file)
+        timestampMap[key] = timestamp
+        db.commit()
 
-            logger.debug { "Stored timestamp for file: $file" }
-        } catch (e: Exception) {
-            logger.error(e) { "Failed to store timestamp for file: $file" }
-            db.rollback()
-            throw e
-        }
+        logger.debug { "Stored timestamp for file: $file" }
+    } catch (e: Exception) {
+        logger.error(e) { "Failed to store timestamp for file: $file" }
+        db.rollback()
+        throw e
+    }
 
     /**
      * Gets statistics about the hash storage

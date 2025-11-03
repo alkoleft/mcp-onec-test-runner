@@ -85,7 +85,7 @@ data class ServerConfigInitCommand(
         httpBase?.let { details.add("базовый путь: $it") }
 
         return "Инициализация конфигурации автономного сервера" +
-                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }
 
@@ -165,6 +165,6 @@ data class ServerConfigImportCommand(
         managerPort?.let { details.add("порт менеджера: $it") }
 
         return "Импорт конфигурации из кластера серверов 1С" +
-                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }

@@ -28,7 +28,9 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.
 /**
  * Builder для создания команд режима infobase
  */
-class InfobaseCommandBuilder(dsl: IbcmdDsl) : CommandBuilder(dsl) {
+class InfobaseCommandBuilder(
+    dsl: IbcmdDsl,
+) : CommandBuilder(dsl) {
     /**
      * Создает команду создания информационной базы
      */

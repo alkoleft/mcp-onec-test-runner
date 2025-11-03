@@ -19,26 +19,34 @@ class IbcmdBuildAction(
     private lateinit var actionDsl: IbcmdDsl
 
     override fun initDsl(properties: ApplicationProperties) {
-        actionDsl = dsl.ibcmd {
-            dbPath = extractFilePath(properties.connection.connectionString)
-                ?: throw BuildError("Не удалось определить путь к файлу из строки подключения")
-            properties.connection.user?.ifNoBlank { user = it }
-            properties.connection.password?.ifNoBlank { password = it }
-        }
+        actionDsl =
+            dsl.ibcmd {
+                dbPath = extractFilePath(properties.connection.connectionString)
+                    ?: throw BuildError("Не удалось определить путь к файлу из строки подключения")
+                properties.connection.user?.ifNoBlank { user = it }
+                properties.connection.password?.ifNoBlank { password = it }
+            }
     }
 
-    override fun loadConfiguration(name: String, path: Path): ShellCommandResult {
+    override fun loadConfiguration(
+        name: String,
+        path: Path,
+    ): ShellCommandResult {
         lateinit var result: ShellCommandResult
         actionDsl.config { result = import(path) }
         return result
     }
 
-    override fun loadExtension(name: String, path: Path): ShellCommandResult {
+    override fun loadExtension(
+        name: String,
+        path: Path,
+    ): ShellCommandResult {
         lateinit var result: ShellCommandResult
         actionDsl.config {
-            result = import(path) {
-                extension = name
-            }
+            result =
+                import(path) {
+                    extension = name
+                }
         }
         return result
     }

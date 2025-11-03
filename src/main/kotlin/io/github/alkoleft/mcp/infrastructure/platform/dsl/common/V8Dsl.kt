@@ -109,7 +109,8 @@ abstract class V8Dsl<T : V8Context, C : Command>(
         context.noTruncate()
     }
 
-    override fun buildCommandArgs(command: C, logPath: Path?): List<String> {
-        return super.buildCommandArgs(command, null) + listOf("/Out", logPath.toString())
-    }
+    override fun buildCommandArgs(
+        command: C,
+        logPath: Path?,
+    ): List<String> = super.buildCommandArgs(command, null) + listOf("/Out", logPath.toString())
 }

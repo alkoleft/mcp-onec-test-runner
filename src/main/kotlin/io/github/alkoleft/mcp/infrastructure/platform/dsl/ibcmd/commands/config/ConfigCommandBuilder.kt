@@ -29,7 +29,9 @@ import java.nio.file.Path
 /**
  * Builder для создания команд режима config
  */
-class ConfigCommandBuilder(dsl: IbcmdDsl) : CommandBuilder(dsl) {
+class ConfigCommandBuilder(
+    dsl: IbcmdDsl,
+) : CommandBuilder(dsl) {
     /**
      * Создает команду загрузки конфигурации
      */
@@ -96,7 +98,8 @@ class ConfigCommandBuilder(dsl: IbcmdDsl) : CommandBuilder(dsl) {
     /**
      * Снимает конфигурацию с поддержки.
      */
-    fun supportDisable(configure: ConfigSupportDisableCommand.() -> Unit = {}) = configureAndExecute(ConfigSupportDisableCommand(), configure)
+    fun supportDisable(configure: ConfigSupportDisableCommand.() -> Unit = {}) =
+        configureAndExecute(ConfigSupportDisableCommand(), configure)
 
     /**
      * Получает идентификатор поколения конфигурации.

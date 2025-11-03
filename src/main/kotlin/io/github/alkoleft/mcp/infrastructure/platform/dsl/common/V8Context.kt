@@ -9,8 +9,9 @@ import java.nio.file.Path
  *
  * @param platformContext контекст для работы с утилитами платформы
  */
-abstract class V8Context(platformContext: PlatformUtilityContext) : DslContext(platformContext) {
-
+abstract class V8Context(
+    platformContext: PlatformUtilityContext,
+) : DslContext(platformContext) {
     /** Строка подключения к информационной базе */
     protected var connectionString: String = ""
 

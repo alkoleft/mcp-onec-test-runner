@@ -92,6 +92,6 @@ data class ConfigExportCommand(
         if (ignoreUnresolvedRefs) details.add("игнорировать ссылки")
 
         return "Экспорт конфигурации в XML: $path" +
-                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }

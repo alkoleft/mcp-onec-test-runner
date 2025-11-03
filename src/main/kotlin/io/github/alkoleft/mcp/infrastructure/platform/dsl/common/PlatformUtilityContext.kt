@@ -33,7 +33,10 @@ class PlatformUtilityContext(
      * @param version версия утилиты
      * @return локация утилиты
      */
-    fun locateUtility(utilityType: UtilityType, version: String = DEFAULT_VERSION): UtilityLocation =
+    fun locateUtility(
+        utilityType: UtilityType,
+        version: String = DEFAULT_VERSION,
+    ): UtilityLocation =
         utilLocator.locateUtility(
             utilityType,
             version = actualVersion(utilityType, version),
@@ -46,12 +49,14 @@ class PlatformUtilityContext(
      * @param version указанная версия
      * @return фактическая версия утилиты
      */
-    private fun actualVersion(utilityType: UtilityType, version: String) =
-        if (version == DEFAULT_VERSION) {
-            if (utilityType.isPlatform()) properties.platformVersion else properties.tools.edtCli.version
-        } else {
-            version
-        }
+    private fun actualVersion(
+        utilityType: UtilityType,
+        version: String,
+    ) = if (version == DEFAULT_VERSION) {
+        if (utilityType.isPlatform()) properties.platformVersion else properties.tools.edtCli.version
+    } else {
+        version
+    }
 
     /**
      * Получает путь к указанной утилите
@@ -60,7 +65,10 @@ class PlatformUtilityContext(
      * @param version версия утилиты
      * @return путь к исполняемому файлу утилиты или null если утилита не найдена
      */
-    fun getUtilityPath(utilityType: UtilityType, version: String = DEFAULT_VERSION): String? =
+    fun getUtilityPath(
+        utilityType: UtilityType,
+        version: String = DEFAULT_VERSION,
+    ): String? =
         try {
             val location = locateUtility(utilityType, version)
             location.executablePath.toString()

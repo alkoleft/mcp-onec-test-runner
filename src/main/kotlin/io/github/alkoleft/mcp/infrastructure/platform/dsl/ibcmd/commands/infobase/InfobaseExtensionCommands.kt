@@ -145,7 +145,7 @@ data class InfobaseGenerationIdCommand(
 
     override fun getFullDescription(): String =
         "Получить идентификатор поколения конфигурации" +
-                (extension?.let { " (расширение: $it)" } ?: "")
+            (extension?.let { " (расширение: $it)" } ?: "")
 }
 
 /**
@@ -206,6 +206,6 @@ data class InfobaseSignCommand(
         path?.let { details.add("файл: $it") }
 
         return "Цифровая подпись конфигурации/расширения в ИБ" +
-                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }

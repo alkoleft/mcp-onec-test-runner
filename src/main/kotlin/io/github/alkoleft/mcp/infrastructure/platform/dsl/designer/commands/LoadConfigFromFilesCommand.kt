@@ -13,7 +13,9 @@ import java.nio.file.Path
  * Загрузка конфигурации из файлов. Загрузка расширения в основную конфигурацию
  * (и наоборот) не поддерживается.
  */
-class LoadConfigFromFilesCommand : DesignerCommand(), UpdateDBCfgSupport {
+class LoadConfigFromFilesCommand :
+    DesignerCommand(),
+    UpdateDBCfgSupport {
     override val name: String = "LoadConfigFromFiles"
     override val description: String = "Загрузка конфигурации из файлов"
 

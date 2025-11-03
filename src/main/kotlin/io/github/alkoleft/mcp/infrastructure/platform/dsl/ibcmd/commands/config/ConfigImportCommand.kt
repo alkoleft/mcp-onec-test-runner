@@ -14,7 +14,6 @@ class ConfigImportCommand(
      * Подкоманда импорта (files, all-extensions)
      */
     var importSubCommand: String? = null,
-
     /**
      * Имя расширения
      * --extension=<extension>, -e <extension>
@@ -73,6 +72,6 @@ class ConfigImportCommand(
 
         if (extension.isNullOrBlank()) "конфигурации" else "расширения"
         return "Импорт ${if (extension.isNullOrBlank()) "конфигурации" else "расширения"} из XML: $path" +
-                if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
+            if (details.isNotEmpty()) " (${details.joinToString(", ")})" else ""
     }
 }

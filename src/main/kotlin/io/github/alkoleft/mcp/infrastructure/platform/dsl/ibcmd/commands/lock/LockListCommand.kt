@@ -29,5 +29,5 @@ data class LockListCommand(
 
     override fun getFullDescription(): String =
         "Получение списка блокировок" +
-                (session?.let { " (сеанс: $it)" } ?: "")
+            (session?.let { " (сеанс: $it)" } ?: "")
 }

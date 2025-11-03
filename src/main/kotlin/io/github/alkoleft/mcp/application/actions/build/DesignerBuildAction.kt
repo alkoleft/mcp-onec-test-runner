@@ -22,23 +22,30 @@ class DesignerBuildAction(
     private lateinit var actionDsl: DesignerDsl
 
     override fun initDsl(properties: ApplicationProperties) {
-        actionDsl = dsl.configurator {
-            // Подключаемся к информационной базе
-            connect(properties.connection.connectionString)
-            properties.connection.user?.ifNoBlank { user(it) }
-            properties.connection.password?.ifNoBlank { password(it) }
+        actionDsl =
+            dsl.configurator {
+                // Подключаемся к информационной базе
+                connect(properties.connection.connectionString)
+                properties.connection.user?.ifNoBlank { user(it) }
+                properties.connection.password?.ifNoBlank { password(it) }
 
-            // Отключаем диалоги и сообщения для автоматической работы
-            disableStartupDialogs()
-            disableStartupMessages()
-        }
+                // Отключаем диалоги и сообщения для автоматической работы
+                disableStartupDialogs()
+                disableStartupMessages()
+            }
     }
 
-    override fun loadConfiguration(name: String, path: Path) = actionDsl.loadConfigFromFiles {
+    override fun loadConfiguration(
+        name: String,
+        path: Path,
+    ) = actionDsl.loadConfigFromFiles {
         fromPath(path)
     }
 
-    override fun loadExtension(name: String, path: Path) = actionDsl.loadConfigFromFiles {
+    override fun loadExtension(
+        name: String,
+        path: Path,
+    ) = actionDsl.loadConfigFromFiles {
         fromPath(path)
         extension(name)
     }

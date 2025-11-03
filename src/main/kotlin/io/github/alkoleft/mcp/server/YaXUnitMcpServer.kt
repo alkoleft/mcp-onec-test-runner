@@ -185,14 +185,14 @@ class YaXUnitMcpServer(
                     success = true,
                     message = "Сборка выполнена успешно",
                     buildTime = buildResult.duration.inWholeMilliseconds,
-                    details = emptyMap()
+                    details = emptyMap(),
                 )
             } else {
                 McpBuildResponse(
                     success = false,
                     message = if (buildResult.errors.isNotEmpty()) buildResult.errors.joinToString("; ") else "Ошибки сборки",
                     buildTime = buildResult.duration.inWholeMilliseconds,
-                    details = emptyMap()
+                    details = emptyMap(),
                 )
             }
         } catch (e: Exception) {
@@ -220,11 +220,11 @@ class YaXUnitMcpServer(
         return try {
             val utilityTypes =
                 UtilityType.entries.filter { it.isPlatform() } +
-                        if (properties.format == ProjectFormat.EDT) {
-                            listOf(UtilityType.EDT_CLI)
-                        } else {
-                            emptyList()
-                        }
+                    if (properties.format == ProjectFormat.EDT) {
+                        listOf(UtilityType.EDT_CLI)
+                    } else {
+                        emptyList()
+                    }
 
             val utilityStates =
                 utilityTypes.associateWith {
