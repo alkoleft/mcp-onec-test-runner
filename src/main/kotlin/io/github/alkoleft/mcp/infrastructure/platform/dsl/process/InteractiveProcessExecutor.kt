@@ -149,9 +149,9 @@ class InteractiveProcessExecutor(
                     val promptCount = currentOutput.split(params.promptPattern).size - 1
                     logger.debug { "Найдено приглашений: $promptCount" }
                     logger.info {
-                        "Приглашение EDT: '${params.promptPattern}', " +
-                                "последние $PROMPT_LOG_OUTPUT_LENGTH символов: " +
-                                currentOutput.takeLast(PROMPT_LOG_OUTPUT_LENGTH)
+                        "Приглашение EDT: '${params.promptPattern}', последние $PROMPT_LOG_OUTPUT_LENGTH символов: ${currentOutput.takeLast(
+                            PROMPT_LOG_OUTPUT_LENGTH,
+                        )}"
                     }
                     return currentOutput
                 }

@@ -51,7 +51,7 @@ abstract class Dsl<T : DslContext, C : Command>(
         logPath: Path? = null,
     ): List<String> {
         if (logPath != null) {
-            throw IllegalArgumentException("Не поддерживается работы с файлом лога")
+            throw IllegalArgumentException("Не поддерживается работа с файлом лога")
         }
         val args = mutableListOf<String>()
 

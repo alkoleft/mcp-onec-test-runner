@@ -26,27 +26,22 @@ abstract class AbstractBuildAction(
     override fun run(
         properties: ApplicationProperties,
         sourceSet: SourceSet,
-    ): BuildResult = measureExecutionTime("build") { executeBuildDsl(properties, sourceSet) }
+    ): BuildResult = measureExecutionTime { executeBuildDsl(properties, sourceSet) }
 
     /**
      * Измеряет время выполнения операции с обработкой ошибок
      */
-    private fun measureExecutionTime(
-        operation: String,
-        block: () -> BuildResult,
-    ): BuildResult {
+    private fun measureExecutionTime(block: () -> BuildResult): BuildResult {
         val startTime = TimeSource.Monotonic.markNow()
-        logger.info { "Начинаю операцию: $operation" }
-
         return try {
             val result = block()
             val duration = startTime.elapsedNow()
-            logger.info { "Операция $operation завершена за $duration" }
+            logger.info { "Сборка проекта завершена за $duration" }
             result.copy(duration = duration)
         } catch (e: Exception) {
             val duration = startTime.elapsedNow()
-            logger.error(e) { "Операция $operation завершилась с ошибкой после $duration" }
-            throw BuildException("Операция $operation завершилась с ошибкой: ${e.message}", e)
+            logger.error(e) { "Сборка проекта завершилась с ошибкой после $duration" }
+            throw BuildException("Сборка проекта завершилась с ошибкой: ${e.message}", e)
         }
     }
 
@@ -100,15 +95,14 @@ abstract class AbstractBuildAction(
             return state.toBuildResult()
         }
 
-        val updateResult = updateDb().also { state.updateResult = it }
+        val updateResult = updateDb().also(state::registerUpdateResult)
         if (updateResult.success) {
             logger.info { "Обновление базы данных завершена успешно" }
         } else {
             logger.error { "Обновление базы данных не выполнено" }
         }
-        logger.info { "Сборка завершена успешно" }
 
-        return state.toBuildResult()
+        return state.toBuildResult().also { if (it.success) logger.info { "Сборка завершена успешно" } }
     }
 
     protected abstract fun initDsl(properties: ApplicationProperties): Unit
@@ -140,11 +134,23 @@ abstract class AbstractBuildAction(
             }
         }
 
-        fun toBuildResult() =
-            BuildResult(
-                success = !sourceSet.values.any { !it.success },
-                errors = sourceSet.values.mapNotNull { it.error },
+        fun registerUpdateResult(result: ShellCommandResult) {
+            updateResult = result
+            if (!result.success) {
+                success = false
+            }
+        }
+
+        fun toBuildResult(): BuildResult {
+            val errors = mutableListOf<String>()
+            errors.addAll(sourceSet.values.mapNotNull { it.error })
+            updateResult?.error?.let(errors::add)
+
+            return BuildResult(
+                success = success,
+                errors = errors,
                 sourceSet = sourceSet,
             )
+        }
     }
 }

@@ -1,6 +1,7 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.config
 
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.IbcmdCommand
+import java.nio.file.Path
 
 /**
  * 7. export — Экспорт конфигурации в XML
@@ -56,7 +57,7 @@ data class ConfigExportCommand(
     /**
      * Путь к каталогу экспорта
      */
-    val path: String,
+    val path: Path,
 ) : IbcmdCommand {
     override val mode: String = "config"
     override val subCommand: String = "export" + (exportSubCommand?.let { " $it" } ?: "")
@@ -75,7 +76,7 @@ data class ConfigExportCommand(
             threads?.let { args.addAll(listOf("--threads", it.toString())) }
             if (archive) args.add("--archive")
             if (ignoreUnresolvedRefs) args.add("--ignore-unresolved-refs")
-            args.add(path)
+            args.add(path.toString())
 
             return args
         }

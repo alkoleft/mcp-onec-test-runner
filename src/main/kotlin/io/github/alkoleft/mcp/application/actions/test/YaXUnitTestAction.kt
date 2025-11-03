@@ -60,8 +60,8 @@ class YaXUnitTestAction(
 
             return TestExecutionResult(
                 success = executionResult.success,
-                reportPath = executionResult.reportPath!!,
-                report = report!!,
+                reportPath = executionResult.reportPath ?: throw IllegalStateException("YaXUnit не вернул путь к отчёту"),
+                report = report ?: throw IllegalStateException("Не удалось прочитать отчёт YaXUnit"),
                 duration = duration,
             )
         } catch (e: Exception) {

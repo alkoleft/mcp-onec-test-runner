@@ -36,7 +36,7 @@ class ConfigCommandBuilder(
      * Создает команду загрузки конфигурации
      */
     fun load(
-        path: String,
+        path: Path,
         configure: ConfigLoadCommand.() -> Unit = { },
     ) = configureAndExecute(ConfigLoadCommand(path = path), configure)
 
@@ -44,7 +44,7 @@ class ConfigCommandBuilder(
      * Создает команду выгрузки конфигурации
      */
     fun save(
-        path: String,
+        path: Path,
         configure: ConfigSaveCommand.() -> Unit = { },
     ) = configureAndExecute(ConfigSaveCommand(path = path), configure)
 
@@ -67,7 +67,7 @@ class ConfigCommandBuilder(
      * Создает команду экспорта конфигурации в XML
      */
     fun export(
-        path: String,
+        path: Path,
         configure: ConfigExportCommand.() -> Unit = { },
     ) = configureAndExecute(ConfigExportCommand(path = path), configure)
 
