@@ -15,14 +15,14 @@ import kotlin.time.Duration
  * Интерфейс для сборки конфигурации и расширений
  */
 interface BuildAction {
-    suspend fun run(
+    fun run(
         properties: ApplicationProperties,
         sourceSet: SourceSet,
     ): BuildResult
 }
 
 interface ConvertAction {
-    suspend fun run(
+    fun run(
         properties: ApplicationProperties,
         sourceSet: SourceSet,
         destination: SourceSet,
@@ -33,12 +33,12 @@ interface ConvertAction {
  * Интерфейс для анализа изменений в проекте
  */
 interface ChangeAnalysisAction {
-    suspend fun run(properties: ApplicationProperties): ChangeAnalysisResult
+    fun run(properties: ApplicationProperties): ChangeAnalysisResult
 
     /**
      * Сохраняет состояние source set для инкрементальной сборки
      */
-    suspend fun saveSourceSetState(
+    fun saveSourceSetState(
         properties: ApplicationProperties,
         sourceSetChanges: SourceSetChanges,
     ): Boolean
@@ -48,7 +48,7 @@ interface ChangeAnalysisAction {
  * Интерфейс для запуска тестов
  */
 interface RunTestAction {
-    suspend fun run(request: TestExecutionRequest): TestExecutionResult
+    fun run(request: TestExecutionRequest): TestExecutionResult
 }
 
 /**
@@ -56,7 +56,6 @@ interface RunTestAction {
  */
 data class BuildResult(
     val success: Boolean,
-    val configurationBuilt: Boolean = false,
     val errors: List<String> = emptyList(),
     val duration: Duration = Duration.ZERO,
     val sourceSet: Map<String, ShellCommandResult> = emptyMap(),

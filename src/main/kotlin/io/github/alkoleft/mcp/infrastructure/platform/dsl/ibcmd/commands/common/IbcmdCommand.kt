@@ -1,26 +1,18 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common
 
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.Command
+
 /**
  * Базовый интерфейс для всех команд ibcmd
  *
  * Все команды должны реализовывать этот интерфейс для обеспечения
  * единообразного выполнения и формирования аргументов командной строки.
  */
-interface IbcmdCommand {
+interface IbcmdCommand : Command {
     /**
      * Имя команды для выполнения (например, "infobase create", "config load")
      */
     val commandName: String
-
-    /**
-     * Список аргументов командной строки для данной команды
-     */
-    val arguments: List<String>
-
-    /**
-     * Полное описание команды для логирования и отладки
-     */
-    fun getFullDescription(): String
 
     /**
      * Режим работы ibcmd (infobase, server, config, session, lock, mobile-app, mobile-client, extension)

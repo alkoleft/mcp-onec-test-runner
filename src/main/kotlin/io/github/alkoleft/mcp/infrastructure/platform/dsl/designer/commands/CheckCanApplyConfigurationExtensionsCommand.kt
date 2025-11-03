@@ -3,7 +3,7 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands
 /**
  * Команда CheckCanApplyConfigurationExtensions с DSL функциональностью
  */
-class CheckCanApplyConfigurationExtensionsCommand : ConfiguratorCommand() {
+class CheckCanApplyConfigurationExtensionsCommand : DesignerCommand() {
     override val name: String = "CheckCanApplyConfigurationExtensions"
     override val description: String = "Проверка применимости расширений конфигурации"
 

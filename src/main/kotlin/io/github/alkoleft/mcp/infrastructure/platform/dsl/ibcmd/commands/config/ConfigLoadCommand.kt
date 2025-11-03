@@ -1,6 +1,7 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.config
 
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.IbcmdCommand
+import java.nio.file.Path
 
 /**
  * 1. load — Загрузка конфигурации
@@ -21,7 +22,7 @@ data class ConfigLoadCommand(
     /**
      * Путь к файлу конфигурации
      */
-    val path: String,
+    val path: Path,
 ) : IbcmdCommand {
     override val mode: String = "config"
     override val subCommand: String = "load"
@@ -33,7 +34,7 @@ data class ConfigLoadCommand(
 
             extension?.let { args.addAll(listOf("--extension", it)) }
             if (force) args.add("--force")
-            args.add(path)
+            args.add(path.toString())
 
             return args
         }

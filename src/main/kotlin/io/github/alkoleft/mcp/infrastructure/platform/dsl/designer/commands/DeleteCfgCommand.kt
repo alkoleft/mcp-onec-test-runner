@@ -5,7 +5,7 @@ import java.nio.file.Path
 /**
  * Команда DeleteCfg с DSL функциональностью
  */
-class DeleteCfgCommand : ConfiguratorCommand() {
+class DeleteCfgCommand : DesignerCommand() {
     override val name: String = "DeleteCfg"
     override val description: String = "Удаление конфигурации"
 

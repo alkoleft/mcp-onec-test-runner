@@ -2,8 +2,6 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.process
 
 import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.io.InputStreamReader
@@ -97,168 +95,162 @@ class InteractiveProcessExecutor(
     /**
      * Инициализирует интерактивный процесс с уже запущенным процессом
      */
-    suspend fun initialize(): Boolean =
-        withContext(Dispatchers.IO) {
-            processStatus = ProcessStatus.STARTED
-            try {
-                logger.debug { "Инициализация интерактивного процесса EDT CLI" }
-                logger.debug { "Используется кодировка консоли: $consoleEncoding" }
+    fun initialize(): Boolean {
+        processStatus = ProcessStatus.STARTED
+        try {
+            logger.debug { "Инициализация интерактивного процесса EDT CLI" }
+            logger.debug { "Используется кодировка консоли: $consoleEncoding" }
 
-                // Инициализируем потоки ввода-вывода
-                isRunning.set(true)
+            // Инициализируем потоки ввода-вывода
+            isRunning.set(true)
 
-                // Ждем появления приглашения командной строки
-                logger.debug { "Ожидание инициализации приложения, ожидание приглашения." }
-                val promptFound = waitForPrompt(params.promptTimeoutMs)
-                if (!promptFound) {
-                    logger.warn { "Приглашение командной строки не найдено в течение ${params.promptTimeoutMs}ms" }
-                    stopProcess()
-                    return@withContext false
-                }
-
-                logger.info { "Интерактивный процесс EDT CLI успешно инициализирован" }
-                processStatus = ProcessStatus.COMMAND_WAIT
-                true
-            } catch (e: Exception) {
-                logger.error(e) { "Ошибка при инициализации интерактивного процесса" }
+            // Ждем появления приглашения командной строки
+            logger.debug { "Ожидание инициализации приложения, ожидание приглашения." }
+            val promptFound = waitForPrompt(params.promptTimeoutMs)
+            if (!promptFound) {
+                logger.warn { "Приглашение командной строки не найдено в течение ${params.promptTimeoutMs}ms" }
                 stopProcess()
-                false
+                return false
             }
+
+            logger.info { "Интерактивный процесс EDT CLI успешно инициализирован" }
+            processStatus = ProcessStatus.COMMAND_WAIT
+            return true
+        } catch (e: Exception) {
+            logger.error(e) { "Ошибка при инициализации интерактивного процесса" }
+            stopProcess()
+            return false
         }
+    }
 
     /**
      * Читает данные из потока с проверкой prompt
      */
-    private suspend fun readStreamData(timeoutMs: Long): String =
-        withContext(Dispatchers.IO) {
-            val startTime = System.currentTimeMillis()
-            val output = StringBuilder()
-            val byteBuffer = ByteArray(1024)
+    private fun readStreamData(timeoutMs: Long): String {
+        val startTime = System.currentTimeMillis()
+        val output = StringBuilder()
+        val byteBuffer = ByteArray(1024)
 
-            while (System.currentTimeMillis() - startTime < timeoutMs) {
-                // Проверяем, не завершился ли процесс
-                if (!isProcessActive()) {
-                    logger.warn { "Процесс завершился во время чтения данных" }
-                    break
-                }
-
-                val available = process!!.inputStream.available()
-                if (available > 0) {
-                    val readed = process!!.inputStream.read(byteBuffer)
-                    output.append(String(byteBuffer, 0, readed, charset(consoleEncoding)))
-
-                    // Проверяем prompt если нужно
-                    if (output.contains(params.promptPattern)) {
-                        val currentOutput = output.toString()
-                        val promptCount = currentOutput.split(params.promptPattern).size - 1
-                        logger.debug { "Найдено приглашений: $promptCount" }
-                        logger.info {
-                            "Приглашение EDT: '${params.promptPattern}', " +
-                                "последние $PROMPT_LOG_OUTPUT_LENGTH символов: " +
-                                "${currentOutput.takeLast(PROMPT_LOG_OUTPUT_LENGTH)}"
-                        }
-                        return@withContext currentOutput
-                    }
-                }
-
-                // Проверяем stderr на наличие ошибок
-                while (process!!.errorStream.available() > 0) {
-                    val char = process!!.errorStream.read().toChar()
-                    output.append("ERROR: $char")
-                    logger.debug { "STDERR: $char" }
-                }
-
-                kotlinx.coroutines.delay(params.readDelayMs)
+        while (System.currentTimeMillis() - startTime < timeoutMs) {
+            // Проверяем, не завершился ли процесс
+            if (!isProcessActive()) {
+                logger.warn { "Процесс завершился во время чтения данных" }
+                break
             }
 
-            throw TimeoutException()
+            val available = process!!.inputStream.available()
+            if (available > 0) {
+                val readed = process!!.inputStream.read(byteBuffer)
+                output.append(String(byteBuffer, 0, readed, charset(consoleEncoding)))
+
+                // Проверяем prompt если нужно
+                if (output.contains(params.promptPattern)) {
+                    val currentOutput = output.toString()
+                    val promptCount = currentOutput.split(params.promptPattern).size - 1
+                    logger.debug { "Найдено приглашений: $promptCount" }
+                    logger.info {
+                        "Приглашение EDT: '${params.promptPattern}', последние $PROMPT_LOG_OUTPUT_LENGTH символов: ${currentOutput.takeLast(
+                            PROMPT_LOG_OUTPUT_LENGTH,
+                        )}"
+                    }
+                    return currentOutput
+                }
+            }
+
+            // Проверяем stderr на наличие ошибок
+            while (process!!.errorStream.available() > 0) {
+                val char = process!!.errorStream.read().toChar()
+                output.append("ERROR: $char")
+                logger.debug { "STDERR: $char" }
+            }
+
+            Thread.sleep(params.readDelayMs)
         }
+
+        throw TimeoutException()
+    }
 
     /**
      * Ожидает появления приглашения командной строки
      */
-    private suspend fun waitForPrompt(timeoutMs: Long): Boolean =
-        withContext(Dispatchers.IO) {
-            // Инициализируем потоки один раз
-            processWriter = BufferedWriter(OutputStreamWriter(process!!.outputStream, consoleEncoding))
-            errorReader = BufferedReader(InputStreamReader(process!!.errorStream, consoleEncoding))
+    private fun waitForPrompt(timeoutMs: Long): Boolean {
+        // Инициализируем потоки один раз
+        processWriter = BufferedWriter(OutputStreamWriter(process!!.outputStream, consoleEncoding))
+        errorReader = BufferedReader(InputStreamReader(process!!.errorStream, consoleEncoding))
 
-            try {
-                readStreamData(timeoutMs)
-                return@withContext true
-            } catch (_: TimeoutException) {
-                logger.warn { "Таймаут ожидания приглашения." }
-                false
-            }
+        try {
+            readStreamData(timeoutMs)
+            return true
+        } catch (_: TimeoutException) {
+            logger.warn { "Таймаут ожидания приглашения." }
+            return false
         }
+    }
 
     /**
      * Выполняет команду в интерактивном процессе
      */
-    suspend fun executeCommand(
+    fun executeCommand(
         command: String,
         timeoutMs: Long? = null,
-    ): CommandResult =
-        withContext(Dispatchers.IO) {
-            if (!isProcessActive()) {
-                return@withContext CommandResult(
-                    success = false,
-                    output = "",
-                    error = "Процесс не запущен или завершен",
-                    duration = (System.currentTimeMillis() - startTime).toDuration(DurationUnit.MILLISECONDS),
-                    command = command,
-                )
-            }
-
-            val commandStartTime = System.currentTimeMillis()
-            val actualTimeout = timeoutMs ?: params.commandTimeoutMs
-
-            try {
-                sendCommand(command)
-
-                // Читаем ответ до следующего приглашения
-                val (output, duration) = measureTimedValue { readStreamData(actualTimeout) }
-
-                CommandResult(
-                    success = true,
-                    output = output.replace(params.promptPattern, "").trim(),
-                    error = null,
-                    duration = duration,
-                    command = command,
-                )
-            } catch (e: Exception) {
-                val duration = (System.currentTimeMillis() - commandStartTime).toDuration(DurationUnit.MILLISECONDS)
-                logger.error(e) { "Ошибка при выполнении команды: $command" }
-
-                CommandResult(
-                    success = false,
-                    output = "",
-                    error = e.message ?: "Unknown error",
-                    duration = duration,
-                    command = command,
-                )
-            }
+    ): CommandResult {
+        if (!isProcessActive()) {
+            return CommandResult(
+                success = false,
+                output = "",
+                error = "Процесс не запущен или завершен",
+                duration = (System.currentTimeMillis() - startTime).toDuration(DurationUnit.MILLISECONDS),
+                command = command,
+            )
         }
+
+        val commandStartTime = System.currentTimeMillis()
+        val actualTimeout = timeoutMs ?: params.commandTimeoutMs
+
+        try {
+            sendCommand(command)
+
+            // Читаем ответ до следующего приглашения
+            val (output, duration) = measureTimedValue { readStreamData(actualTimeout) }
+
+            return CommandResult(
+                success = true,
+                output = output.replace(params.promptPattern, "").trim(),
+                error = null,
+                duration = duration,
+                command = command,
+            )
+        } catch (e: Exception) {
+            val duration = (System.currentTimeMillis() - commandStartTime).toDuration(DurationUnit.MILLISECONDS)
+            logger.error(e) { "Ошибка при выполнении команды: $command" }
+
+            return CommandResult(
+                success = false,
+                output = "",
+                error = e.message ?: "Unknown error",
+                duration = duration,
+                command = command,
+            )
+        }
+    }
 
     /**
      * Отправляет команду exit для корректного завершения
      */
-    suspend fun exit(): Boolean =
-        withContext(Dispatchers.IO) {
-            try {
-                logger.debug { "Отправка команды exit для корректного завершения" }
-                executeCommand("exit --yes", DEFAULT_EXIT_TIMEOUT)
+    fun exit(): Boolean =
+        try {
+            logger.debug { "Отправка команды exit для корректного завершения" }
+            executeCommand("exit --yes", DEFAULT_EXIT_TIMEOUT)
 
-                // Даем процессу время на корректное завершение
-                kotlinx.coroutines.delay(params.exitDelayMs)
+            // Даем процессу время на корректное завершение
+            Thread.sleep(params.exitDelayMs)
 
-                stopProcess()
-                true
-            } catch (e: Exception) {
-                logger.error(e) { "Ошибка при отправке команды exit" }
-                stopProcess()
-                false
-            }
+            stopProcess()
+            true
+        } catch (e: Exception) {
+            logger.error(e) { "Ошибка при отправке команды exit" }
+            stopProcess()
+            false
         }
 
     /**

@@ -6,7 +6,7 @@ import java.nio.file.Path
 /**
  * Команда ApplyCfg с DSL функциональностью
  */
-class ApplyCfgCommand : ConfiguratorCommand() {
+class ApplyCfgCommand : DesignerCommand() {
     override val name: String = "ApplyCfg"
     override val description: String = "Применение конфигурации"
 

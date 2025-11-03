@@ -1,8 +1,8 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.designer
 
 import io.github.alkoleft.mcp.core.modules.UtilityType
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.BasePlatformContext
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilityContext
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.V8Context
 
 /**
  * Контекст для работы с конфигуратором 1С
@@ -11,9 +11,9 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtility
  */
 class DesignerContext(
     platformContext: PlatformUtilityContext,
-) : BasePlatformContext(platformContext) {
+) : V8Context(platformContext) {
     /**
      * Строит базовые аргументы для команд конфигуратора
      */
-    suspend fun buildBaseArgs(): List<String> = buildCommonArgs(UtilityType.DESIGNER, "DESIGNER")
+    override fun buildBaseArgs(): List<String> = buildCommonArgs(UtilityType.DESIGNER, "DESIGNER")
 }

@@ -24,23 +24,22 @@ class LauncherService(
     private val edtSourceSet: SourceSet = createEdtSourceSet()
     private val designerSourceSet: SourceSet = createDesignerSourceSet()
 
-    suspend fun run(request: TestExecutionRequest): TestExecutionResult {
+    fun run(request: TestExecutionRequest): TestExecutionResult {
         val buildResult = build()
         if (!buildResult.success) {
-            val reason = if (buildResult.errors.isNotEmpty()) buildResult.errors.joinToString("; ") else "Build failed"
+            val reason = if (buildResult.errors.isNotEmpty()) buildResult.errors.joinToString("; ") else "Сборка не удалась"
             throw TestExecutionError.BuildFailed(reason)
         }
         return actionFactory.createRunTestAction().run(request)
     }
 
-    suspend fun build(): BuildResult {
+    fun build(): BuildResult {
         val changeAnalyzer = actionFactory.createChangeAnalysisAction()
         val changes = changeAnalyzer.run(properties)
         if (!changes.hasChanges) {
             logger.info { "Исходные файлы не изменены. Обновление базы пропущено" }
             return BuildResult(
                 success = true,
-                configurationBuilt = false,
                 errors = emptyList(),
                 duration = Duration.ZERO,
                 sourceSet = emptyMap(),
@@ -59,7 +58,6 @@ class LauncherService(
                 logger.error { "Ошибки конвертации исходников EDT: ${convertResult.errors.joinToString()}" }
                 return BuildResult(
                     success = false,
-                    configurationBuilt = false,
                     errors = convertResult.errors,
                     duration = Duration.ZERO,
                     sourceSet = emptyMap(),
@@ -85,7 +83,6 @@ class LauncherService(
         } else {
             BuildResult(
                 success = false,
-                configurationBuilt = result.configurationBuilt,
                 errors = errors.ifEmpty { result.errors },
                 duration = result.duration,
                 sourceSet = result.sourceSet,
@@ -93,7 +90,7 @@ class LauncherService(
         }
     }
 
-    private suspend fun convertSources(
+    private fun convertSources(
         changedSourceSets: SourceSet,
         destination: SourceSet,
     ): ConvertResult =
@@ -103,7 +100,7 @@ class LauncherService(
             destination,
         )
 
-    private suspend fun updateIB(changedSourceSets: SourceSet): BuildResult {
+    private fun updateIB(changedSourceSets: SourceSet): BuildResult {
         val builder = actionFactory.createBuildAction(properties.tools.builder)
         return builder.run(
             properties,

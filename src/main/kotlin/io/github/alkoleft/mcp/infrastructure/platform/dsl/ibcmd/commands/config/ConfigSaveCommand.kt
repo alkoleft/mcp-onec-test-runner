@@ -1,6 +1,7 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.config
 
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.IbcmdCommand
+import java.nio.file.Path
 
 /**
  * 2. save — Выгрузка конфигурации
@@ -21,7 +22,7 @@ data class ConfigSaveCommand(
     /**
      * Путь к файлу конфигурации
      */
-    val path: String,
+    val path: Path,
 ) : IbcmdCommand {
     override val mode: String = "config"
     override val subCommand: String = "save"
@@ -33,7 +34,7 @@ data class ConfigSaveCommand(
 
             extension?.let { args.addAll(listOf("--extension", it)) }
             if (db) args.add("--db")
-            args.add(path)
+            args.add(path.toString())
 
             return args
         }

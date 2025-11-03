@@ -14,7 +14,7 @@ import java.nio.file.Path
  * (и наоборот) не поддерживается.
  */
 class LoadConfigFromFilesCommand :
-    ConfiguratorCommand(),
+    DesignerCommand(),
     UpdateDBCfgSupport {
     override val name: String = "LoadConfigFromFiles"
     override val description: String = "Загрузка конфигурации из файлов"

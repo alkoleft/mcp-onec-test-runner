@@ -4,15 +4,9 @@ import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import org.mapdb.DB
 import org.mapdb.DBMaker
 import org.mapdb.Serializer
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.nio.file.Files
 import java.nio.file.Path
@@ -26,11 +20,8 @@ private val logger = KotlinLogging.logger { }
 
 @Component
 class MapDbHashStorage(
-    private val properties: ApplicationProperties,
-    @Value("\${spring.application.name}") private val applicationName: String,
+    properties: ApplicationProperties,
 ) {
-    private val mutex = Mutex()
-
     private lateinit var db: DB
     private lateinit var hashMap: ConcurrentMap<String, String>
     private lateinit var timestampMap: ConcurrentMap<String, Long>
@@ -79,223 +70,183 @@ class MapDbHashStorage(
 
     fun isEmpty() = hashMap.isEmpty() || timestampMap.isEmpty()
 
-    suspend fun getHash(file: Path): String? =
-        withContext(Dispatchers.IO) {
-            mutex.withLock {
-                try {
-                    val key = normalizeKey(file)
-                    hashMap[key]
-                } catch (e: Exception) {
-                    logger.debug(e) { "Failed to get hash for file: $file" }
-                    null
-                }
-            }
+    fun getHash(file: Path): String? =
+        try {
+            val key = normalizeKey(file)
+            hashMap[key]
+        } catch (e: Exception) {
+            logger.debug(e) { "Failed to get hash for file: $file" }
+            null
         }
 
-    suspend fun storeHash(
+    fun storeHash(
         file: Path,
         hash: String,
-    ) = withContext(Dispatchers.IO) {
-        mutex.withLock {
-            try {
+    ) = try {
+        val key = normalizeKey(file)
+        val timestamp = Files.getLastModifiedTime(file).toMillis()
+
+        hashMap[key] = hash
+        timestampMap[key] = timestamp
+
+        db.commit()
+
+        logger.debug { "Stored hash for file: $file" }
+    } catch (e: Exception) {
+        logger.error(e) { "Failed to store hash for file: $file" }
+        db.rollback()
+        throw e
+    }
+
+    fun batchUpdate(updates: Map<Path, String>) {
+        if (updates.isEmpty()) return
+        try {
+            logger.debug { "Starting batch update for ${updates.size} files" }
+
+            for ((file, hash) in updates) {
                 val key = normalizeKey(file)
-                val timestamp = Files.getLastModifiedTime(file).toMillis()
+                val timestamp =
+                    if (Files.exists(file)) {
+                        Files.getLastModifiedTime(file).toMillis()
+                    } else {
+                        System.currentTimeMillis()
+                    }
 
                 hashMap[key] = hash
                 timestampMap[key] = timestamp
-
-                db.commit()
-
-                logger.debug { "Stored hash for file: $file" }
-            } catch (e: Exception) {
-                logger.error(e) { "Failed to store hash for file: $file" }
-                db.rollback()
-                throw e
             }
+
+            db.commit()
+
+            logger.info { "Batch updated ${updates.size} file hashes" }
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to batch update file hashes" }
+            db.rollback()
+            throw e
         }
     }
 
-    suspend fun batchUpdate(updates: Map<Path, String>) =
-        withContext(Dispatchers.IO) {
-            if (updates.isEmpty()) return@withContext
+    fun removeHash(file: Path) =
+        try {
+            val key = normalizeKey(file)
 
-            mutex.withLock {
-                try {
-                    logger.debug { "Starting batch update for ${updates.size} files" }
+            hashMap.remove(key)
+            timestampMap.remove(key)
 
-                    for ((file, hash) in updates) {
-                        val key = normalizeKey(file)
-                        val timestamp =
-                            if (Files.exists(file)) {
-                                Files.getLastModifiedTime(file).toMillis()
-                            } else {
-                                System.currentTimeMillis()
-                            }
+            db.commit()
 
-                        hashMap[key] = hash
-                        timestampMap[key] = timestamp
-                    }
-
-                    db.commit()
-
-                    logger.info { "Batch updated ${updates.size} file hashes" }
-                } catch (e: Exception) {
-                    logger.error(e) { "Failed to batch update file hashes" }
-                    db.rollback()
-                    throw e
-                }
-            }
+            logger.debug { "Removed hash for file: $file" }
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to remove hash for file: $file" }
+            db.rollback()
+            throw e
         }
 
-    suspend fun removeHash(file: Path) =
-        withContext(Dispatchers.IO) {
-            mutex.withLock {
-                try {
-                    val key = normalizeKey(file)
-
-                    hashMap.remove(key)
-                    timestampMap.remove(key)
-
-                    db.commit()
-
-                    logger.debug { "Removed hash for file: $file" }
-                } catch (e: Exception) {
-                    logger.error(e) { "Failed to remove hash for file: $file" }
-                    db.rollback()
-                    throw e
-                }
-            }
-        }
-
-    suspend fun getAllHashes(): Map<String, String> =
-        withContext(Dispatchers.IO) {
-            mutex.withLock {
-                try {
-                    HashMap(hashMap)
-                } catch (e: Exception) {
-                    logger.error(e) { "Failed to get all hashes" }
-                    emptyMap()
-                }
-            }
+    fun getAllHashes(): Map<String, String> =
+        try {
+            HashMap(hashMap)
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to get all hashes" }
+            emptyMap()
         }
 
     /**
      * Gets the stored timestamp for a file
      */
-    suspend fun getTimestamp(file: Path): Long? =
-        withContext(Dispatchers.IO) {
-            mutex.withLock {
-                try {
-                    val key = normalizeKey(file)
-                    timestampMap[key]
-                } catch (e: Exception) {
-                    logger.debug(e) { "Failed to get timestamp for file: $file" }
-                    null
-                }
-            }
+    fun getTimestamp(file: Path): Long? =
+        try {
+            val key = normalizeKey(file)
+            timestampMap[key]
+        } catch (e: Exception) {
+            logger.debug(e) { "Failed to get timestamp for file: $file" }
+            null
         }
 
     /**
      * Stores the timestamp for a file
      */
-    suspend fun storeTimestamp(
+    fun storeTimestamp(
         file: Path,
         timestamp: Long,
-    ) = withContext(Dispatchers.IO) {
-        mutex.withLock {
-            try {
-                val key = normalizeKey(file)
-                timestampMap[key] = timestamp
-                db.commit()
+    ) = try {
+        val key = normalizeKey(file)
+        timestampMap[key] = timestamp
+        db.commit()
 
-                logger.debug { "Stored timestamp for file: $file" }
-            } catch (e: Exception) {
-                logger.error(e) { "Failed to store timestamp for file: $file" }
-                db.rollback()
-                throw e
-            }
-        }
+        logger.debug { "Stored timestamp for file: $file" }
+    } catch (e: Exception) {
+        logger.error(e) { "Failed to store timestamp for file: $file" }
+        db.rollback()
+        throw e
     }
 
     /**
      * Gets statistics about the hash storage
      */
-    suspend fun getStorageStats(): HashStorageStats =
-        withContext(Dispatchers.IO) {
-            mutex.withLock {
-                try {
-                    HashStorageStats(
-                        totalFiles = hashMap.size,
-                        dbSizeBytes = Files.size(dbPath),
-                        oldestTimestamp = timestampMap.values.minOrNull(),
-                        newestTimestamp = timestampMap.values.maxOrNull(),
-                    )
-                } catch (e: Exception) {
-                    logger.error(e) { "Failed to get storage stats" }
-                    HashStorageStats(0, 0, null, null)
-                }
-            }
+    fun getStorageStats(): HashStorageStats =
+        try {
+            HashStorageStats(
+                totalFiles = hashMap.size,
+                dbSizeBytes = Files.size(dbPath),
+                oldestTimestamp = timestampMap.values.minOrNull(),
+                newestTimestamp = timestampMap.values.maxOrNull(),
+            )
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to get storage stats" }
+            HashStorageStats(0, 0, null, null)
         }
 
     /**
      * Performs cleanup of old entries beyond the specified retention period
      */
-    suspend fun cleanup(retentionDays: Int = 30) =
-        withContext(Dispatchers.IO) {
-            mutex.withLock {
-                try {
-                    val cutoffTime = System.currentTimeMillis() - (retentionDays * 24 * 60 * 60 * 1000L)
-                    val keysToRemove = mutableListOf<String>()
+    fun cleanup(retentionDays: Int = 30) {
+        try {
+            val cutoffTime = System.currentTimeMillis() - (retentionDays * 24 * 60 * 60 * 1000L)
+            val keysToRemove = mutableListOf<String>()
 
-                    for ((key, timestamp) in timestampMap) {
-                        if (timestamp < cutoffTime) {
-                            keysToRemove.add(key)
-                        }
-                    }
-
-                    for (key in keysToRemove) {
-                        hashMap.remove(key)
-                        timestampMap.remove(key)
-                    }
-
-                    db.commit()
-
-                    logger.info { "Cleaned up ${keysToRemove.size} old hash entries (retention: $retentionDays days)" }
-                } catch (e: Exception) {
-                    logger.error(e) { "Failed to cleanup old hash entries" }
-                    db.rollback()
+            for ((key, timestamp) in timestampMap) {
+                if (timestamp < cutoffTime) {
+                    keysToRemove.add(key)
                 }
             }
+
+            for (key in keysToRemove) {
+                hashMap.remove(key)
+                timestampMap.remove(key)
+            }
+
+            db.commit()
+
+            logger.info { "Cleaned up ${keysToRemove.size} old hash entries (retention: $retentionDays days)" }
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to cleanup old hash entries" }
+            db.rollback()
         }
+    }
 
     /**
      * Normalizes file path to a consistent string key
      */
     private fun normalizeKey(file: Path): String = file.toAbsolutePath().normalize().toString()
 
-    suspend fun close() =
-        withContext(Dispatchers.IO) {
-            mutex.withLock {
-                try {
-                    logger.info { "Closing MapDB hash storage" }
+    fun close() {
+        try {
+            logger.info { "Closing MapDB hash storage" }
 
-                    if (::db.isInitialized && !db.isClosed()) {
-                        db.commit()
-                        db.close()
-                    }
-
-                    logger.info { "MapDB hash storage closed successfully" }
-                } catch (e: Exception) {
-                    logger.error(e) { "Error closing MapDB hash storage" }
-                }
+            if (::db.isInitialized && !db.isClosed()) {
+                db.commit()
+                db.close()
             }
+
+            logger.info { "MapDB hash storage closed successfully" }
+        } catch (e: Exception) {
+            logger.error(e) { "Error closing MapDB hash storage" }
         }
+    }
 
     @PreDestroy
     private fun destroy() {
-        runBlocking {
-            close()
-        }
+        close()
     }
 }
 

@@ -12,7 +12,7 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.SessionTerminat
  *
  * Обновление конфигурации в информационной базе.
  */
-class UpdateDBCfgCommand : ConfiguratorCommand() {
+class UpdateDBCfgCommand : DesignerCommand() {
     override val name: String = "UpdateDBCfg"
     override val description: String = "Обновление конфигурации в информационной базе"
 

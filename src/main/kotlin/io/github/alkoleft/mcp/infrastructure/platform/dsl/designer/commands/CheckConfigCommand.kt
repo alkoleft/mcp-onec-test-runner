@@ -3,7 +3,7 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands
 /**
  * Команда CheckConfig с DSL функциональностью
  */
-class CheckConfigCommand : ConfiguratorCommand() {
+class CheckConfigCommand : DesignerCommand() {
     override val name: String = "CheckConfig"
     override val description: String = "Централизованная проверка конфигурации"
 

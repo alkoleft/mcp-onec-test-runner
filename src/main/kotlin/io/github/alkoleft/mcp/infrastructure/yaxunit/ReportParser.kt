@@ -7,8 +7,6 @@ import io.github.alkoleft.mcp.core.modules.ReportFormat
 import io.github.alkoleft.mcp.core.modules.TestMetadata
 import io.github.alkoleft.mcp.core.modules.TestStatus
 import io.github.alkoleft.mcp.core.modules.TestSummary
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Component
 import org.w3c.dom.Element
 import java.io.InputStream
@@ -23,29 +21,27 @@ import kotlin.time.toDuration
  */
 @Component
 class ReportParser {
-    suspend fun parseReport(
+    fun parseReport(
         input: InputStream,
         format: ReportFormat,
-    ): GenericTestReport =
-        withContext(Dispatchers.IO) {
-            require(format == ReportFormat.JUNIT_XML) { "Only JUNIT_XML format is supported" }
-            parseJUnitXml(input)
-        }
+    ): GenericTestReport {
+        require(format == ReportFormat.JUNIT_XML) { "Only JUNIT_XML format is supported" }
+        return parseJUnitXml(input)
+    }
 
-    suspend fun detectFormat(input: InputStream): ReportFormat =
-        withContext(Dispatchers.IO) {
-            val bytes = input.readAllBytes()
-            val content = String(bytes)
-            if (content
-                    .trim()
-                    .startsWith("<?xml") &&
-                content.contains("testsuite")
-            ) {
-                ReportFormat.JUNIT_XML
-            } else {
-                ReportFormat.JUNIT_XML
-            }
+    fun detectFormat(input: InputStream): ReportFormat {
+        val bytes = input.readAllBytes()
+        val content = String(bytes)
+        if (content
+                .trim()
+                .startsWith("<?xml") &&
+            content.contains("testsuite")
+        ) {
+            return ReportFormat.JUNIT_XML
+        } else {
+            return ReportFormat.JUNIT_XML
         }
+    }
 
     fun getSupportedFormats(): Set<ReportFormat> = setOf(ReportFormat.JUNIT_XML)
 
@@ -145,6 +141,7 @@ class ReportParser {
                 TestStatus.ERROR ->
                     (element.getElementsByTagName("error").item(0) as? Element)?.getAttribute("message")
                         ?: (element.getElementsByTagName("error").item(0) as? Element)?.textContent
+
                 else -> null
             }
 

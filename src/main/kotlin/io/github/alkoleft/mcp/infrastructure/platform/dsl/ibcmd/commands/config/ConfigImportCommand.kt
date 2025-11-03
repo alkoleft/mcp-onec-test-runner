@@ -1,6 +1,7 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.config
 
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.IbcmdCommand
+import java.nio.file.Path
 
 /**
  * 8. import — Импорт конфигурации из XML
@@ -13,11 +14,6 @@ class ConfigImportCommand(
      * Подкоманда импорта (files, all-extensions)
      */
     var importSubCommand: String? = null,
-    /**
-     * Файл для записи конфигурации
-     * --out=<file>, -o <file>
-     */
-    var out: String? = null,
     /**
      * Имя расширения
      * --extension=<extension>, -e <extension>
@@ -46,24 +42,22 @@ class ConfigImportCommand(
     /**
      * Путь к каталогу или архиву XML
      */
-    val path: String,
+    val path: Path,
 ) : IbcmdCommand {
-    override val mode: String = "config"
+    override val mode: String = "infobase config"
     override val subCommand: String = "import" + (importSubCommand?.let { " $it" } ?: "")
-    override val commandName: String = "config import" + (importSubCommand?.let { " $it" } ?: "")
+    override val commandName: String = "$mode $subCommand"
 
     override val arguments: List<String>
         get() {
             val args = mutableListOf<String>()
 
-            importSubCommand?.let { args.add(it) }
-            out?.let { args.addAll(listOf("--out", it)) }
             extension?.let { args.addAll(listOf("--extension", it)) }
             baseDir?.let { args.addAll(listOf("--base-dir", it)) }
             archivePath?.let { args.addAll(listOf("--archive", it)) }
             if (noCheck) args.add("--no-check")
             if (partial) args.add("--partial")
-            args.add(path)
+            args.add(path.toString())
             return args
         }
 
@@ -72,7 +66,6 @@ class ConfigImportCommand(
 
         importSubCommand?.let { details.add("подкоманда: $it") }
         extension?.let { details.add("расширение: $it") }
-        out?.let { details.add("файл записи: $it") }
         archivePath?.let { details.add("архив: $it") }
         if (noCheck) details.add("без проверки")
         if (partial) details.add("частичный импорт")

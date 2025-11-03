@@ -8,16 +8,16 @@ import java.nio.file.Path
  * Build state management
  */
 interface BuildStateManager {
-    suspend fun checkChanges(properties: ApplicationProperties): ChangesSet
+    fun checkChanges(properties: ApplicationProperties): ChangesSet
 
-    suspend fun updateHashes(files: Map<Path, String>)
+    fun updateHashes(files: Map<Path, String>)
 }
 
 /**
  * YAXUnit test runner
  */
 interface YaXUnitRunner {
-    suspend fun executeTests(
+    fun executeTests(
         utilityLocation: UtilityLocation,
         request: TestExecutionRequest,
     ): YaXUnitExecutionResult

@@ -6,6 +6,7 @@
 
 # Базовые настройки приложения
 app:
+  id: test
   # Базовый путь к проекту
   base-path: "~/Загрузки/sources/"
 
@@ -40,3 +41,8 @@ app:
   tools:
     # Тип сборщика: DESIGNER или IBMCMD
     builder: DESIGNER
+
+logging:
+  level:
+    root: INFO
+    io.github.alkoleft: DEBUG

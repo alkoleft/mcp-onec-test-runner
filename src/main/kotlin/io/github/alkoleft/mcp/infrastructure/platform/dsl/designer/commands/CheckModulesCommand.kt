@@ -3,7 +3,7 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands
 /**
  * Команда CheckModules с DSL функциональностью
  */
-class CheckModulesCommand : ConfiguratorCommand() {
+class CheckModulesCommand : DesignerCommand() {
     override val name: String = "CheckModules"
     override val description: String = "Проверка модулей конфигурации"
 

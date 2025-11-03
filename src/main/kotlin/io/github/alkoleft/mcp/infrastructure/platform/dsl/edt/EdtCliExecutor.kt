@@ -34,7 +34,7 @@ class EdtCliExecutor(
     /**
      * Выполняет произвольную команду
      */
-    override suspend fun execute(commandArgs: List<String>): EdtCommandResult {
+    override fun execute(commandArgs: List<String>): EdtCommandResult {
         val command = commandArgs.joinToString(" ")
         logger.debug { "Выполнение команды $command" }
         return processCommandResult(interactiveExecutor.executeCommand(command, 600000))
@@ -43,7 +43,7 @@ class EdtCliExecutor(
     /**
      * Корректно завершает сессию EDT CLI
      */
-    suspend fun exit(): Boolean {
+    fun exit(): Boolean {
         logger.debug { "Завершение сессии EDT CLI" }
         return interactiveExecutor.exit()
     }

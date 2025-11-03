@@ -6,7 +6,14 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.common
 enum class DynamicMode(
     val value: String,
 ) {
+    /**
+     * Включить динамическое обновление
+     */
     PLUS("+"),
+
+    /**
+     * Выключить динамическое обновление
+     */
     MINUS("-"),
 }
 
@@ -16,7 +23,14 @@ enum class DynamicMode(
 enum class SessionTerminateMode(
     val value: String,
 ) {
+    /**
+     * Не завершать активные сеансы
+     */
     DISABLE("disable"),
+
+    /**
+     * Принудительно завершить активные сеансы
+     */
     FORCE("force"),
 }
 

@@ -125,7 +125,7 @@ class EdtCliStartService(
                 logger.info { "Инициализация процесса EDT CLI" }
 
                 // Проверяем наличие исполняемого файла EDT
-                val executablePath = utilityContext.locateUtilitySync(UtilityType.EDT_CLI).executablePath
+                val executablePath = utilityContext.locateUtility(UtilityType.EDT_CLI).executablePath
                 if (!executablePath.toFile().exists()) {
                     logger.error { "Исполняемый файл EDT не найден: $executablePath" }
                     return@withContext null
