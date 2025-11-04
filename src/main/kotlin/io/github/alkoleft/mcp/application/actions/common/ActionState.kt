@@ -19,14 +19,27 @@
  * along with METR.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.github.alkoleft.mcp.application.actions
+package io.github.alkoleft.mcp.application.actions.common
 
+import io.github.alkoleft.mcp.application.actions.ActionStepResult
 import io.github.alkoleft.mcp.core.modules.ShellCommandResult
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
+
+abstract class ActionState {
+    var success: Boolean = true
+    val steps: MutableList<ActionStepResult> = mutableListOf()
+}
 
 fun ShellCommandResult.toActionStepResult(description: String) =
     ActionStepResult(
         description + if (success) ": успешно" else ": неудачно",
         success,
-        error,
+        fullError(),
         duration,
     )
+
+fun ShellCommandResult.fullError() =
+    when {
+        this is ProcessResult && output.isNotEmpty() -> "$error\n$output"
+        else -> error
+    }

@@ -53,14 +53,15 @@ interface ConvertAction {
  * Интерфейс для анализа изменений в проекте
  */
 interface ChangeAnalysisAction {
-    fun run(properties: ApplicationProperties): ChangeAnalysisResult
+    fun run(): ChangeAnalysisResult
 
     /**
      * Сохраняет состояние source set для инкрементальной сборки
      */
     fun saveSourceSetState(
-        properties: ApplicationProperties,
         sourceSetChanges: SourceSetChanges,
+        timeStamp: Long,
+        success: Boolean,
     ): Boolean
 }
 
@@ -81,7 +82,7 @@ interface ActionResult {
 data class ActionStepResult(
     val message: String,
     val success: Boolean,
-    val error: String?,
+    val error: String? = null,
     val duration: Duration,
 )
 
@@ -116,4 +117,6 @@ data class ChangeAnalysisResult(
     val changedFiles: Set<Path> = emptySet(),
     val changeTypes: ChangesSet = emptyMap(),
     val sourceSetChanges: Map<String, SourceSetChanges> = emptyMap(),
+    val steps: List<ActionStepResult>,
+    val timestamp: Long,
 )

@@ -26,7 +26,6 @@ import io.github.alkoleft.mcp.application.actions.exceptions.TestExecuteExceptio
 import io.github.alkoleft.mcp.core.modules.GenericTestReport
 import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
 import io.github.alkoleft.mcp.core.modules.TestExecutionResult
-import io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult
 import io.github.alkoleft.mcp.infrastructure.yaxunit.ReportParser
 import io.github.alkoleft.mcp.infrastructure.yaxunit.YaXUnitRunner
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -89,13 +88,10 @@ class YaXUnitTestAction(
                 logger.debug { "Парсинг отчета о тестах из: ${executionResult.reportPath}" }
 
                 val inputStream = Files.newInputStream(executionResult.reportPath)
-                val format = reportParser.detectFormat(inputStream)
                 inputStream.close()
 
-                logger.debug { "Обнаружен формат отчета: $format" }
-
                 val reportInputStream = Files.newInputStream(executionResult.reportPath)
-                val report = reportParser.parseReport(reportInputStream, format)
+                val report = reportParser.parseReport(reportInputStream)
 
                 logger.info { "Отчет о тестах успешно проанализирован: ${report.summary.totalTests} тестов" }
                 report

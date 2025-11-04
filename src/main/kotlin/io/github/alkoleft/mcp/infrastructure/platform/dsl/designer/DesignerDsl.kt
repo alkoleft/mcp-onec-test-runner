@@ -21,7 +21,6 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.designer
 
-import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.V8Dsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.ApplyCfgCommand
@@ -36,6 +35,7 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.Dump
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.LoadCfgCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.LoadConfigFromFilesCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.UpdateDBCfgCommand
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 
 /**
  * DSL для работы с конфигуратором 1С:Предприятие
@@ -72,5 +72,5 @@ class DesignerDsl(
     private fun <C : DesignerCommand> configureAndExecute(
         command: C,
         configure: ((C.() -> Unit)?),
-    ): ShellCommandResult = executeCommand(command.also { if (configure != null) it.configure() }, generateLogFilePath())
+    ): ProcessResult = executeCommand(command.also { if (configure != null) it.configure() }, generateLogFilePath())
 }

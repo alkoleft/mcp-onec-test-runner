@@ -112,7 +112,7 @@ class ProcessExecutor : CommandExecutor {
         val combinedOutput = StringBuilder()
 
         if (logContent.isNotEmpty()) {
-            combinedOutput.append("=== ЛОГИ 1С ===\n").append(logContent)
+            combinedOutput.append("=== ЛОГ ===\n").append(logContent)
         }
 
         if (includeStdout && streamData.stdout.isNotEmpty()) {

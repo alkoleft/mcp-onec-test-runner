@@ -25,12 +25,9 @@ import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.DesignerDsl
 import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import java.nio.file.Path
-
-private val logger = KotlinLogging.logger { }
 
 /**
  * Реализация BuildAction для сборки через конфигуратор 1С

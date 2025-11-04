@@ -24,7 +24,7 @@ package io.github.alkoleft.mcp.application.actions.convert
 import io.github.alkoleft.mcp.application.actions.ActionStepResult
 import io.github.alkoleft.mcp.application.actions.ConvertAction
 import io.github.alkoleft.mcp.application.actions.ConvertResult
-import io.github.alkoleft.mcp.application.actions.toActionStepResult
+import io.github.alkoleft.mcp.application.actions.common.toActionStepResult
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
 import io.github.alkoleft.mcp.core.modules.ShellCommandResult
@@ -49,12 +49,16 @@ class EdtInteractiveConvertAction(
                     )
                 results[it.name] = result
                 steps.add(result.toActionStepResult("Конвертация ${it.name}"))
+                if (!result.success) {
+                    return@edt
+                }
             }
         }
         return ConvertResult(
             success = results.values.none { !it.success },
             sourceSet = results.toMap(),
             errors = steps.mapNotNull { it.error },
+            steps = steps,
         )
     }
 }

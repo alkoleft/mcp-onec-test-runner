@@ -43,9 +43,8 @@ class ActionFactory(
     private val yaxUnitRunner: YaXUnitRunner,
     private val reportParser: ReportParser,
     private val buildStateManager: FileBuildStateManager,
+    private val sourceSetAnalyzer: SourceSetChangeAnalyzer,
 ) {
-    private val sourceSetAnalyzer: SourceSetChangeAnalyzer = SourceSetChangeAnalyzer()
-
     fun createBuildAction(type: BuilderType): BuildAction =
         when (type) {
             BuilderType.DESIGNER -> DesignerBuildAction(platformDsl)

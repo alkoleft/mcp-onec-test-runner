@@ -21,7 +21,6 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd
 
-import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.Dsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common.CommandBuilder
@@ -34,6 +33,7 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.mobile.
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.mobile.MobileClientExportCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.server.ServerConfigInitCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.session.SessionCommandBuilder
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import java.nio.file.Path
 
 /**
@@ -252,7 +252,7 @@ class IbcmdDsl(
     internal fun <C : IbcmdCommand> configureAndExecute(
         command: C,
         configure: (C.() -> Unit)?,
-    ): ShellCommandResult = executeCommand(command.also { if (configure != null) it.configure() })
+    ): ProcessResult = executeCommand(command.also { if (configure != null) it.configure() })
 
     /**
      * Строит аргументы команды для конфигуратора с произвольными аргументами

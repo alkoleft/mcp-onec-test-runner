@@ -22,7 +22,6 @@
 package io.github.alkoleft.mcp
 
 import io.github.alkoleft.mcp.application.services.LauncherService
-import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -37,10 +36,14 @@ import kotlin.test.Ignore
 @ActiveProfiles("yaxunit-edt")
 class LaunchTest(
     @Autowired private val launcher: LauncherService,
-    @Autowired private val properties: ApplicationProperties,
 ) {
     @Test
     fun launchYaxUnit() {
-        launcher.run(RunModuleTestsRequest("ОМ_ЮТКоллекции", properties))
+        launcher.run(RunModuleTestsRequest("ОМ_ЮТКоллекции"))
+    }
+
+    @Test
+    fun build() {
+        val result = launcher.build()
     }
 }

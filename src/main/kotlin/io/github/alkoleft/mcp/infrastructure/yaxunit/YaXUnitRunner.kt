@@ -22,9 +22,9 @@
 package io.github.alkoleft.mcp.infrastructure.yaxunit
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.alkoleft.mcp.application.actions.test.YaXUnitExecutionResult
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
-import io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
@@ -46,9 +46,8 @@ private val logger = KotlinLogging.logger { }
 class YaXUnitRunner(
     private val platformDsl: PlatformDsl,
     private val applicationProperties: ApplicationProperties,
+    private val objectMapper: ObjectMapper,
 ) {
-    private val objectMapper = ObjectMapper()
-
     fun executeTests(request: TestExecutionRequest): YaXUnitExecutionResult {
         val startTime = Instant.now()
         logger.info { "Запуск выполнения тестов YaXUnit для ${request.javaClass.simpleName}" }

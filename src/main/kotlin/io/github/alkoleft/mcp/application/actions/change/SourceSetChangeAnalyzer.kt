@@ -36,14 +36,13 @@ typealias ChangesSet = Map<Path, Pair<ChangeType, String>>
  * This component works with FileBuildStateManager to provide source set-specific change analysis.
  */
 @Component
-class SourceSetChangeAnalyzer {
+class SourceSetChangeAnalyzer(
+    private val properties: ApplicationProperties,
+) {
     /**
      * Analyzes all changes and groups them by source set with detailed change type information
      */
-    fun analyzeSourceSetChanges(
-        properties: ApplicationProperties,
-        allChanges: ChangesSet,
-    ): Map<String, SourceSetChanges> {
+    fun analyzeSourceSetChanges(allChanges: ChangesSet): Map<String, SourceSetChanges> {
         logger.debug { "Анализ ${allChanges.size} изменений для группировки по source set" }
 
         if (allChanges.isEmpty()) {
@@ -74,7 +73,6 @@ class SourceSetChangeAnalyzer {
                         sourceSetPath = sourceSetPath.toString(),
                         changedFiles = sourceSetFileChanges.keys,
                         changeTypes = sourceSetFileChanges,
-                        hasChanges = true,
                     )
 
                 val changeTypeSummary = sourceSetFileChanges.values.groupingBy { it.first }.eachCount()
@@ -102,5 +100,4 @@ data class SourceSetChanges(
     val sourceSetPath: String,
     val changedFiles: Set<Path>,
     val changeTypes: ChangesSet,
-    val hasChanges: Boolean,
 )

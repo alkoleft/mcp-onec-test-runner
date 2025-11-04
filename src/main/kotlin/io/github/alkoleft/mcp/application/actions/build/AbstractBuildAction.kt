@@ -21,15 +21,15 @@
 
 package io.github.alkoleft.mcp.application.actions.build
 
-import io.github.alkoleft.mcp.application.actions.ActionStepResult
 import io.github.alkoleft.mcp.application.actions.BuildAction
 import io.github.alkoleft.mcp.application.actions.BuildResult
+import io.github.alkoleft.mcp.application.actions.common.ActionState
+import io.github.alkoleft.mcp.application.actions.common.toActionStepResult
 import io.github.alkoleft.mcp.application.actions.exceptions.BuildException
-import io.github.alkoleft.mcp.application.actions.toActionStepResult
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
-import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Path
 import kotlin.time.TimeSource
@@ -78,7 +78,7 @@ abstract class AbstractBuildAction(
         logger.debug { "Сборка проекта" }
 
         initDsl(properties)
-        val state = CurrentBuildState()
+        val state = BuildActionState()
 
         // Загружаем основную конфигурацию
         sourceSet.configuration?.also { configuration ->
@@ -94,7 +94,7 @@ abstract class AbstractBuildAction(
         }
 
         if (!state.success) {
-            return state.toBuildResult("При загрузке исходников возникли ошибки")
+            return state.toResult("При загрузке исходников возникли ошибки")
         }
 
         // Загружаем расширения
@@ -115,7 +115,7 @@ abstract class AbstractBuildAction(
         }
 
         if (!state.success) {
-            return state.toBuildResult("При загрузке исходников возникли ошибки")
+            return state.toResult("При загрузке исходников возникли ошибки")
         }
 
         val updateResult = updateDb().also(state::registerUpdateResult)
@@ -125,7 +125,7 @@ abstract class AbstractBuildAction(
             logger.error { "Обновление базы данных не выполнено" }
         }
 
-        return state.toBuildResult("Сборка завершена успешно").also { if (it.success) logger.info { "Сборка завершена успешно" } }
+        return state.toResult("Сборка завершена успешно").also { if (it.success) logger.info { "Сборка завершена успешно" } }
     }
 
     protected abstract fun initDsl(properties: ApplicationProperties): Unit
@@ -133,24 +133,22 @@ abstract class AbstractBuildAction(
     protected abstract fun loadConfiguration(
         name: String,
         path: Path,
-    ): ShellCommandResult
+    ): ProcessResult
 
     protected abstract fun loadExtension(
         name: String,
         path: Path,
-    ): ShellCommandResult
+    ): ProcessResult
 
-    protected abstract fun updateDb(): ShellCommandResult
+    protected abstract fun updateDb(): ProcessResult
 
-    private class CurrentBuildState {
-        var success: Boolean = true
-        val sourceSet = mutableMapOf<String, ShellCommandResult>()
-        var updateResult: ShellCommandResult? = null
-        val steps: MutableList<ActionStepResult> = mutableListOf()
+    class BuildActionState : ActionState() {
+        val sourceSet = mutableMapOf<String, ProcessResult>()
+        var updateResult: ProcessResult? = null
 
         fun addResult(
             name: String,
-            result: ShellCommandResult,
+            result: ProcessResult,
             description: String,
         ) {
             sourceSet.put(name, result)
@@ -160,7 +158,7 @@ abstract class AbstractBuildAction(
             steps.add(result.toActionStepResult(description))
         }
 
-        fun registerUpdateResult(result: ShellCommandResult) {
+        fun registerUpdateResult(result: ProcessResult) {
             updateResult = result
             if (!result.success) {
                 success = false
@@ -168,7 +166,7 @@ abstract class AbstractBuildAction(
             steps.add(result.toActionStepResult("Обновление конфигурации"))
         }
 
-        fun toBuildResult(message: String): BuildResult {
+        fun toResult(message: String): BuildResult {
             val errors = mutableListOf<String>()
             errors.addAll(sourceSet.values.mapNotNull { it.error })
             updateResult?.error?.let(errors::add)

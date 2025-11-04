@@ -21,13 +21,16 @@
 
 package io.github.alkoleft.mcp.application.actions.change
 
+import io.github.alkoleft.mcp.application.actions.ActionStepResult
 import io.github.alkoleft.mcp.application.actions.ChangeAnalysisAction
 import io.github.alkoleft.mcp.application.actions.ChangeAnalysisResult
+import io.github.alkoleft.mcp.application.actions.common.ActionState
 import io.github.alkoleft.mcp.application.actions.exceptions.AnalyzeException
-import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.infrastructure.storage.FileBuildStateManager
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
+import kotlin.time.TimedValue
+import kotlin.time.measureTimedValue
 
 private val logger = KotlinLogging.logger { }
 
@@ -40,60 +43,92 @@ class FileSystemChangeAnalysisAction(
     private val buildStateManager: FileBuildStateManager,
     private val sourceSetAnalyzer: SourceSetChangeAnalyzer,
 ) : ChangeAnalysisAction {
-    override fun run(properties: ApplicationProperties): ChangeAnalysisResult {
-        logger.info { "Анализ изменений по source set для проекта: ${properties.basePath}" }
+    override fun run(): ChangeAnalysisResult {
+        logger.info { "Анализ изменений по проекта" }
+
+        val state = ChangeAnalysisActionState()
         try {
             // Use FileBuildStateManager's Enhanced Hybrid Hash Detection
-            val changes = buildStateManager.checkChanges(properties)
+            state.setChanges(measureTimedValue { buildStateManager.checkChanges() })
 
-            if (changes.isEmpty()) {
+            if (state.changes.isEmpty()) {
                 logger.info { "Изменения в проекте не обнаружены" }
-                return ChangeAnalysisResult(
-                    hasChanges = false,
-                    changedFiles = emptySet(),
-                    changeTypes = emptyMap(),
-                    sourceSetChanges = emptyMap(),
-                )
+                return state.toResult()
             }
 
-            logger.info { "Найдено ${changes.size} измененных файлов, анализ по source set" }
+            logger.info { "Найдено ${state.changes.size} измененных файлов, анализ по подпроектам" }
 
-            // Group changes by source set
-            val sourceSetChanges = sourceSetAnalyzer.analyzeSourceSetChanges(properties, changes)
+            // Group changes by подпроекта
+            val sourceSetChanges = sourceSetAnalyzer.analyzeSourceSetChanges(state.changes)
 
-            logger.info { "Изменения сгруппированы в ${sourceSetChanges.size} затронутых source sets" }
+            logger.info { "Изменения сгруппированы в ${sourceSetChanges.size} затронутых подпроекта" }
 
-            return ChangeAnalysisResult(
-                hasChanges = true,
-                changedFiles = changes.keys,
-                changeTypes = changes,
-                sourceSetChanges = sourceSetChanges,
-            )
+            return state.toResult(sourceSetChanges)
         } catch (e: Exception) {
-            logger.error(e) { "Анализ изменений source set завершился с ошибкой" }
-            throw AnalyzeException("Анализ изменений source set завершился с ошибкой: ${e.message}", e)
+            logger.error(e) { "Анализ изменений завершился с ошибкой" }
+            throw AnalyzeException("Анализ изменений завершился с ошибкой: ${e.message}", e)
         }
     }
 
     override fun saveSourceSetState(
-        properties: ApplicationProperties,
         sourceSetChanges: SourceSetChanges,
+        timeStamp: Long,
+        success: Boolean,
     ): Boolean {
-        logger.debug { "Сохранение состояния source set: ${sourceSetChanges.sourceSetName} в проекте: ${properties.basePath}" }
+        logger.debug { "Сохранение состояния подпроекта: ${sourceSetChanges.sourceSetName}" }
 
         return try {
             if (sourceSetChanges.changedFiles.isNotEmpty()) {
                 // Calculate and store hashes for changed files in this source set
-                val hashUpdates = sourceSetChanges.changeTypes.entries.associate { it.key to it.value.second }
+                val hashUpdates =
+                    if (success) {
+                        sourceSetChanges.changeTypes.entries.associate { it.key to it.value.second }
+                    } else {
+                        sourceSetChanges.changeTypes.entries.associate { it.key to "" }
+                    }
 
                 buildStateManager.updateHashes(hashUpdates)
-                logger.info { "Обновлено ${hashUpdates.size} хешей файлов для source set: ${sourceSetChanges.sourceSetName}" }
+
+                logger.debug {
+                    "${if (success) "Обновлено" else "Очищено"} ${hashUpdates.size} хешей файлов для подпроекта: ${sourceSetChanges.sourceSetName}"
+                }
+            }
+            if (success) {
+                buildStateManager.storeTimestamp(sourceSetChanges.sourceSetName, timeStamp)
             }
 
             true
         } catch (e: Exception) {
-            logger.error(e) { "Не удалось сохранить состояние source set: ${sourceSetChanges.sourceSetName}" }
+            logger.error(e) { "Не удалось сохранить состояние подпроекта: ${sourceSetChanges.sourceSetName}" }
             false
         }
+    }
+
+    private class ChangeAnalysisActionState : ActionState() {
+        lateinit var changes: ChangesSet
+        val timestamp = System.currentTimeMillis()
+
+        fun setChanges(value: TimedValue<ChangesSet>) {
+            changes = value.value
+            steps.add(
+                ActionStepResult(
+                    message =
+                        "Анализ изменений: " +
+                            if (value.value.isEmpty()) "нет изменений" else "найдено ${value.value.size} измененных файлов",
+                    success = true,
+                    duration = value.duration,
+                ),
+            )
+        }
+
+        fun toResult(sourceSetChanges: Map<String, SourceSetChanges> = emptyMap()): ChangeAnalysisResult =
+            ChangeAnalysisResult(
+                hasChanges = !changes.isEmpty(),
+                changedFiles = changes.keys,
+                changeTypes = changes,
+                sourceSetChanges = sourceSetChanges,
+                steps = steps.toList(),
+                timestamp = timestamp,
+            )
     }
 }

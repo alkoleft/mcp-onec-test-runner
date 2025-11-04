@@ -23,10 +23,16 @@ package io.github.alkoleft.mcp.infrastructure.storage
 
 import io.github.alkoleft.mcp.application.actions.change.ChangesSet
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
-import io.github.alkoleft.mcp.core.modules.BuildStateManager
 import io.github.alkoleft.mcp.core.modules.ChangeType
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.toSet
+import kotlinx.coroutines.runBlocking
 import org.springframework.stereotype.Component
 import java.nio.file.Files
 import java.nio.file.Path
@@ -43,12 +49,13 @@ private val logger = KotlinLogging.logger { }
 @Component
 class FileBuildStateManager(
     private val hashStorage: MapDbHashStorage,
-) : BuildStateManager {
+    private val properties: ApplicationProperties,
+) {
     // Performance tuning parameters
     private val maxConcurrentHashCalculations = 4
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun checkChanges(properties: ApplicationProperties): ChangesSet {
+    fun checkChanges(): ChangesSet {
         val startTime = Instant.now()
         logger.debug { "Запуск Enhanced Hybrid Hash Detection для проекта: ${properties.basePath}" }
 
@@ -56,8 +63,7 @@ class FileBuildStateManager(
             // Phase 1: Fast timestamp pre-scan
             val candidateFiles =
                 properties.sourceSet
-                    .map { properties.basePath.resolve(it.path) }
-                    .flatMap { scanForPotentialChanges(it) }
+                    .flatMap { scanForPotentialChanges(properties.basePath.resolve(it.path), it.name) }
                     .toSet()
 
             logger.debug { "Фаза 1: Найдено ${candidateFiles.size} потенциальных изменений после сканирования временных меток" }
@@ -83,52 +89,70 @@ class FileBuildStateManager(
         }
     }
 
-    override fun updateHashes(files: Map<Path, String>) {
-        logger.debug { "Обновление хешей для ${files.size} файлов" }
-
+    fun updateHashes(files: Map<Path, String>) {
         try {
             hashStorage.batchUpdate(files)
-            logger.debug { "Хеши ${files.size} файлов успешно обновлены" }
         } catch (e: Exception) {
             logger.error(e) { "Не удалось обновить хеши файлов" }
             throw e
         }
     }
 
+    fun storeTimestamp(
+        sourceSetName: String,
+        timeStamp: Long,
+    ) {
+        hashStorage.storeTimestamp(sourceSetName, timeStamp)
+    }
+
     /**
      * Phase 1: Fast timestamp pre-scan to identify potential changes
      */
-    private fun scanForPotentialChanges(projectPath: Path): Set<Path> {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun scanForPotentialChanges(
+        projectPath: Path,
+        projectName: String,
+    ): Set<Path> {
         logger.debug { "Сканирование изменений временных меток в: $projectPath" }
 
-        val potentialChanges = mutableSetOf<Path>()
         val sourceFiles = getAllSourceFiles(projectPath)
+        val projectTimestamp = hashStorage.getSourceSetTimestamp(projectName)
 
-        for (file in sourceFiles) {
-            try {
-                val currentTimestamp = Files.getLastModifiedTime(file).toMillis()
-                val storedTimestamp = hashStorage.getTimestamp(file)
+        val changed =
+            runBlocking {
+                sourceFiles
+                    .asFlow()
+                    .flowOn(Dispatchers.IO)
+                    .flatMapMerge { file ->
+                        flow {
+                            try {
+                                val currentTimestamp = Files.getLastModifiedTime(file).toMillis()
 
-                when {
-                    storedTimestamp == null -> {
-                        // New file
-                        potentialChanges.add(file)
-                        logger.trace { "Обнаружен новый файл: $file" }
-                    }
+                                when {
+                                    projectTimestamp == null -> {
+                                        // New file
+                                        logger.trace { "Обнаружен новый файл: $file" }
+                                        emit(file)
+                                    }
 
-                    currentTimestamp > storedTimestamp -> {
-                        // Potentially modified file
-                        potentialChanges.add(file)
-                        logger.trace { "Потенциально измененный файл: $file (текущая: $currentTimestamp, сохраненная: $storedTimestamp)" }
-                    }
-                }
-            } catch (e: Exception) {
-                logger.debug(e) { "Ошибка при проверке временной метки для файла: $file" }
-                potentialChanges.add(file) // Include in potential changes if we can't verify
+                                    currentTimestamp > projectTimestamp -> {
+                                        // Potentially modified file
+                                        logger.trace {
+                                            "Потенциально измененный файл: $file (текущая: $currentTimestamp, сохраненная: $projectTimestamp)"
+                                        }
+                                        emit(file)
+                                    }
+
+                                    else -> false
+                                }
+                            } catch (e: Exception) {
+                                logger.debug(e) { "Ошибка при проверке временной метки для файла: $file" }
+                                true // Include in potential changes if we can't verify
+                            }
+                        }
+                    }.toSet()
             }
-        }
-
-        return potentialChanges
+        return changed
     }
 
     /**
@@ -191,21 +215,20 @@ class FileBuildStateManager(
     /**
      * Gets all source files in the project that should be tracked for changes
      */
-    private fun getAllSourceFiles(projectPath: Path): List<Path> {
+    private fun getAllSourceFiles(projectPath: Path): Sequence<Path> {
         try {
             if (!Files.exists(projectPath)) {
                 logger.warn { "Путь проекта не существует: $projectPath" }
-                return emptyList()
+                return emptySequence()
             }
 
             return projectPath
                 .walk()
                 .filter { it.isRegularFile() }
                 .filter { !isIgnoredPath(it, projectPath) }
-                .toList()
         } catch (e: Exception) {
             logger.error(e) { "Ошибка при сканировании исходных файлов в: $projectPath" }
-            return emptyList()
+            return emptySequence()
         }
     }
 

@@ -22,6 +22,7 @@
 package io.github.alkoleft.mcp.application.services
 
 import io.github.alkoleft.mcp.application.actions.ActionFactory
+import io.github.alkoleft.mcp.application.actions.ActionStepResult
 import io.github.alkoleft.mcp.application.actions.BuildResult
 import io.github.alkoleft.mcp.application.actions.ConvertResult
 import io.github.alkoleft.mcp.application.actions.exceptions.AnalysisError
@@ -56,7 +57,10 @@ class LauncherService(
 
     fun build(): BuildResult {
         val changeAnalyzer = actionFactory.createChangeAnalysisAction()
-        val changes = changeAnalyzer.run(properties)
+        val changes = changeAnalyzer.run()
+
+        val steps = mutableListOf<ActionStepResult>()
+        steps.addAll(changes.steps)
 
         if (!changes.hasChanges) {
             return BuildResult(
@@ -65,25 +69,27 @@ class LauncherService(
                 errors = emptyList(),
                 duration = Duration.ZERO,
                 sourceSet = emptyMap(),
+                steps = steps,
             ).also { logger.info { it.message } }
         }
         val changedSourceSets = properties.sourceSet.subSourceSet { it.name in changes.sourceSetChanges.keys }
 
         if (changedSourceSets.isEmpty()) {
-            throw AnalysisError("Не удалось распределить изменения по субпроектам.")
+            throw AnalysisError("Не удалось распределить изменения по подпроектам.")
         }
         logger.info { "Обнаружены изменения: ${changedSourceSets.joinToString { it.name }}" }
 
         if (properties.format == ProjectFormat.EDT) {
             val convertResult = convertSources(changedSourceSets, designerSourceSet)
+            steps.addAll(convertResult.steps)
             if (!convertResult.success) {
                 return BuildResult(
                     message = "Ошибки конвертации исходников EDT: ${convertResult.errors.joinToString()}",
                     success = false,
                     errors = convertResult.errors,
                     duration = Duration.ZERO,
-                    steps = convertResult.steps,
                     sourceSet = emptyMap(),
+                    steps = steps,
                 ).also { logger.error { it.message } }
             }
         }
@@ -94,14 +100,13 @@ class LauncherService(
         val errors = mutableListOf<String>()
         result.sourceSet.forEach { (name, result) ->
             success = success && result.success
-            if (result.success) {
-                changeAnalyzer.saveSourceSetState(properties, changes.sourceSetChanges[name]!!)
-            } else {
+            changeAnalyzer.saveSourceSetState(changes.sourceSetChanges[name]!!, changes.timestamp, result.success)
+            if (!result.success) {
                 result.error?.takeIf { it.isNotBlank() }?.let { errors.add(it) }
             }
         }
 
-        return result
+        return result.copy(steps = steps + result.steps)
     }
 
     private fun convertSources(

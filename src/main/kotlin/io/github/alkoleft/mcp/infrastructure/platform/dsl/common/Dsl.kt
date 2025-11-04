@@ -21,8 +21,8 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.common
 
-import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.File
 import java.nio.file.Path
@@ -48,7 +48,7 @@ abstract class Dsl<T : DslContext, C : Command>(
     protected open fun executeCommand(
         command: C,
         logPath: Path? = null,
-    ): ShellCommandResult {
+    ): ProcessResult {
         val executor = ProcessExecutor()
         val args = buildCommandArgs(command, logPath)
 

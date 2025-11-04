@@ -19,20 +19,9 @@
  * along with METR.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.github.alkoleft.mcp.core.modules
+package io.github.alkoleft.mcp.application.actions.test
 
-import io.github.alkoleft.mcp.application.actions.change.ChangesSet
-import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import java.nio.file.Path
-
-/**
- * Build state management
- */
-interface BuildStateManager {
-    fun checkChanges(properties: ApplicationProperties): ChangesSet
-
-    fun updateHashes(files: Map<Path, String>)
-}
 
 data class YaXUnitExecutionResult(
     val success: Boolean,
@@ -42,7 +31,3 @@ data class YaXUnitExecutionResult(
     val errorOutput: String,
     val duration: java.time.Duration,
 )
-
-enum class ReportFormat {
-    JUNIT_XML,
-}
