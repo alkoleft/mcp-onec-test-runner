@@ -86,10 +86,10 @@ class InteractiveProcessExecutor(
     /**
      * Результат выполнения команды
      */
-    data class CommandResult(
+    data class EdtCommandResult(
         override val success: Boolean,
-        override val output: String,
-        override val error: String?,
+        override val output: String = "",
+        override val error: String? = null,
         override val exitCode: Int = 0,
         override val duration: Duration,
         val command: String,
@@ -214,11 +214,10 @@ class InteractiveProcessExecutor(
     fun executeCommand(
         command: String,
         timeoutMs: Long? = null,
-    ): CommandResult {
+    ): EdtCommandResult {
         if (!isProcessActive()) {
-            return CommandResult(
+            return EdtCommandResult(
                 success = false,
-                output = "",
                 error = "Процесс не запущен или завершен",
                 duration = (System.currentTimeMillis() - startTime).toDuration(DurationUnit.MILLISECONDS),
                 command = command,
@@ -234,10 +233,9 @@ class InteractiveProcessExecutor(
             // Читаем ответ до следующего приглашения
             val (output, duration) = measureTimedValue { readStreamData(actualTimeout) }
 
-            return CommandResult(
+            return EdtCommandResult(
                 success = true,
                 output = output.replace(params.promptPattern, "").trim(),
-                error = null,
                 duration = duration,
                 command = command,
             )
@@ -245,9 +243,8 @@ class InteractiveProcessExecutor(
             val duration = (System.currentTimeMillis() - commandStartTime).toDuration(DurationUnit.MILLISECONDS)
             logger.error(e) { "Ошибка при выполнении команды: $command" }
 
-            return CommandResult(
+            return EdtCommandResult(
                 success = false,
-                output = "",
                 error = e.message ?: "Неизвестная ошибка",
                 duration = duration,
                 command = command,

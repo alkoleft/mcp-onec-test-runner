@@ -77,7 +77,7 @@ fun filter(request: TestExecutionRequest) =
     when (request) {
         is RunAllTestsRequest -> null
         is RunModuleTestsRequest -> TestFilter(modules = listOf(request.moduleName))
-        is RunListTestsRequest -> TestFilter(tests = request.testNames)
+        is RunListTestsRequest -> TestFilter(modules = request.moduleNames)
     }
 
 fun YaXUnitConfig.validate(): ValidationResult {

@@ -19,19 +19,14 @@
  * along with METR.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.github.alkoleft.mcp.server
+package io.github.alkoleft.mcp.application.actions
 
-import org.springframework.ai.tool.ToolCallbackProvider
-import org.springframework.ai.tool.method.MethodToolCallbackProvider
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
+import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 
-@Configuration
-class McpConfiguration {
-    @Bean
-    fun platformTools(platformMcp: McpServer): ToolCallbackProvider =
-        MethodToolCallbackProvider
-            .builder()
-            .toolObjects(platformMcp)
-            .build()
-}
+fun ShellCommandResult.toActionStepResult(description: String) =
+    ActionStepResult(
+        description + if (success) ": успешно" else ": неудачно",
+        success,
+        error,
+        duration,
+    )

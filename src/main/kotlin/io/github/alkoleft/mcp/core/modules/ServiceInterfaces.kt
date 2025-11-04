@@ -34,16 +34,6 @@ interface BuildStateManager {
     fun updateHashes(files: Map<Path, String>)
 }
 
-/**
- * YAXUnit test runner
- */
-interface YaXUnitRunner {
-    fun executeTests(
-        utilityLocation: UtilityLocation,
-        request: TestExecutionRequest,
-    ): YaXUnitExecutionResult
-}
-
 data class YaXUnitExecutionResult(
     val success: Boolean,
     val reportPath: Path?,

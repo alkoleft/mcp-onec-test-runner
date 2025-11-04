@@ -26,10 +26,7 @@ import io.github.alkoleft.mcp.application.actions.exceptions.TestExecuteExceptio
 import io.github.alkoleft.mcp.core.modules.GenericTestReport
 import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
 import io.github.alkoleft.mcp.core.modules.TestExecutionResult
-import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
-import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
 import io.github.alkoleft.mcp.infrastructure.yaxunit.ReportParser
 import io.github.alkoleft.mcp.infrastructure.yaxunit.YaXUnitRunner
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -45,9 +42,8 @@ private val logger = KotlinLogging.logger { }
  * Интегрирован со стратегиями обработки ошибок
  */
 class YaXUnitTestAction(
-    private val platformDsl: PlatformDsl,
-    private val utilLocator: UtilityLocator,
     private val reportParser: ReportParser,
+    private val runner: YaXUnitRunner,
 ) : RunTestAction {
     @OptIn(ExperimentalTime::class)
     override fun run(request: TestExecutionRequest): TestExecutionResult {
@@ -55,14 +51,7 @@ class YaXUnitTestAction(
         logger.info { "Запуск выполнения тестов YaXUnit с фильтром: $request" }
 
         try {
-            // Локализуем утилиту 1С:Предприятие
-            logger.debug { "Поиск утилиты 1С:Предприятие для версии: ${request.platformVersion}" }
-            val utilityLocation = utilLocator.locateUtility(UtilityType.THIN_CLIENT, request.platformVersion)
-            logger.info { "Утилита 1С:Предприятие найдена по пути: ${utilityLocation.executablePath}" }
-
-            // Создаем runner и выполняем тесты
-            val runner = YaXUnitRunner(platformDsl)
-            val executionResult = runner.executeTests(utilityLocation, request)
+            val executionResult = runner.executeTests(request)
 
             // Парсим отчет если он был создан
             val report = parseTestReport(executionResult)

@@ -28,7 +28,6 @@ import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.infrastructure.storage.FileBuildStateManager
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
-import java.time.Instant
 
 private val logger = KotlinLogging.logger { }
 
@@ -54,7 +53,6 @@ class FileSystemChangeAnalysisAction(
                     changedFiles = emptySet(),
                     changeTypes = emptyMap(),
                     sourceSetChanges = emptyMap(),
-                    analysisTimestamp = Instant.now(),
                 )
             }
 
@@ -70,7 +68,6 @@ class FileSystemChangeAnalysisAction(
                 changedFiles = changes.keys,
                 changeTypes = changes,
                 sourceSetChanges = sourceSetChanges,
-                analysisTimestamp = Instant.now(),
             )
         } catch (e: Exception) {
             logger.error(e) { "Анализ изменений source set завершился с ошибкой" }

@@ -29,7 +29,6 @@ import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
 import io.github.alkoleft.mcp.core.modules.TestExecutionResult
 import java.nio.file.Path
-import java.time.Instant
 import kotlin.time.Duration
 
 /**
@@ -72,15 +71,31 @@ interface RunTestAction {
     fun run(request: TestExecutionRequest): TestExecutionResult
 }
 
+interface ActionResult {
+    val message: String
+    val success: Boolean
+    val errors: List<String>
+    val duration: Duration
+}
+
+data class ActionStepResult(
+    val message: String,
+    val success: Boolean,
+    val error: String?,
+    val duration: Duration,
+)
+
 /**
  * Результат сборки
  */
 data class BuildResult(
-    val success: Boolean,
-    val errors: List<String> = emptyList(),
-    val duration: Duration = Duration.ZERO,
+    override val message: String,
+    override val success: Boolean,
+    override val errors: List<String> = emptyList(),
+    override val duration: Duration = Duration.ZERO,
     val sourceSet: Map<String, ShellCommandResult> = emptyMap(),
-)
+    val steps: List<ActionStepResult> = emptyList(),
+) : ActionResult
 
 /**
  * Результат сборки
@@ -90,6 +105,7 @@ data class ConvertResult(
     val errors: List<String> = emptyList(),
     val duration: Duration = Duration.ZERO,
     val sourceSet: Map<String, ShellCommandResult> = emptyMap(),
+    val steps: List<ActionStepResult> = emptyList(),
 )
 
 /**
@@ -100,5 +116,4 @@ data class ChangeAnalysisResult(
     val changedFiles: Set<Path> = emptySet(),
     val changeTypes: ChangesSet = emptyMap(),
     val sourceSetChanges: Map<String, SourceSetChanges> = emptyMap(),
-    val analysisTimestamp: Instant = Instant.now(),
 )

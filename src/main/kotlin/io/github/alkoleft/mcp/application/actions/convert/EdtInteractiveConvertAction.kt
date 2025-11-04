@@ -21,14 +21,16 @@
 
 package io.github.alkoleft.mcp.application.actions.convert
 
+import io.github.alkoleft.mcp.application.actions.ActionStepResult
 import io.github.alkoleft.mcp.application.actions.ConvertAction
 import io.github.alkoleft.mcp.application.actions.ConvertResult
+import io.github.alkoleft.mcp.application.actions.toActionStepResult
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
 import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 
-class InteractiveSessionConvertAction(
+class EdtInteractiveConvertAction(
     private val dsl: PlatformDsl,
 ) : ConvertAction {
     override fun run(
@@ -37,15 +39,22 @@ class InteractiveSessionConvertAction(
         destination: SourceSet,
     ): ConvertResult {
         val results = mutableMapOf<String, ShellCommandResult>()
+        val steps = mutableListOf<ActionStepResult>()
         dsl.edt {
             sourceSet.forEach {
-                results[it.name] =
+                val result =
                     export(
                         projectName = it.name,
                         configurationFiles = destination.pathByName(it.name),
                     )
+                results[it.name] = result
+                steps.add(result.toActionStepResult("Конвертация ${it.name}"))
             }
         }
-        return ConvertResult(success = results.values.none { !it.success }, sourceSet = results.toMap())
+        return ConvertResult(
+            success = results.values.none { !it.success },
+            sourceSet = results.toMap(),
+            errors = steps.mapNotNull { it.error },
+        )
     }
 }

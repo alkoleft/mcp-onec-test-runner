@@ -21,9 +21,11 @@
 
 package io.github.alkoleft.mcp.application.actions.build
 
+import io.github.alkoleft.mcp.application.actions.ActionStepResult
 import io.github.alkoleft.mcp.application.actions.BuildAction
 import io.github.alkoleft.mcp.application.actions.BuildResult
 import io.github.alkoleft.mcp.application.actions.exceptions.BuildException
+import io.github.alkoleft.mcp.application.actions.toActionStepResult
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
 import io.github.alkoleft.mcp.core.modules.ShellCommandResult
@@ -82,7 +84,7 @@ abstract class AbstractBuildAction(
         sourceSet.configuration?.also { configuration ->
             logger.info { "Загружаю основную конфигурацию" }
             val result = loadConfiguration(configuration.name, sourceSet.basePath.resolve(configuration.path))
-            state.addResult(configuration.name, result)
+            state.addResult(configuration.name, result, "Загрузка конфигурации")
 
             if (result.success) {
                 logger.info { "Конфигурация загружена успешно" }
@@ -92,7 +94,7 @@ abstract class AbstractBuildAction(
         }
 
         if (!state.success) {
-            return state.toBuildResult()
+            return state.toBuildResult("При загрузке исходников возникли ошибки")
         }
 
         // Загружаем расширения
@@ -100,7 +102,7 @@ abstract class AbstractBuildAction(
         logger.info { "Загружаю ${extensions.size} расширений: ${extensions.joinToString(", ") { it.name }}" }
         extensions.forEach {
             val result = loadExtension(it.name, sourceSet.basePath.resolve(it.path))
-            state.addResult(it.name, result)
+            state.addResult(it.name, result, "Загрузка расширения ${it.name}")
 
             if (result.success) {
                 logger.info { "Расширение ${it.name} загружено успешно" }
@@ -113,7 +115,7 @@ abstract class AbstractBuildAction(
         }
 
         if (!state.success) {
-            return state.toBuildResult()
+            return state.toBuildResult("При загрузке исходников возникли ошибки")
         }
 
         val updateResult = updateDb().also(state::registerUpdateResult)
@@ -123,7 +125,7 @@ abstract class AbstractBuildAction(
             logger.error { "Обновление базы данных не выполнено" }
         }
 
-        return state.toBuildResult().also { if (it.success) logger.info { "Сборка завершена успешно" } }
+        return state.toBuildResult("Сборка завершена успешно").also { if (it.success) logger.info { "Сборка завершена успешно" } }
     }
 
     protected abstract fun initDsl(properties: ApplicationProperties): Unit
@@ -144,15 +146,18 @@ abstract class AbstractBuildAction(
         var success: Boolean = true
         val sourceSet = mutableMapOf<String, ShellCommandResult>()
         var updateResult: ShellCommandResult? = null
+        val steps: MutableList<ActionStepResult> = mutableListOf()
 
         fun addResult(
             name: String,
             result: ShellCommandResult,
+            description: String,
         ) {
             sourceSet.put(name, result)
             if (!result.success) {
                 success = false
             }
+            steps.add(result.toActionStepResult(description))
         }
 
         fun registerUpdateResult(result: ShellCommandResult) {
@@ -160,17 +165,20 @@ abstract class AbstractBuildAction(
             if (!result.success) {
                 success = false
             }
+            steps.add(result.toActionStepResult("Обновление конфигурации"))
         }
 
-        fun toBuildResult(): BuildResult {
+        fun toBuildResult(message: String): BuildResult {
             val errors = mutableListOf<String>()
             errors.addAll(sourceSet.values.mapNotNull { it.error })
             updateResult?.error?.let(errors::add)
 
             return BuildResult(
+                message = message,
                 success = success,
                 errors = errors,
                 sourceSet = sourceSet,
+                steps = steps.toList(),
             )
         }
     }

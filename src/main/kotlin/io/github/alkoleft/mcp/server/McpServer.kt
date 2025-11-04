@@ -21,20 +21,19 @@
 
 package io.github.alkoleft.mcp.server
 
+import io.github.alkoleft.mcp.application.actions.ActionStepResult
 import io.github.alkoleft.mcp.application.services.LauncherService
-import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
-import io.github.alkoleft.mcp.configuration.properties.ProjectFormat
 import io.github.alkoleft.mcp.core.modules.GenericTestCase
 import io.github.alkoleft.mcp.core.modules.GenericTestReport
 import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
 import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
-import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.ai.tool.annotation.ToolParam
 import org.springframework.stereotype.Service
+import kotlin.time.TimeSource
 
 private val logger = KotlinLogging.logger { }
 
@@ -43,9 +42,8 @@ private val logger = KotlinLogging.logger { }
  * Предоставляет инструменты для запуска тестов YaXUnit через Model Context Protocol
  */
 @Service
-class YaXUnitMcpServer(
+class McpServer(
     private val launcherService: LauncherService,
-    private val properties: ApplicationProperties,
     private val platformUtilities: PlatformUtilities,
 ) {
     /**
@@ -53,14 +51,14 @@ class YaXUnitMcpServer(
      * @return Результат выполнения всех тестов
      */
     @Tool(
-        name = "yaxunit_run_all_tests",
+        name = "run_all_tests",
         description = "Запускает все тесты YaXUnit в проекте. Возвращает подробный отчет о выполнении тестов.",
     )
     fun runAllTests(): McpTestResponse {
         logger.info { "Запуск всех тестов YaXUnit" }
 
         try {
-            val request = RunAllTestsRequest(properties)
+            val request = RunAllTestsRequest()
             val result = launcherService.run(request)
             return McpTestResponse(
                 success = result.success,
@@ -96,7 +94,7 @@ class YaXUnitMcpServer(
      * @return Результат выполнения тестов модуля
      */
     @Tool(
-        name = "yaxunit_run_module_tests",
+        name = "run_module_tests",
         description = "Запускает тесты YaXUnit из указанного модуля. Укажите имя модуля для тестирования.",
     )
     fun runModuleTests(
@@ -105,7 +103,7 @@ class YaXUnitMcpServer(
         logger.info { "Запуск тестов модуля: $moduleName" }
 
         try {
-            val request = RunModuleTestsRequest(moduleName, properties)
+            val request = RunModuleTestsRequest(moduleName)
             val result = launcherService.run(request)
             return McpTestResponse(
                 success = result.success,
@@ -144,7 +142,7 @@ class YaXUnitMcpServer(
      * @return Результат выполнения тестов указанных модулей
      */
     @Tool(
-        name = "yaxunit_run_list_tests",
+        name = "run_list_tests",
         description = "Запускает тесты YaXUnit из списка указанных модулей. Передайте список имен модулей.",
     )
     fun runListTests(
@@ -153,7 +151,7 @@ class YaXUnitMcpServer(
         logger.info { "Запуск тестов модулей: $moduleNames" }
 
         try {
-            val request = RunListTestsRequest(moduleNames, properties)
+            val request = RunListTestsRequest(moduleNames)
             val result = launcherService.run(request)
             return McpTestResponse(
                 success = result.success,
@@ -193,27 +191,29 @@ class YaXUnitMcpServer(
      * @return Результат сборки проекта
      */
     @Tool(
-        name = "yaxunit_build_project",
+        name = "build_project",
         description = "Выполняет сборку проекта YaXUnit. Возвращает результат сборки.",
     )
     fun buildProject(): McpBuildResponse {
         logger.info { "Выполнение сборки проекта" }
 
         try {
+            val start = TimeSource.Monotonic.markNow()
             val buildResult = launcherService.build()
+            val duration = start.elapsedNow()
+
             return if (buildResult.success) {
                 McpBuildResponse(
                     success = true,
-                    message = "Сборка выполнена успешно",
-                    buildTime = buildResult.duration.inWholeMilliseconds,
-                    details = emptyMap(),
+                    message = buildResult.message,
+                    buildTime = duration.inWholeMilliseconds,
                 )
             } else {
                 McpBuildResponse(
                     success = false,
                     message = if (buildResult.errors.isNotEmpty()) buildResult.errors.joinToString("; ") else "Ошибки сборки",
-                    buildTime = buildResult.duration.inWholeMilliseconds,
-                    details = emptyMap(),
+                    buildTime = duration.inWholeMilliseconds,
+                    steps = buildResult.steps,
                 )
             }
         } catch (e: Exception) {
@@ -221,56 +221,6 @@ class YaXUnitMcpServer(
             return McpBuildResponse(
                 success = false,
                 message = "Ошибка при сборке: ${e.message}",
-                buildTime = 0,
-                details = mapOf("error" to e.message.toString()),
-            )
-        }
-    }
-
-    /**
-     * Проверяет статус платформы 1С
-     * @return Статус и информация о платформе 1С
-     */
-    @Tool(
-        name = "yaxunit_check_platform",
-        description = "Проверяет статус и доступность платформы 1С для выполнения тестов YaXUnit.",
-    )
-    fun checkPlatform(): PlatformStatusResult {
-        logger.info { "Проверка статуса платформы 1С" }
-
-        return try {
-            val utilityTypes =
-                UtilityType.entries.filter { it.isPlatform() } +
-                    if (properties.format == ProjectFormat.EDT) {
-                        listOf(UtilityType.EDT_CLI)
-                    } else {
-                        emptyList()
-                    }
-
-            val utilityStates =
-                utilityTypes.associateWith {
-                    runCatching {
-                        platformUtilities.locateUtility(it).version
-                    }.getOrNull()
-                }
-            val isAvailable = utilityStates.values.find { it != null } != null
-
-            PlatformStatusResult(
-                success = true,
-                message = "Платформа 1С доступна",
-                version = properties.platformVersion,
-                path = "/usr/local/1cv8/8.3.24.1482/1cv8c",
-                isAvailable = isAvailable,
-                details = utilityStates,
-            )
-        } catch (e: Exception) {
-            logger.error(e) { "Ошибка при проверке платформы" }
-            PlatformStatusResult(
-                success = false,
-                message = "Ошибка при проверке платформы: ${e.message}",
-                version = null,
-                path = null,
-                isAvailable = false,
             )
         }
     }
@@ -296,18 +246,6 @@ data class McpTestResponse(
 data class McpBuildResponse(
     val success: Boolean,
     val message: String,
-    val buildTime: Long,
-    val details: Map<String, Any>,
-)
-
-/**
- * Результат статуса платформы
- */
-data class PlatformStatusResult(
-    val success: Boolean,
-    val message: String,
-    val version: String?,
-    val path: String?,
-    val isAvailable: Boolean,
-    val details: Map<UtilityType, String?> = emptyMap(),
+    val buildTime: Long? = null,
+    val steps: List<ActionStepResult>? = null,
 )

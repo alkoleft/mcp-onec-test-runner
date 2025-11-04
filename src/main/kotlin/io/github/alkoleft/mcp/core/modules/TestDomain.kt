@@ -21,7 +21,6 @@
 
 package io.github.alkoleft.mcp.core.modules
 
-import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import java.nio.file.Path
 import java.time.Instant
 import kotlin.time.Duration
@@ -29,37 +28,17 @@ import kotlin.time.Duration
 /**
  * Test execution requests
  */
-sealed class TestExecutionRequest {
-    val projectPath: Path
-    val testsPath: Path
-    val ibConnection: String
-    val platformVersion: String?
-    val user: String?
-    val password: String?
+sealed interface TestExecutionRequest
 
-    constructor(properties: ApplicationProperties) {
-        projectPath = properties.basePath
-        testsPath = properties.testsPath
-        platformVersion = properties.platformVersion
-        ibConnection = properties.connection.connectionString
-        user = properties.connection.user
-        password = properties.connection.password
-    }
-}
-
-class RunAllTestsRequest(
-    properties: ApplicationProperties,
-) : TestExecutionRequest(properties)
+class RunAllTestsRequest : TestExecutionRequest
 
 class RunModuleTestsRequest(
     val moduleName: String,
-    properties: ApplicationProperties,
-) : TestExecutionRequest(properties)
+) : TestExecutionRequest
 
 data class RunListTestsRequest(
-    val testNames: List<String>,
-    val properties: ApplicationProperties,
-) : TestExecutionRequest(properties)
+    val moduleNames: List<String>,
+) : TestExecutionRequest
 
 /**
  * Test execution results

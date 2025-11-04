@@ -57,14 +57,15 @@ class LauncherService(
     fun build(): BuildResult {
         val changeAnalyzer = actionFactory.createChangeAnalysisAction()
         val changes = changeAnalyzer.run(properties)
+
         if (!changes.hasChanges) {
-            logger.info { "Исходные файлы не изменены. Обновление базы пропущено" }
             return BuildResult(
+                message = "Исходные файлы не изменены. Обновление базы пропущено",
                 success = true,
                 errors = emptyList(),
                 duration = Duration.ZERO,
                 sourceSet = emptyMap(),
-            )
+            ).also { logger.info { it.message } }
         }
         val changedSourceSets = properties.sourceSet.subSourceSet { it.name in changes.sourceSetChanges.keys }
 
@@ -76,13 +77,14 @@ class LauncherService(
         if (properties.format == ProjectFormat.EDT) {
             val convertResult = convertSources(changedSourceSets, designerSourceSet)
             if (!convertResult.success) {
-                logger.error { "Ошибки конвертации исходников EDT: ${convertResult.errors.joinToString()}" }
                 return BuildResult(
+                    message = "Ошибки конвертации исходников EDT: ${convertResult.errors.joinToString()}",
                     success = false,
                     errors = convertResult.errors,
                     duration = Duration.ZERO,
+                    steps = convertResult.steps,
                     sourceSet = emptyMap(),
-                )
+                ).also { logger.error { it.message } }
             }
         }
 
@@ -99,16 +101,7 @@ class LauncherService(
             }
         }
 
-        return if (success && result.success) {
-            result
-        } else {
-            BuildResult(
-                success = false,
-                errors = errors.ifEmpty { result.errors },
-                duration = result.duration,
-                sourceSet = result.sourceSet,
-            )
-        }
+        return result
     }
 
     private fun convertSources(

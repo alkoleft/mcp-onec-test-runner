@@ -22,14 +22,14 @@
 package io.github.alkoleft.mcp.infrastructure.yaxunit
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
-import io.github.alkoleft.mcp.core.modules.UtilityLocation
 import io.github.alkoleft.mcp.core.modules.YaXUnitExecutionResult
-import io.github.alkoleft.mcp.core.modules.YaXUnitRunner
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.stereotype.Component
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Duration
@@ -42,15 +42,14 @@ private val logger = KotlinLogging.logger { }
  * Реализация YaXUnitRunner для запуска тестов через 1С:Предприятие
  * Интегрирован со стратегиями построения команд и обработки ошибок
  */
+@Component
 class YaXUnitRunner(
     private val platformDsl: PlatformDsl,
-) : YaXUnitRunner {
+    private val applicationProperties: ApplicationProperties,
+) {
     private val objectMapper = ObjectMapper()
 
-    override fun executeTests(
-        utilityLocation: UtilityLocation,
-        request: TestExecutionRequest,
-    ): YaXUnitExecutionResult {
+    fun executeTests(request: TestExecutionRequest): YaXUnitExecutionResult {
         val startTime = Instant.now()
         logger.info { "Запуск выполнения тестов YaXUnit для ${request.javaClass.simpleName}" }
 
@@ -59,11 +58,7 @@ class YaXUnitRunner(
         try {
             // Запускаем тесты через EnterpriseDsl
             logger.debug { "Выполнение тестов через EnterpriseDsl" }
-            val result =
-                executeTests(
-                    request = request,
-                    configPath = configPath,
-                )
+            val result = executeTests(configPath = configPath)
 
             logger.info { "Процесс завершен с кодом выхода: ${result.exitCode}" }
 
@@ -116,15 +111,12 @@ class YaXUnitRunner(
     /**
      * Строит аргументы команды для запуска 1С:Предприятие
      */
-    private fun executeTests(
-        request: TestExecutionRequest,
-        configPath: Path,
-    ): ProcessResult =
+    private fun executeTests(configPath: Path): ProcessResult =
         platformDsl
             .enterprise {
-                connect(request.ibConnection)
-                request.user?.ifNoBlank { user(it) }
-                request.password?.ifNoBlank { password(it) }
+                connect(applicationProperties.connection.connectionString)
+                applicationProperties.connection.user?.ifNoBlank { user(it) }
+                applicationProperties.connection.password?.ifNoBlank { password(it) }
                 runArguments("RunUnitTests=${configPath.toAbsolutePath()}")
             }.run()
 }
