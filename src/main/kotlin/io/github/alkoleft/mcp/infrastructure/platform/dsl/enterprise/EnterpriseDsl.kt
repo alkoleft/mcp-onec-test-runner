@@ -21,7 +21,7 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.enterprise
 
-import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.alkoleft.mcp.application.core.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.Command
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.V8Dsl
@@ -34,7 +34,7 @@ import kotlin.time.Duration
  */
 class EnterpriseDsl(
     utilityContext: PlatformUtilities,
-    utilityType: UtilityType
+    utilityType: UtilityType,
 ) : V8Dsl<EnterpriseContext, Command>(EnterpriseContext(utilityContext, utilityType)) {
     fun runArguments(value: String) {
         context.runArguments = value

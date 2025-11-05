@@ -58,7 +58,7 @@ class ProcessExecutor : CommandExecutor {
         val timeoutMs: Long? = null,
         val logFilePath: Path? = null,
         val includeStdout: Boolean = true,
-        val wait: Boolean = true
+        val wait: Boolean = true,
     )
 
     /**
@@ -232,7 +232,7 @@ class ProcessExecutor : CommandExecutor {
                     output = "",
                     error = null,
                     exitCode = -1,
-                    duration = Duration.ZERO
+                    duration = Duration.ZERO,
                 )
             }
 
@@ -408,7 +408,7 @@ class ProcessExecutor : CommandExecutor {
         executeProcess(
             ExecutionParams(
                 commandArgs = commandArgs,
-                wait = false
+                wait = false,
             ),
         )
 

@@ -22,6 +22,7 @@
 package io.github.alkoleft.mcp.server
 
 import io.github.alkoleft.mcp.application.actions.common.ActionStepResult
+import io.github.alkoleft.mcp.application.actions.common.LaunchRequest
 import io.github.alkoleft.mcp.application.actions.common.RunTestResult
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.GenericTestSuite
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunAllTestsRequest
@@ -142,7 +143,11 @@ class McpServer(
      */
     @Tool(
         name = "launch_app",
-        description = "Запускает приложение указанного типа. Укажите тип приложения: DESIGNER (designer, 1cv8, конфигуратор), THIN_CLIENT (thin_client, 1cv8c, тонкий клиент), THICK_CLIENT (thick_client, толстый клиент).",
+        description = """Запускает приложение указанного типа. 
+            |Укажите тип приложения: 
+            |* DESIGNER (designer, 1cv8, конфигуратор),
+            |* THIN_CLIENT (thin_client, 1cv8c, тонкий клиент),
+            |* THICK_CLIENT (thick_client, толстый клиент).""",
     )
     fun launchUtility(
         @ToolParam(description = "Псевдоним типа приложения для запуска") utilityType: String,

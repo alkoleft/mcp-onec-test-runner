@@ -21,11 +21,11 @@
 
 package io.github.alkoleft.mcp.application.actions.launch
 
-import io.github.alkoleft.mcp.application.actions.LaunchAction
-import io.github.alkoleft.mcp.application.actions.LaunchRequest
-import io.github.alkoleft.mcp.application.actions.LaunchResult
+import io.github.alkoleft.mcp.application.actions.common.LaunchAction
+import io.github.alkoleft.mcp.application.actions.common.LaunchRequest
+import io.github.alkoleft.mcp.application.actions.common.LaunchResult
+import io.github.alkoleft.mcp.application.core.UtilityType
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
-import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
@@ -40,32 +40,50 @@ private val logger = KotlinLogging.logger { }
 @Component
 class UtilityLaunchAction(
     private val platformDsl: PlatformDsl,
-    private val properties: ApplicationProperties
+    private val properties: ApplicationProperties,
 ) : LaunchAction {
     override fun run(request: LaunchRequest): LaunchResult {
-
-        val utilityType = resolveUtilityType(request)
-            ?: return LaunchResult(
-                success = false,
-                message = "Неизвестный тип приложения",
-                errors = listOf("Неизвестный тип приложения: ${request.utilityType}. Доступные типы: ${utilityTypeAliases.keys.joinToString(", ")}")
-            )
+        val utilityType =
+            resolveUtilityType(request)
+                ?: return LaunchResult(
+                    success = false,
+                    message = "Неизвестный тип приложения",
+                    errors =
+                        listOf(
+                            "Неизвестный тип приложения: ${request.utilityType}. Доступные типы: ${
+                                utilityTypeAliases.keys.joinToString(
+                                    ", ",
+                                )
+                            }",
+                        ),
+                )
 
         logger.info { "Запуск приложения типа: $utilityType" }
-        val launchResult = when (utilityType) {
-            UtilityType.DESIGNER -> launchDesigner(request)
-            UtilityType.THIN_CLIENT -> launchThinClient(request)
-            UtilityType.THICK_CLIENT -> launchThickClient(request)
-            else -> return LaunchResult(
-                success = false,
-                message = "Неподдерживаемый тип приложения",
-                errors = listOf("Неподдерживаемый тип приложения: ${utilityType}. Доступные типы: DESIGNER, THIN_CLIENT, THICK_CLIENT"),
-            )
-        }
+        val launchResult =
+            when (utilityType) {
+                UtilityType.DESIGNER -> launchDesigner(request)
+                UtilityType.THIN_CLIENT -> launchThinClient(request)
+                UtilityType.THICK_CLIENT -> launchThickClient(request)
+                else -> return LaunchResult(
+                    success = false,
+                    message = "Неподдерживаемый тип приложения",
+                    errors = listOf("Неподдерживаемый тип приложения: $utilityType. Доступные типы: DESIGNER, THIN_CLIENT, THICK_CLIENT"),
+                )
+            }
         return LaunchResult(
             success = launchResult.success,
-            message = if (launchResult.success) "Приложение успешно запущено, pid: ${launchResult.pid}" else "Не удалось запустить приложение",
-            errors = if (launchResult.error != null) listOf(launchResult.error) else emptyList(),
+            message =
+                if (launchResult.success) {
+                    "Приложение успешно запущено, pid: ${launchResult.pid}"
+                } else {
+                    "Не удалось запустить приложение"
+                },
+            errors =
+                if (launchResult.error != null) {
+                    listOf(launchResult.error)
+                } else {
+                    emptyList()
+                },
         )
     }
 
@@ -109,25 +127,25 @@ class UtilityLaunchAction(
         }
         return result
     }
-
 }
 
 /**
  * Словарь псевдонимов для типов утилит
  * Исключены типы IBCMD и IBSRV
  */
-private val utilityTypeAliases = mapOf(
-    // DESIGNER
-    "designer" to UtilityType.DESIGNER,
-    "1cv8" to UtilityType.DESIGNER,
-    "конфигуратор" to UtilityType.DESIGNER,
-    // THIN_CLIENT
-    "thin_client" to UtilityType.THIN_CLIENT,
-    "1cv8c" to UtilityType.THIN_CLIENT,
-    "тонкий клиент" to UtilityType.THIN_CLIENT,
-    "тонкий" to UtilityType.THIN_CLIENT,
-    // THICK_CLIENT
-    "thick_client" to UtilityType.THICK_CLIENT,
-    "толстый клиент" to UtilityType.THICK_CLIENT,
-    "толстый" to UtilityType.THICK_CLIENT,
-)
+private val utilityTypeAliases =
+    mapOf(
+        // DESIGNER
+        "designer" to UtilityType.DESIGNER,
+        "1cv8" to UtilityType.DESIGNER,
+        "конфигуратор" to UtilityType.DESIGNER,
+        // THIN_CLIENT
+        "thin_client" to UtilityType.THIN_CLIENT,
+        "1cv8c" to UtilityType.THIN_CLIENT,
+        "тонкий клиент" to UtilityType.THIN_CLIENT,
+        "тонкий" to UtilityType.THIN_CLIENT,
+        // THICK_CLIENT
+        "thick_client" to UtilityType.THICK_CLIENT,
+        "толстый клиент" to UtilityType.THICK_CLIENT,
+        "толстый" to UtilityType.THICK_CLIENT,
+    )

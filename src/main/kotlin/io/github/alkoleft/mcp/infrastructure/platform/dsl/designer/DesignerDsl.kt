@@ -71,12 +71,13 @@ class DesignerDsl(
     fun deleteExtension(block: DeleteCfgCommand.() -> Unit) = configureAndExecute(DeleteCfgCommand(), block)
 
     fun launch(): ProcessResult {
-        val command = object : DesignerCommand() {
-            override val name: String = "launch"
-            override val description: String = "Запуск конфигуратора"
-            override val parameters: Map<String, String> = emptyMap()
-            override val arguments: List<String> = emptyList()
-        }
+        val command =
+            object : DesignerCommand() {
+                override val name: String = "launch"
+                override val description: String = "Запуск конфигуратора"
+                override val parameters: Map<String, String> = emptyMap()
+                override val arguments: List<String> = emptyList()
+            }
         return ProcessExecutor().launch(buildCommandArgs(command))
     }
 

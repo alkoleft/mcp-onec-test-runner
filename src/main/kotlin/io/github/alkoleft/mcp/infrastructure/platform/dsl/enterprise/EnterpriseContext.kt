@@ -31,7 +31,7 @@ import java.nio.file.Path
  */
 class EnterpriseContext(
     platformContext: PlatformUtilities,
-    val utilityType: UtilityType
+    val utilityType: UtilityType,
 ) : V8Context(platformContext) {
     var runArguments: String? = null
 

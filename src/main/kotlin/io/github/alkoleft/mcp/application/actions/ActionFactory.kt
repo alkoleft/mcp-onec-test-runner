@@ -26,6 +26,7 @@ import io.github.alkoleft.mcp.application.actions.change.SourceSetChangeAnalyzer
 import io.github.alkoleft.mcp.application.actions.common.BuildAction
 import io.github.alkoleft.mcp.application.actions.common.ChangeAnalysisAction
 import io.github.alkoleft.mcp.application.actions.common.ConvertAction
+import io.github.alkoleft.mcp.application.actions.common.LaunchAction
 import io.github.alkoleft.mcp.application.actions.common.RunTestAction
 import io.github.alkoleft.mcp.application.actions.convert.EdtInteractiveConvertAction
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.YaXUnitTestAction
@@ -47,7 +48,7 @@ class ActionFactory(
     private val buildStateManager: FileBuildStateManager,
     private val sourceSetAnalyzer: SourceSetChangeAnalyzer,
     private val buildAction: BuildAction,
-    private val launchAction: LaunchAction
+    private val launchAction: LaunchAction,
 ) {
     fun createBuildAction(type: BuilderType) = buildAction
 

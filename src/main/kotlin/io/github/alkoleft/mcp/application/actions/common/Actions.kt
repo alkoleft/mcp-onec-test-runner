@@ -25,10 +25,9 @@ import io.github.alkoleft.mcp.application.actions.change.ChangesSet
 import io.github.alkoleft.mcp.application.actions.change.SourceSetChanges
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.GenericTestReport
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestExecutionRequest
+import io.github.alkoleft.mcp.application.core.ShellCommandResult
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
-import io.github.alkoleft.mcp.core.modules.ExecuteResult
-import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import java.nio.file.Path
 import kotlin.time.Duration
 
@@ -137,6 +136,13 @@ interface ActionResult {
     val duration: Duration
     val steps: List<ActionStepResult>
 }
+
+data class ActionStepResult(
+    val message: String,
+    val success: Boolean,
+    val error: String? = null,
+    val duration: Duration,
+)
 
 /**
  * Запрос на запуск приложения
