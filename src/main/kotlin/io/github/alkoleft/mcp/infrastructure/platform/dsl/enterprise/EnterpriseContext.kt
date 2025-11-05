@@ -31,6 +31,7 @@ import java.nio.file.Path
  */
 class EnterpriseContext(
     platformContext: PlatformUtilities,
+    val utilityType: UtilityType
 ) : V8Context(platformContext) {
     var runArguments: String? = null
 
@@ -38,7 +39,7 @@ class EnterpriseContext(
      * Строит аргументы для запуска 1С:Предприятие
      */
     override fun buildBaseArgs(): List<String> =
-        buildCommonArgs(UtilityType.THIN_CLIENT, "ENTERPRISE")
+        buildCommonArgs(utilityType, "ENTERPRISE")
             .also { args ->
                 runArguments?.let {
                     args.add("/C")

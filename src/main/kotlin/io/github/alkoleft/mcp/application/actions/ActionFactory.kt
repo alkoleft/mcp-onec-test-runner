@@ -47,6 +47,7 @@ class ActionFactory(
     private val buildStateManager: FileBuildStateManager,
     private val sourceSetAnalyzer: SourceSetChangeAnalyzer,
     private val buildAction: BuildAction,
+    private val launchAction: LaunchAction
 ) {
     fun createBuildAction(type: BuilderType) = buildAction
 
@@ -55,4 +56,6 @@ class ActionFactory(
     fun createChangeAnalysisAction(): ChangeAnalysisAction = FileSystemChangeAnalysisAction(buildStateManager, sourceSetAnalyzer)
 
     fun createRunTestAction(): RunTestAction = YaXUnitTestAction(reportParser, yaxUnitRunner)
+
+    fun createLaunchAction() = launchAction
 }

@@ -59,6 +59,8 @@ class LauncherService(
         }
     }
 
+    fun launch(request: LaunchRequest) = actionFactory.createLaunchAction().run(request)
+
     fun build(): BuildResult {
         val changeAnalyzer = actionFactory.createChangeAnalysisAction()
         val changes = changeAnalyzer.run()

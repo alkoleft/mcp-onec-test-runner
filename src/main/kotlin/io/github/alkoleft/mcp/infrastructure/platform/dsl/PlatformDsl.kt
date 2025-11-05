@@ -21,6 +21,7 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.dsl
 
+import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.DesignerDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.edt.EdtDsl
@@ -60,7 +61,16 @@ class PlatformDsl(
      * DSL для работы с 1С:Предприятие
      */
     fun enterprise(block: EnterpriseDsl.() -> Unit): EnterpriseDsl {
-        val enterpriseDsl = EnterpriseDsl(context)
+        val enterpriseDsl = EnterpriseDsl(context, UtilityType.THIN_CLIENT)
+        enterpriseDsl.block()
+        return enterpriseDsl
+    }
+
+    /**
+     * DSL для работы с 1С:Предприятие
+     */
+    fun enterprise(utilityType: UtilityType, block: EnterpriseDsl.() -> Unit): EnterpriseDsl {
+        val enterpriseDsl = EnterpriseDsl(context, utilityType)
         enterpriseDsl.block()
         return enterpriseDsl
     }
