@@ -147,7 +147,7 @@ class FileBuildStateManager(
                                 }
                             } catch (e: Exception) {
                                 logger.debug(e) { "Ошибка при проверке временной метки для файла: $file" }
-                                true // Include in potential changes if we can't verify
+                                emit(file) // Include in potential changes if we can't verify
                             }
                         }
                     }.toSet()

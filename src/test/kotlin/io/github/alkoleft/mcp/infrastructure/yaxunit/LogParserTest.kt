@@ -47,7 +47,7 @@ class LogParserTest {
         val logFile = tempDir.resolve("test.log")
         Files.writeString(logFile, logContent)
         val parser = LogParser()
-        val errors = parser.extractErrors(logFile)
+        val errors = parser.extractErrors(logFile.toString())
         assertEquals(2, errors.size)
         assertTrue(errors[0].contains("Первая ошибка"))
         assertTrue(errors[0].contains("Описание первой ошибки"))
@@ -69,7 +69,7 @@ class LogParserTest {
         val logFile = tempDir.resolve("test.log")
         Files.writeString(logFile, logContent)
         val parser = LogParser()
-        val errors = parser.extractErrors(logFile)
+        val errors = parser.extractErrors(logFile.toString())
         assertTrue(errors.isEmpty())
     }
 
@@ -79,7 +79,7 @@ class LogParserTest {
         val nonExistentPath =
             java.nio.file.Paths
                 .get("/nonexistent/path/to/file.log")
-        val errors = parser.extractErrors(nonExistentPath)
+        val errors = parser.extractErrors(nonExistentPath.toString())
         assertTrue(errors.isEmpty())
     }
 
@@ -96,7 +96,7 @@ class LogParserTest {
         val logFile = tempDir.resolve("test.log")
         Files.writeString(logFile, logContent)
         val parser = LogParser()
-        val errors = parser.extractErrors(logFile)
+        val errors = parser.extractErrors(logFile.toString())
         assertEquals(1, errors.size)
         assertTrue(errors[0].contains("Последняя ошибка"))
         assertTrue(errors[0].contains("Описание ошибки"))

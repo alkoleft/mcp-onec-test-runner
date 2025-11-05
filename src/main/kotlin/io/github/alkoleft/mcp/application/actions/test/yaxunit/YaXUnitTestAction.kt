@@ -81,8 +81,10 @@ class YaXUnitTestAction(
                 val inputStream = Files.newInputStream(executionResult.reportPath)
                 inputStream.close()
 
-                val reportInputStream = Files.newInputStream(executionResult.reportPath)
-                val report = reportParser.parseReport(reportInputStream)
+                val report =
+                    Files.newInputStream(executionResult.reportPath).use {
+                        reportParser.parseReport(it)
+                    }
 
                 logger.info { "Отчет о тестах успешно проанализирован: ${report.summary.totalTests} тестов" }
                 report
