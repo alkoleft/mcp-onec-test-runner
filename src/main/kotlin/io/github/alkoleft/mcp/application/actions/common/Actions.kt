@@ -89,6 +89,13 @@ interface ChangeAnalysisAction {
 }
 
 /**
+ * Интерфейс для запуска приложений
+ */
+interface LaunchAction {
+    fun run(request: LaunchRequest): LaunchResult
+}
+
+/**
  * Результат анализа изменений
  */
 data class ChangeAnalysisResult(
@@ -136,3 +143,22 @@ data class ActionStepResult(
     val error: String? = null,
     val duration: Duration,
 )
+
+/**
+ * Запрос на запуск приложения
+ */
+data class LaunchRequest(
+    val utilityType: String,
+)
+
+/**
+ * Результат запуска приложения
+ */
+data class LaunchResult(
+    override val success: Boolean,
+    override val duration: Duration = Duration.ZERO,
+    override val message: String,
+    override val errors: List<String>,
+    override val steps: List<ActionStepResult> = emptyList(),
+    val processId: Long? = null,
+) : ActionResult

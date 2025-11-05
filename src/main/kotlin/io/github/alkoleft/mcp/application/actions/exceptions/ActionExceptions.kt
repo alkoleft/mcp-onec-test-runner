@@ -49,9 +49,9 @@ class ConfigurationError(
 ) : ActionError(message, cause, context)
 
 /**
- * Ошибка валидации с контекстом
+ * Ошибка запуск приложения
  */
-class ValidationError(
+class LaunchError(
     message: String,
     cause: Throwable? = null,
     context: Map<String, Any> = emptyMap(),

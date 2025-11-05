@@ -35,6 +35,7 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.Dump
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.LoadCfgCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.LoadConfigFromFilesCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.UpdateDBCfgCommand
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 
 /**
@@ -68,6 +69,17 @@ class DesignerDsl(
     fun createCfg(block: CreateCfgCommand.() -> Unit) = configureAndExecute(CreateCfgCommand(), block)
 
     fun deleteExtension(block: DeleteCfgCommand.() -> Unit) = configureAndExecute(DeleteCfgCommand(), block)
+
+    fun launch(): ProcessResult {
+        val command =
+            object : DesignerCommand() {
+                override val name: String = "launch"
+                override val description: String = "Запуск конфигуратора"
+                override val parameters: Map<String, String> = emptyMap()
+                override val arguments: List<String> = emptyList()
+            }
+        return ProcessExecutor().launch(buildCommandArgs(command))
+    }
 
     private fun <C : DesignerCommand> configureAndExecute(
         command: C,

@@ -58,6 +58,7 @@ class ProcessExecutor : CommandExecutor {
         val timeoutMs: Long? = null,
         val logFilePath: Path? = null,
         val includeStdout: Boolean = true,
+        val wait: Boolean = true,
     )
 
     /**
@@ -224,6 +225,16 @@ class ProcessExecutor : CommandExecutor {
             val process = processBuilder.start()
 
             logger.debug { "Процесс запущен с PID: ${process.pid()}" }
+            if (!params.wait) {
+                return ProcessResult(
+                    success = true,
+                    pid = process.pid(),
+                    output = "",
+                    error = null,
+                    exitCode = -1,
+                    duration = Duration.ZERO,
+                )
+            }
 
             val result =
                 if (params.timeoutMs != null) {
@@ -391,6 +402,17 @@ class ProcessExecutor : CommandExecutor {
         )
 
     /**
+     * Выполняет команду с указанными аргументами
+     */
+    fun launch(commandArgs: List<String>): ProcessResult =
+        executeProcess(
+            ExecutionParams(
+                commandArgs = commandArgs,
+                wait = false,
+            ),
+        )
+
+    /**
      * Выполняет команду с логированием
      *
      * @param commandArgs аргументы команды
@@ -439,5 +461,6 @@ data class ProcessResult(
     override val error: String?,
     override val exitCode: Int,
     override val duration: Duration,
+    val pid: Long? = null,
     val logFilePath: Path? = null,
 ) : ShellCommandResult

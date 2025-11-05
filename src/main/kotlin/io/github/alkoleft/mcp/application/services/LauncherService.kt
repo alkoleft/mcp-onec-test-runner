@@ -25,6 +25,7 @@ import io.github.alkoleft.mcp.application.actions.ActionFactory
 import io.github.alkoleft.mcp.application.actions.common.ActionStepResult
 import io.github.alkoleft.mcp.application.actions.common.BuildResult
 import io.github.alkoleft.mcp.application.actions.common.ConvertResult
+import io.github.alkoleft.mcp.application.actions.common.LaunchRequest
 import io.github.alkoleft.mcp.application.actions.common.RunTestResult
 import io.github.alkoleft.mcp.application.actions.exceptions.AnalysisError
 import io.github.alkoleft.mcp.application.actions.exceptions.TestExecutionError
@@ -58,6 +59,8 @@ class LauncherService(
             it.copy(steps = buildResult.steps + it.steps, duration = start.elapsedNow())
         }
     }
+
+    fun launch(request: LaunchRequest) = actionFactory.createLaunchAction().run(request)
 
     fun build(): BuildResult {
         val changeAnalyzer = actionFactory.createChangeAnalysisAction()
