@@ -21,12 +21,14 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.process
 
-import io.github.alkoleft.mcp.core.modules.ShellCommandResult
+import io.github.alkoleft.mcp.application.core.ShellCommandResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
@@ -45,13 +47,14 @@ private val logger = KotlinLogging.logger {}
  */
 class InteractiveProcessExecutor(
     private var process: Process?,
-    private val params: InteractiveProcessParams = InteractiveProcessParams(),
+    private val params: InteractiveProcessParams,
 ) {
     private var processStatus: ProcessStatus = ProcessStatus.PENDING
     private var processWriter: BufferedWriter? = null
     private var errorReader: BufferedReader? = null
     private val isRunning = AtomicBoolean(false)
     private val startTime = System.currentTimeMillis()
+    private val initializationLatch = CountDownLatch(1)
 
     // Определяем кодировку в зависимости от платформы
     private val consoleEncoding: String = getValidatedConsoleEncoding()
@@ -69,8 +72,8 @@ class InteractiveProcessExecutor(
      */
     data class InteractiveProcessParams(
         val promptPattern: String = "1C:EDT>",
-        val promptTimeoutMs: Long = 180000, // 3 минуты по умолчанию для EDT CLI
-        val commandTimeoutMs: Long = 60000, // 60 секунд по умолчанию для команд EDT
+        val startUpTimeoutMs: Long,
+        val commandTimeoutMs: Long,
         val maxOutputLines: Int = 1000,
         val readDelayMs: Long = 50, // Задержка между чтениями
         val exitDelayMs: Long = 1000, // Задержка при выходе
@@ -86,10 +89,10 @@ class InteractiveProcessExecutor(
     /**
      * Результат выполнения команды
      */
-    data class CommandResult(
+    data class EdtCommandResult(
         override val success: Boolean,
-        override val output: String,
-        override val error: String?,
+        override val output: String = "",
+        override val error: String? = null,
         override val exitCode: Int = 0,
         override val duration: Duration,
         val command: String,
@@ -127,15 +130,16 @@ class InteractiveProcessExecutor(
 
             // Ждем появления приглашения командной строки
             logger.debug { "Ожидание инициализации приложения, ожидание приглашения." }
-            val promptFound = waitForPrompt(params.promptTimeoutMs)
+            val promptFound = waitForPrompt(params.startUpTimeoutMs)
             if (!promptFound) {
-                logger.warn { "Приглашение командной строки не найдено в течение ${params.promptTimeoutMs}ms" }
+                logger.warn { "Приглашение командной строки не найдено в течение ${params.startUpTimeoutMs}ms" }
                 stopProcess()
                 return false
             }
 
             logger.info { "Интерактивный процесс EDT CLI успешно инициализирован" }
             processStatus = ProcessStatus.COMMAND_WAIT
+            initializationLatch.countDown()
             return true
         } catch (e: Exception) {
             logger.error(e) { "Ошибка при инициализации интерактивного процесса" }
@@ -170,9 +174,11 @@ class InteractiveProcessExecutor(
                     val promptCount = currentOutput.split(params.promptPattern).size - 1
                     logger.debug { "Найдено приглашений: $promptCount" }
                     logger.info {
-                        "Приглашение EDT: '${params.promptPattern}', последние $PROMPT_LOG_OUTPUT_LENGTH символов: ${currentOutput.takeLast(
-                            PROMPT_LOG_OUTPUT_LENGTH,
-                        )}"
+                        "Приглашение EDT: '${params.promptPattern}', последние $PROMPT_LOG_OUTPUT_LENGTH символов: ${
+                            currentOutput.takeLast(
+                                PROMPT_LOG_OUTPUT_LENGTH,
+                            )
+                        }"
                     }
                     return currentOutput
                 }
@@ -214,11 +220,10 @@ class InteractiveProcessExecutor(
     fun executeCommand(
         command: String,
         timeoutMs: Long? = null,
-    ): CommandResult {
+    ): EdtCommandResult {
         if (!isProcessActive()) {
-            return CommandResult(
+            return EdtCommandResult(
                 success = false,
-                output = "",
                 error = "Процесс не запущен или завершен",
                 duration = (System.currentTimeMillis() - startTime).toDuration(DurationUnit.MILLISECONDS),
                 command = command,
@@ -228,16 +233,41 @@ class InteractiveProcessExecutor(
         val commandStartTime = System.currentTimeMillis()
         val actualTimeout = timeoutMs ?: params.commandTimeoutMs
 
+        // Ожидаем инициализации перед выполнением команды
+        if (!available) {
+            logger.debug { "Процесс не инициализирован, ожидание инициализации" }
+            try {
+                val initialized = initializationLatch.await(params.startUpTimeoutMs, TimeUnit.MILLISECONDS)
+                if (!initialized) {
+                    val duration = (System.currentTimeMillis() - commandStartTime).toDuration(DurationUnit.MILLISECONDS)
+                    return EdtCommandResult(
+                        success = false,
+                        error = "Процесс не инициализирован в течение ${params.startUpTimeoutMs}ms",
+                        duration = duration,
+                        command = command,
+                    )
+                }
+            } catch (e: InterruptedException) {
+                Thread.currentThread().interrupt()
+                val duration = (System.currentTimeMillis() - commandStartTime).toDuration(DurationUnit.MILLISECONDS)
+                return EdtCommandResult(
+                    success = false,
+                    error = "Ожидание инициализации прервано: ${e.message}",
+                    duration = duration,
+                    command = command,
+                )
+            }
+        }
+
         try {
             sendCommand(command)
 
             // Читаем ответ до следующего приглашения
             val (output, duration) = measureTimedValue { readStreamData(actualTimeout) }
 
-            return CommandResult(
+            return EdtCommandResult(
                 success = true,
                 output = output.replace(params.promptPattern, "").trim(),
-                error = null,
                 duration = duration,
                 command = command,
             )
@@ -245,9 +275,8 @@ class InteractiveProcessExecutor(
             val duration = (System.currentTimeMillis() - commandStartTime).toDuration(DurationUnit.MILLISECONDS)
             logger.error(e) { "Ошибка при выполнении команды: $command" }
 
-            return CommandResult(
+            return EdtCommandResult(
                 success = false,
-                output = "",
                 error = e.message ?: "Неизвестная ошибка",
                 duration = duration,
                 command = command,
@@ -283,6 +312,10 @@ class InteractiveProcessExecutor(
 
             isRunning.set(false)
             processStatus = ProcessStatus.STOPED
+            // Освобождаем блокировку, если процесс не был инициализирован
+            if (initializationLatch.count > 0) {
+                initializationLatch.countDown()
+            }
             // Закрываем потоки
             processWriter?.close()
             errorReader?.close()
@@ -306,32 +339,14 @@ class InteractiveProcessExecutor(
     }
 
     /**
-     * Получает текущий статус процесса
-     */
-    fun getStatus(): ProcessState {
-        val currentProcess = process
-        return ProcessState(
-            isRunning = isProcessActive(),
-            pid = currentProcess?.pid(),
-            uptime = (System.currentTimeMillis() - startTime).toDuration(DurationUnit.MILLISECONDS),
-            exitCode = if (currentProcess?.isAlive == true) null else currentProcess?.exitValue(),
-        )
-    }
-
-    /**
      * Проверяет, инициализирован ли процесс
      */
-    fun isInitialized(): Boolean = isProcessActive()
+    fun isInitialized(): Boolean = available
 
     /**
      * Проверяет, запущен ли процесс
      */
     fun isProcessRunning(): Boolean = isProcessActive()
-
-    /**
-     * Получает PID процесса
-     */
-    fun getProcessId(): Long? = process?.pid()
 
     private fun sendCommand(command: String) {
         logger.debug { "Выполнение команды: $command" }

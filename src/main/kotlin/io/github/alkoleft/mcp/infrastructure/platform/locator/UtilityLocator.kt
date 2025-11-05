@@ -21,8 +21,8 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.locator
 
-import io.github.alkoleft.mcp.core.modules.UtilityLocation
-import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.alkoleft.mcp.application.core.UtilityLocation
+import io.github.alkoleft.mcp.application.core.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.search.SearchStrategyFactory
 import io.github.alkoleft.mcp.infrastructure.platform.search.search
 import io.github.oshai.kotlinlogging.KotlinLogging

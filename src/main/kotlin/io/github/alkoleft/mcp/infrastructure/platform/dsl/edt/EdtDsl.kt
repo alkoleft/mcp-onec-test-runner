@@ -21,13 +21,11 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.edt
 
-import io.github.alkoleft.mcp.core.modules.ShellCommandResult
-import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.alkoleft.mcp.application.core.ShellCommandResult
+import io.github.alkoleft.mcp.application.core.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Path
-import kotlin.time.Duration
-import kotlin.time.measureTime
 
 private val logger = KotlinLogging.logger {}
 
@@ -57,18 +55,16 @@ private val logger = KotlinLogging.logger {}
 class EdtDsl(
     private val utilityContext: PlatformUtilities,
 ) {
-    private val context = EdtContext(utilityContext)
-
     /**
      * Executes EDT CLI command to print version
      */
-    fun version(): EdtResult = executeEdt(listOf("version"))
+    fun version() = executeEdt(listOf("version"))
 
     /**
      * Runs an arbitrary EDT CLI command with provided arguments.
      * Example: edt { run("workspace", "--list") }
      */
-    fun run(vararg args: String): EdtResult = executeEdt(args.toList())
+    fun run(vararg args: String) = executeEdt(args.toList())
 
     // Build commands
 
@@ -78,7 +74,7 @@ class EdtDsl(
     fun build(
         projects: List<String>? = null,
         yes: Boolean = true,
-    ): EdtResult {
+    ): ShellCommandResult {
         val args = mutableListOf("build")
         if (yes) args.add("--yes")
         projects?.let { args.addAll(it) }
@@ -91,14 +87,14 @@ class EdtDsl(
     fun buildProjects(
         vararg projectNames: String,
         yes: Boolean = true,
-    ): EdtResult = build(projectNames.toList(), yes)
+    ) = build(projectNames.toList(), yes)
 
     // Directory commands
 
     /**
      * Show current working directory or change it
      */
-    fun cd(directory: String? = null): EdtResult =
+    fun cd(directory: String? = null) =
         if (directory != null) {
             executeEdt(listOf("cd", directory))
         } else {
@@ -114,7 +110,7 @@ class EdtDsl(
         projectPath: String? = null,
         projectName: String? = null,
         includeFullSupportObjects: Boolean = false,
-    ): EdtResult {
+    ): ShellCommandResult {
         val args = mutableListOf("clean-up-source")
         when {
             projectPath != null -> args.addAll(listOf("--project", projectPath))
@@ -135,7 +131,7 @@ class EdtDsl(
     fun delete(
         projects: List<String>? = null,
         yes: Boolean = true,
-    ): EdtResult {
+    ): ShellCommandResult {
         val args = mutableListOf("delete")
         if (yes) args.add("--yes")
         projects?.let { args.addAll(it) }
@@ -148,7 +144,7 @@ class EdtDsl(
     fun deleteProjects(
         vararg projectNames: String,
         yes: Boolean = true,
-    ): EdtResult = delete(projectNames.toList(), yes)
+    ) = delete(projectNames.toList(), yes)
 
     // Export commands
 
@@ -159,7 +155,7 @@ class EdtDsl(
         projectPath: String? = null,
         projectName: String? = null,
         configurationFiles: Path,
-    ): EdtResult {
+    ): ShellCommandResult {
         logger.info { "Экспорт проекта $projectName в каталог $configurationFiles" }
         val args = mutableListOf("export")
         when {
@@ -179,7 +175,7 @@ class EdtDsl(
     fun formatModules(
         projectPath: String? = null,
         projectName: String? = null,
-    ): EdtResult {
+    ): ShellCommandResult {
         val args = mutableListOf("format-modules")
         when {
             projectPath != null -> args.addAll(listOf("--project", projectPath))
@@ -194,7 +190,7 @@ class EdtDsl(
     /**
      * Import project into workspace
      */
-    fun importProject(projectPath: String): EdtResult = executeEdt(listOf("import", "--project", projectPath))
+    fun importProject(projectPath: String) = executeEdt(listOf("import", "--project", projectPath))
 
     /**
      * Import XML configuration files into project
@@ -206,7 +202,7 @@ class EdtDsl(
         version: String? = null,
         baseProjectName: String? = null,
         build: Boolean = false,
-    ): EdtResult {
+    ): ShellCommandResult {
         val args = mutableListOf("import", "--configuration-files", configurationFiles)
         when {
             projectPath != null -> args.addAll(listOf("--project", projectPath))
@@ -227,7 +223,7 @@ class EdtDsl(
     fun infobase(
         details: Boolean = false,
         infobases: List<String>? = null,
-    ): EdtResult {
+    ): ShellCommandResult {
         val args = mutableListOf("infobase")
         if (details) args.add("--details")
         infobases?.let { args.addAll(it) }
@@ -242,7 +238,7 @@ class EdtDsl(
         version: String? = null,
         path: String? = null,
         configurationFile: String? = null,
-    ): EdtResult {
+    ): ShellCommandResult {
         val args = mutableListOf("infobase-create", "--name", name)
         version?.let { args.addAll(listOf("--version", it)) }
         path?.let { args.addAll(listOf("--path", it)) }
@@ -258,7 +254,7 @@ class EdtDsl(
         name: String? = null,
         yes: Boolean = false,
         deleteContent: Boolean = false,
-    ): EdtResult {
+    ): ShellCommandResult {
         val args = mutableListOf("infobase-delete")
         when {
             names != null -> args.addAll(names)
@@ -277,7 +273,7 @@ class EdtDsl(
         name: String,
         project: String,
         build: Boolean = false,
-    ): EdtResult {
+    ): ShellCommandResult {
         val args = mutableListOf("infobase-import", "--name", name, "--project", project)
         if (build) args.addAll(listOf("--build", "true"))
         return executeEdt(args)
@@ -288,17 +284,17 @@ class EdtDsl(
     /**
      * Install platform support
      */
-    fun installPlatformSupport(version: String): EdtResult = executeEdt(listOf("install-platform-support", "--version", version))
+    fun installPlatformSupport(version: String) = executeEdt(listOf("install-platform-support", "--version", version))
 
     /**
      * Uninstall platform support
      */
-    fun uninstallPlatformSupport(version: String): EdtResult = executeEdt(listOf("uninstall-platform-support", "--version", version))
+    fun uninstallPlatformSupport(version: String) = executeEdt(listOf("uninstall-platform-support", "--version", version))
 
     /**
      * Show platform versions
      */
-    fun platformVersions(): EdtResult = executeEdt(listOf("platform-versions"))
+    fun platformVersions() = executeEdt(listOf("platform-versions"))
 
     // Project commands
 
@@ -308,7 +304,7 @@ class EdtDsl(
     fun project(
         details: Boolean = false,
         projects: List<String>? = null,
-    ): EdtResult {
+    ): ShellCommandResult {
         val args = mutableListOf("project")
         if (details) args.add("--details")
         projects?.let { args.addAll(it) }
@@ -320,7 +316,7 @@ class EdtDsl(
     /**
      * Show available scripts
      */
-    fun script(): EdtResult = executeEdt(listOf("script"))
+    fun script() = executeEdt(listOf("script"))
 
     /**
      * Show script information
@@ -328,7 +324,7 @@ class EdtDsl(
     fun scriptInfo(
         scriptName: String,
         content: Boolean = false,
-    ): EdtResult {
+    ): ShellCommandResult {
         val args = mutableListOf("script", scriptName)
         if (content) args.add("--content")
         return executeEdt(args)
@@ -341,7 +337,7 @@ class EdtDsl(
         scriptPath: String,
         recursive: Boolean = true,
         namespace: String? = null,
-    ): EdtResult {
+    ): ShellCommandResult {
         val args = mutableListOf("script", "--load", scriptPath)
         if (recursive) args.addAll(listOf("--recursive", "true"))
         namespace?.let { args.addAll(listOf("--namespace", it)) }
@@ -356,7 +352,7 @@ class EdtDsl(
     fun sortProject(
         projectPaths: List<String>? = null,
         projectNames: List<String>? = null,
-    ): EdtResult {
+    ): ShellCommandResult {
         val args = mutableListOf("sort-project")
         when {
             projectPaths != null -> args.addAll(listOf("--project-list") + projectPaths)
@@ -375,7 +371,7 @@ class EdtDsl(
         outputFile: String,
         projectPaths: List<String>? = null,
         projectNames: List<String>? = null,
-    ): EdtResult {
+    ): ShellCommandResult {
         val args = mutableListOf("validate", "--file", outputFile)
         when {
             projectPaths != null -> args.addAll(listOf("--project-list") + projectPaths)
@@ -388,112 +384,9 @@ class EdtDsl(
     /**
      * Executes an EDT CLI command with specified arguments immediately.
      */
-    private fun executeEdt(arguments: List<String>): EdtResult {
+    private fun executeEdt(arguments: List<String>): ShellCommandResult {
         logger.debug { "Запуск 1C:EDT: args=${arguments.joinToString(" ")}" }
-        val duration =
-            measureTime {
-                try {
-                    val executor = utilityContext.executor(UtilityType.EDT_CLI)
-                    val result = executor.execute(arguments)
-                    logger.info { "Команда 1C:EDT выполнен: exitCode=${result.exitCode}, длительность=${result.duration}" }
-                    if (result.exitCode != 0) {
-                        val errorPreview: String? =
-                            result.error?.let { if (it.length > 4000) it.take(4000) + "..." else it }
-                        logger.warn { "Команда 1C:EDT завершилась с ошибкой: exitCode=${result.exitCode}, ошибка=$errorPreview" }
-                    }
-                    context.setResult(
-                        success = result.exitCode == 0,
-                        output = result.output,
-                        error = result.error,
-                        exitCode = result.exitCode,
-                        duration = result.duration,
-                    )
-                } catch (e: Exception) {
-                    logger.error(e) { "Команда 1C:EDT выбросила исключение для args=${arguments.joinToString(" ")}" }
-                    context.setResult(
-                        success = false,
-                        output = "",
-                        error = e.message ?: "Неизвестная ошибка",
-                        exitCode = -1,
-                        duration = Duration.ZERO,
-                    )
-                }
-            }
-
-        logger.debug { "Команда 1C:EDT общая длительность=$duration" }
-        return EdtResult(
-            success = context.buildResult().success,
-            output = context.buildResult().output,
-            error = context.buildResult().error,
-            exitCode = context.buildResult().exitCode,
-            duration = duration,
-        )
-    }
-}
-
-/**
- * Context for EDT CLI.
- */
-class EdtContext(
-    val platformContext: PlatformUtilities,
-) {
-    private var lastError: String? = null
-    private var lastOutput: String = ""
-    private var lastExitCode: Int = 0
-    private var lastDuration: Duration = Duration.ZERO
-
-    /**
-     * Builds argument list for EDT CLI.
-     * EDT does not use Designer/Enterprise modes, so no mode token is added.
-     */
-    fun buildEdtArgs(commandArgs: List<String>): List<String> {
-        val args = mutableListOf<String>()
-        val location = platformContext.locateUtility(UtilityType.EDT_CLI).executablePath
-        args.add(location.toString())
-        args.addAll(commandArgs)
-        return args
-    }
-
-    /**
-     * Sets the result of execution
-     */
-    fun setResult(
-        success: Boolean,
-        output: String,
-        error: String?,
-        exitCode: Int,
-        duration: kotlin.time.Duration,
-    ) {
-        this.lastOutput = output
-        this.lastError = error
-        this.lastExitCode = exitCode
-        this.lastDuration = duration
-    }
-
-    /**
-     * Builds the result of execution
-     */
-    fun buildResult(): EdtResult =
-        EdtResult(
-            success = lastExitCode == 0,
-            output = lastOutput,
-            error = lastError,
-            exitCode = lastExitCode,
-            duration = lastDuration,
-        )
-}
-
-/**
- * Result of EDT CLI execution
- */
-data class EdtResult(
-    override val success: Boolean,
-    override val output: String,
-    override val error: String?,
-    override val exitCode: Int,
-    override val duration: Duration,
-) : ShellCommandResult {
-    companion object {
-        val EMPTY = EdtResult(false, "", "", -1, Duration.ZERO)
+        val executor = utilityContext.executor(UtilityType.EDT_CLI)
+        return executor.execute(arguments)
     }
 }

@@ -21,14 +21,19 @@
 
 package io.github.alkoleft.mcp.application.actions.convert
 
-import io.github.alkoleft.mcp.application.actions.ConvertAction
-import io.github.alkoleft.mcp.application.actions.ConvertResult
+import io.github.alkoleft.mcp.application.actions.common.ActionState
+import io.github.alkoleft.mcp.application.actions.common.ConvertAction
+import io.github.alkoleft.mcp.application.actions.common.ConvertResult
+import io.github.alkoleft.mcp.application.actions.common.toActionStepResult
+import io.github.alkoleft.mcp.application.core.ShellCommandResult
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
-import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
+import io.github.oshai.kotlinlogging.KotlinLogging
 
-class InteractiveSessionConvertAction(
+private val logger = KotlinLogging.logger { }
+
+class EdtInteractiveConvertAction(
     private val dsl: PlatformDsl,
 ) : ConvertAction {
     override fun run(
@@ -36,16 +41,45 @@ class InteractiveSessionConvertAction(
         sourceSet: SourceSet,
         destination: SourceSet,
     ): ConvertResult {
-        val results = mutableMapOf<String, ShellCommandResult>()
+        val state = ConvertActionState()
         dsl.edt {
             sourceSet.forEach {
-                results[it.name] =
+                state.addResult(
                     export(
                         projectName = it.name,
                         configurationFiles = destination.pathByName(it.name),
-                    )
+                    ),
+                    it.name,
+                )
+                if (!state.success) {
+                    return@edt
+                }
             }
         }
-        return ConvertResult(success = results.values.none { !it.success }, sourceSet = results.toMap())
+        return state.toResult()
+    }
+
+    private class ConvertActionState : ActionState(logger) {
+        val results = mutableMapOf<String, ShellCommandResult>()
+
+        fun addResult(
+            result: ShellCommandResult,
+            sourceSetName: String,
+        ): ShellCommandResult {
+            results[sourceSetName] = result
+            addStep(result.toActionStepResult("Конвертация $sourceSetName"))
+            if (!result.success) {
+                success = false
+            }
+            return result
+        }
+
+        fun toResult() =
+            ConvertResult(
+                success = success,
+                sourceSet = results.toMap(),
+                errors = steps.mapNotNull { it.error },
+                steps = steps,
+            )
     }
 }

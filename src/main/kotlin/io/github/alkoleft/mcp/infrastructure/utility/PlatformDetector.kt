@@ -21,7 +21,7 @@
 
 package io.github.alkoleft.mcp.infrastructure.utility
 
-import io.github.alkoleft.mcp.core.modules.PlatformType
+import io.github.alkoleft.mcp.application.core.PlatformType
 
 /**
  * Platform detection utility for determining current operating system

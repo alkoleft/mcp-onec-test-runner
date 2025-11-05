@@ -21,10 +21,10 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.common
 
+import io.github.alkoleft.mcp.application.core.UtilityLocation
+import io.github.alkoleft.mcp.application.core.UtilityType
 import io.github.alkoleft.mcp.application.services.EdtCliStartService
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
-import io.github.alkoleft.mcp.core.modules.UtilityLocation
-import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.edt.EdtCliExecutor
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.CommandExecutor
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor

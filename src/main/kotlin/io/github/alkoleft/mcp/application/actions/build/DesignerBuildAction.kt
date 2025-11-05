@@ -25,12 +25,9 @@ import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.DesignerDsl
 import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import java.nio.file.Path
-
-private val logger = KotlinLogging.logger { }
 
 /**
  * Реализация BuildAction для сборки через конфигуратор 1С
@@ -44,7 +41,7 @@ class DesignerBuildAction(
 
     override fun initDsl(properties: ApplicationProperties) {
         actionDsl =
-            dsl.configurator {
+            dsl.designer {
                 // Подключаемся к информационной базе
                 connect(properties.connection.connectionString)
                 properties.connection.user?.ifNoBlank { user(it) }
@@ -61,6 +58,7 @@ class DesignerBuildAction(
         path: Path,
     ) = actionDsl.loadConfigFromFiles {
         fromPath(path)
+        updateDBCfg()
     }
 
     override fun loadExtension(
@@ -69,7 +67,8 @@ class DesignerBuildAction(
     ) = actionDsl.loadConfigFromFiles {
         fromPath(path)
         extension(name)
+        updateDBCfg()
     }
 
-    override fun updateDb() = actionDsl.updateDBCfg {}
+    override fun updateDb() = null
 }

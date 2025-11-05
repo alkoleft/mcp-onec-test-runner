@@ -19,19 +19,25 @@
  * along with METR.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.github.alkoleft.mcp.server
+package io.github.alkoleft.mcp.configuration
 
-import org.springframework.ai.tool.ToolCallbackProvider
-import org.springframework.ai.tool.method.MethodToolCallbackProvider
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Primary
 
 @Configuration
-class McpConfiguration {
+class JacksonConfig {
+    @Primary
     @Bean
-    fun platformTools(platformMcp: McpServer): ToolCallbackProvider =
-        MethodToolCallbackProvider
-            .builder()
-            .toolObjects(platformMcp)
-            .build()
+    fun objectMapper(): ObjectMapper {
+        return ObjectMapper()
+            .registerModule(KotlinModule.Builder().build())
+            .registerModule(JavaTimeModule()) // For Java 8 Date/Time API
+            .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
+        // Add other customizations as needed
+    }
 }

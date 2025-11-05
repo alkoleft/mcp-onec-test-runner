@@ -77,7 +77,7 @@ class MapDbHashStorage(
             // Create timestamp map for file modification times
             timestampMap =
                 db
-                    .hashMap("file_timestamps")
+                    .hashMap("subproject_timestamps")
                     .keySerializer(Serializer.STRING)
                     .valueSerializer(Serializer.LONG)
                     .createOrOpen()
@@ -100,46 +100,14 @@ class MapDbHashStorage(
             null
         }
 
-    fun storeHash(
-        file: Path,
-        hash: String,
-    ) = try {
-        val key = normalizeKey(file)
-        val timestamp = Files.getLastModifiedTime(file).toMillis()
-
-        hashMap[key] = hash
-        timestampMap[key] = timestamp
-
-        db.commit()
-
-        logger.debug { "Хеш сохранен для файла: $file" }
-    } catch (e: Exception) {
-        logger.error(e) { "Не удалось сохранить хеш для файла: $file" }
-        db.rollback()
-        throw e
-    }
-
     fun batchUpdate(updates: Map<Path, String>) {
         if (updates.isEmpty()) return
         try {
-            logger.debug { "Начало пакетного обновления для ${updates.size} файлов" }
-
             for ((file, hash) in updates) {
                 val key = normalizeKey(file)
-                val timestamp =
-                    if (Files.exists(file)) {
-                        Files.getLastModifiedTime(file).toMillis()
-                    } else {
-                        System.currentTimeMillis()
-                    }
-
                 hashMap[key] = hash
-                timestampMap[key] = timestamp
             }
-
             db.commit()
-
-            logger.info { "Пакетно обновлено ${updates.size} хешей файлов" }
         } catch (e: Exception) {
             logger.error(e) { "Не удалось выполнить пакетное обновление хешей файлов" }
             db.rollback()
@@ -147,39 +115,14 @@ class MapDbHashStorage(
         }
     }
 
-    fun removeHash(file: Path) =
-        try {
-            val key = normalizeKey(file)
-
-            hashMap.remove(key)
-            timestampMap.remove(key)
-
-            db.commit()
-
-            logger.debug { "Хеш удален для файла: $file" }
-        } catch (e: Exception) {
-            logger.error(e) { "Не удалось удалить хеш для файла: $file" }
-            db.rollback()
-            throw e
-        }
-
-    fun getAllHashes(): Map<String, String> =
-        try {
-            HashMap(hashMap)
-        } catch (e: Exception) {
-            logger.error(e) { "Не удалось получить все хеши" }
-            emptyMap()
-        }
-
     /**
      * Gets the stored timestamp for a file
      */
-    fun getTimestamp(file: Path): Long? =
+    fun getSourceSetTimestamp(sourceSetName: String): Long? =
         try {
-            val key = normalizeKey(file)
-            timestampMap[key]
+            timestampMap[sourceSetName]
         } catch (e: Exception) {
-            logger.debug(e) { "Не удалось получить временную метку для файла: $file" }
+            logger.debug(e) { "Не удалось получить временную метку для проекта: $sourceSetName" }
             null
         }
 
@@ -187,62 +130,17 @@ class MapDbHashStorage(
      * Stores the timestamp for a file
      */
     fun storeTimestamp(
-        file: Path,
+        sourceSetName: String,
         timestamp: Long,
     ) = try {
-        val key = normalizeKey(file)
-        timestampMap[key] = timestamp
+        timestampMap[sourceSetName] = timestamp
         db.commit()
 
-        logger.debug { "Временная метка сохранена для файла: $file" }
+        logger.debug { "Временная метка сохранена для подпроекта: $sourceSetName" }
     } catch (e: Exception) {
-        logger.error(e) { "Не удалось сохранить временную метку для файла: $file" }
+        logger.error(e) { "Не удалось сохранить временную метку для подпроекта: $sourceSetName" }
         db.rollback()
         throw e
-    }
-
-    /**
-     * Gets statistics about the hash storage
-     */
-    fun getStorageStats(): HashStorageStats =
-        try {
-            HashStorageStats(
-                totalFiles = hashMap.size,
-                dbSizeBytes = Files.size(dbPath),
-                oldestTimestamp = timestampMap.values.minOrNull(),
-                newestTimestamp = timestampMap.values.maxOrNull(),
-            )
-        } catch (e: Exception) {
-            logger.error(e) { "Не удалось получить статистику хранилища" }
-            HashStorageStats(0, 0, null, null)
-        }
-
-    /**
-     * Performs cleanup of old entries beyond the specified retention period
-     */
-    fun cleanup(retentionDays: Int = 30) {
-        try {
-            val cutoffTime = System.currentTimeMillis() - (retentionDays * 24 * 60 * 60 * 1000L)
-            val keysToRemove = mutableListOf<String>()
-
-            for ((key, timestamp) in timestampMap) {
-                if (timestamp < cutoffTime) {
-                    keysToRemove.add(key)
-                }
-            }
-
-            for (key in keysToRemove) {
-                hashMap.remove(key)
-                timestampMap.remove(key)
-            }
-
-            db.commit()
-
-            logger.info { "Очищено ${keysToRemove.size} старых записей хешей (срок хранения: $retentionDays дней)" }
-        } catch (e: Exception) {
-            logger.error(e) { "Не удалось очистить старые записи хешей" }
-            db.rollback()
-        }
     }
 
     /**

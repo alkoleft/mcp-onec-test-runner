@@ -21,7 +21,7 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.locator
 
-import io.github.alkoleft.mcp.core.modules.UtilityLocation
+import io.github.alkoleft.mcp.application.core.UtilityLocation
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlin.io.path.exists
 import kotlin.io.path.isExecutable

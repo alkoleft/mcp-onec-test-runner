@@ -22,6 +22,7 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.commands.common
 
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdDsl
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 
 open class CommandBuilder(
     protected val dsl: IbcmdDsl,
@@ -34,5 +35,5 @@ open class CommandBuilder(
     protected fun <T : IbcmdCommand> configureAndExecute(
         command: T,
         configure: (T.() -> Unit)?,
-    ) = dsl.configureAndExecute(command, configure)
+    ): ProcessResult = dsl.configureAndExecute(command, configure)
 }

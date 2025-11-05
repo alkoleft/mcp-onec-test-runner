@@ -22,18 +22,20 @@
 package io.github.alkoleft.mcp.application.services
 
 import io.github.alkoleft.mcp.application.actions.ActionFactory
-import io.github.alkoleft.mcp.application.actions.BuildResult
-import io.github.alkoleft.mcp.application.actions.ConvertResult
+import io.github.alkoleft.mcp.application.actions.common.ActionStepResult
+import io.github.alkoleft.mcp.application.actions.common.BuildResult
+import io.github.alkoleft.mcp.application.actions.common.ConvertResult
+import io.github.alkoleft.mcp.application.actions.common.RunTestResult
 import io.github.alkoleft.mcp.application.actions.exceptions.AnalysisError
+import io.github.alkoleft.mcp.application.actions.exceptions.TestExecutionError
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestExecutionRequest
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.ProjectFormat
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
-import io.github.alkoleft.mcp.core.modules.TestExecutionError
-import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
-import io.github.alkoleft.mcp.core.modules.TestExecutionResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import kotlin.time.Duration
+import kotlin.time.TimeSource
 
 private val logger = KotlinLogging.logger { }
 
@@ -45,44 +47,54 @@ class LauncherService(
     private val edtSourceSet: SourceSet = createEdtSourceSet()
     private val designerSourceSet: SourceSet = createDesignerSourceSet()
 
-    fun run(request: TestExecutionRequest): TestExecutionResult {
+    fun runTests(request: TestExecutionRequest): RunTestResult {
+        val start = TimeSource.Monotonic.markNow()
         val buildResult = build()
         if (!buildResult.success) {
             val reason = if (buildResult.errors.isNotEmpty()) buildResult.errors.joinToString("; ") else "Сборка не удалась"
-            throw TestExecutionError.BuildFailed(reason)
+            throw TestExecutionError(reason)
         }
-        return actionFactory.createRunTestAction().run(request)
+        return actionFactory.createRunTestAction().run(request).let {
+            it.copy(steps = buildResult.steps + it.steps, duration = start.elapsedNow())
+        }
     }
 
     fun build(): BuildResult {
         val changeAnalyzer = actionFactory.createChangeAnalysisAction()
-        val changes = changeAnalyzer.run(properties)
+        val changes = changeAnalyzer.run()
+
+        val steps = mutableListOf<ActionStepResult>()
+        steps.addAll(changes.steps)
+
         if (!changes.hasChanges) {
-            logger.info { "Исходные файлы не изменены. Обновление базы пропущено" }
             return BuildResult(
+                message = "Исходные файлы не изменены. Обновление базы пропущено",
                 success = true,
                 errors = emptyList(),
                 duration = Duration.ZERO,
                 sourceSet = emptyMap(),
-            )
+                steps = steps,
+            ).also { logger.info { it.message } }
         }
         val changedSourceSets = properties.sourceSet.subSourceSet { it.name in changes.sourceSetChanges.keys }
 
         if (changedSourceSets.isEmpty()) {
-            throw AnalysisError("Не удалось распределить изменения по субпроектам.")
+            throw AnalysisError("Не удалось распределить изменения по подпроектам.")
         }
         logger.info { "Обнаружены изменения: ${changedSourceSets.joinToString { it.name }}" }
 
         if (properties.format == ProjectFormat.EDT) {
             val convertResult = convertSources(changedSourceSets, designerSourceSet)
+            steps.addAll(convertResult.steps)
             if (!convertResult.success) {
-                logger.error { "Ошибки конвертации исходников EDT: ${convertResult.errors.joinToString()}" }
                 return BuildResult(
+                    message = "Ошибки конвертации исходников EDT: ${convertResult.errors.joinToString()}",
                     success = false,
                     errors = convertResult.errors,
                     duration = Duration.ZERO,
                     sourceSet = emptyMap(),
-                )
+                    steps = steps,
+                ).also { logger.error { it.message } }
             }
         }
 
@@ -92,23 +104,13 @@ class LauncherService(
         val errors = mutableListOf<String>()
         result.sourceSet.forEach { (name, result) ->
             success = success && result.success
-            if (result.success) {
-                changeAnalyzer.saveSourceSetState(properties, changes.sourceSetChanges[name]!!)
-            } else {
+            changeAnalyzer.saveSourceSetState(changes.sourceSetChanges[name]!!, changes.timestamp, result.success)
+            if (!result.success) {
                 result.error?.takeIf { it.isNotBlank() }?.let { errors.add(it) }
             }
         }
 
-        return if (success && result.success) {
-            result
-        } else {
-            BuildResult(
-                success = false,
-                errors = errors.ifEmpty { result.errors },
-                duration = result.duration,
-                sourceSet = result.sourceSet,
-            )
-        }
+        return result.copy(steps = steps + result.steps)
     }
 
     private fun convertSources(

@@ -21,9 +21,9 @@
 
 package io.github.alkoleft.mcp.application.services
 
+import io.github.alkoleft.mcp.application.core.UtilityType
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.ProjectFormat
-import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.InteractiveProcessExecutor
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -177,7 +177,7 @@ class EdtCliStartService(
                         process,
                         InteractiveProcessExecutor.InteractiveProcessParams(
                             promptPattern = "1C:EDT>",
-                            promptTimeoutMs = properties.tools.edtCli.startupTimeoutMs,
+                            startUpTimeoutMs = properties.tools.edtCli.startupTimeoutMs,
                             commandTimeoutMs = properties.tools.edtCli.commandTimeoutMs,
                         ),
                     )
@@ -253,45 +253,4 @@ class EdtCliStartService(
         // Запускаем заново (без ожидания)
         ensureStarted().start()
     }
-
-    /**
-     * Принудительно перезапускает 1C:EDT CLI исполнитель и ожидает готовности
-     */
-    fun restartInteractiveExecutor(): InteractiveProcessExecutor? =
-        runBlocking {
-            logger.info { "Принудительный перезапуск 1C:EDT CLI исполнителя" }
-            initMutex.withLock {
-                try {
-                    executorRef?.stopProcess()
-                } catch (e: Exception) {
-                    logger.warn(e) { "Ошибка при остановке текущего 1C:EDT CLI процесса" }
-                } finally {
-                    executorRef = null
-                    initJob = null
-                }
-            }
-            ensureStarted().await()
-        }
-
-    /**
-     * Проверяет, запущен ли процесс 1C:EDT CLI
-     */
-    fun isProcessStarted(): Boolean = executorRef?.isProcessRunning() == true || (initJob?.isActive == true)
-
-    /**
-     * Проверяет, включен ли автозапуск
-     */
-    fun isAutoStartEnabled(): Boolean = isAutoStartEnabled
-
-    /**
-     * Проверяет состояние 1C:EDT CLI исполнителя
-     */
-    fun getExecutorStatus(): String =
-        when {
-            properties.format != ProjectFormat.EDT -> "EDT формат не выбран"
-            executorRef?.available == true -> "Готов к работе"
-            initJob?.isActive == true -> "Инициализация в процессе"
-            executorRef == null -> "Не запущен"
-            else -> "Неопределенное состояние"
-        }
 }

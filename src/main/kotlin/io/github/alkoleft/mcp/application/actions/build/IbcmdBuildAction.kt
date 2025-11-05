@@ -23,9 +23,9 @@ package io.github.alkoleft.mcp.application.actions.build
 
 import io.github.alkoleft.mcp.application.actions.exceptions.BuildError
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
-import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdDsl
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
 import java.nio.file.Path
 
@@ -52,8 +52,8 @@ class IbcmdBuildAction(
     override fun loadConfiguration(
         name: String,
         path: Path,
-    ): ShellCommandResult {
-        lateinit var result: ShellCommandResult
+    ): ProcessResult {
+        lateinit var result: ProcessResult
         actionDsl.config { result = import(path) }
         return result
     }
@@ -61,8 +61,8 @@ class IbcmdBuildAction(
     override fun loadExtension(
         name: String,
         path: Path,
-    ): ShellCommandResult {
-        lateinit var result: ShellCommandResult
+    ): ProcessResult {
+        lateinit var result: ProcessResult
         actionDsl.config {
             result =
                 import(path) {
@@ -72,8 +72,8 @@ class IbcmdBuildAction(
         return result
     }
 
-    override fun updateDb(): ShellCommandResult {
-        lateinit var result: ShellCommandResult
+    override fun updateDb(): ProcessResult {
+        lateinit var result: ProcessResult
         actionDsl.config { result = apply() }
         return result
     }

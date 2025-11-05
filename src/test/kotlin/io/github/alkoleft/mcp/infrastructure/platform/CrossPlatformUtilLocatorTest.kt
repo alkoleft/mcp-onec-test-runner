@@ -21,10 +21,10 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform
 
-import io.github.alkoleft.mcp.core.modules.PlatformType
-import io.github.alkoleft.mcp.core.modules.TestExecutionError
-import io.github.alkoleft.mcp.core.modules.UtilityLocation
-import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestExecutionError
+import io.github.alkoleft.mcp.application.core.PlatformType
+import io.github.alkoleft.mcp.application.core.UtilityLocation
+import io.github.alkoleft.mcp.application.core.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
 import java.nio.file.Paths
 import kotlin.test.Test

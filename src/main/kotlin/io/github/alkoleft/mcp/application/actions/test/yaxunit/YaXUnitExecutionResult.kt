@@ -19,17 +19,14 @@
  * along with METR.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.github.alkoleft.mcp.core.modules
+package io.github.alkoleft.mcp.application.actions.test.yaxunit
 
-import kotlin.time.Duration
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
+import java.nio.file.Path
 
-interface ExecuteResult {
-    val success: Boolean
-    val duration: Duration
-}
-
-interface ShellCommandResult : ExecuteResult {
-    val output: String
-    val error: String?
-    val exitCode: Int
-}
+data class YaXUnitExecutionResult(
+    val commandResult: ProcessResult,
+    val reportPath: Path?,
+    val configPath: Path,
+    val logPath: String?,
+)

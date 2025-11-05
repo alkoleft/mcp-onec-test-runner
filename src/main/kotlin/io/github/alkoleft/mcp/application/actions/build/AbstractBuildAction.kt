@@ -21,13 +21,15 @@
 
 package io.github.alkoleft.mcp.application.actions.build
 
-import io.github.alkoleft.mcp.application.actions.BuildAction
-import io.github.alkoleft.mcp.application.actions.BuildResult
+import io.github.alkoleft.mcp.application.actions.common.ActionState
+import io.github.alkoleft.mcp.application.actions.common.BuildAction
+import io.github.alkoleft.mcp.application.actions.common.BuildResult
+import io.github.alkoleft.mcp.application.actions.common.toActionStepResult
 import io.github.alkoleft.mcp.application.actions.exceptions.BuildException
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
-import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Path
 import kotlin.time.TimeSource
@@ -76,23 +78,17 @@ abstract class AbstractBuildAction(
         logger.debug { "Сборка проекта" }
 
         initDsl(properties)
-        val state = CurrentBuildState()
+        val state = BuildActionState()
 
         // Загружаем основную конфигурацию
         sourceSet.configuration?.also { configuration ->
             logger.info { "Загружаю основную конфигурацию" }
             val result = loadConfiguration(configuration.name, sourceSet.basePath.resolve(configuration.path))
-            state.addResult(configuration.name, result)
-
-            if (result.success) {
-                logger.info { "Конфигурация загружена успешно" }
-            } else {
-                logger.error { "Не удалось загрузить конфигурацию" }
-            }
+            state.addResult(configuration.name, result, "Загрузка конфигурации")
         }
 
         if (!state.success) {
-            return state.toBuildResult()
+            return state.toResult("При загрузке исходников возникли ошибки")
         }
 
         // Загружаем расширения
@@ -100,30 +96,20 @@ abstract class AbstractBuildAction(
         logger.info { "Загружаю ${extensions.size} расширений: ${extensions.joinToString(", ") { it.name }}" }
         extensions.forEach {
             val result = loadExtension(it.name, sourceSet.basePath.resolve(it.path))
-            state.addResult(it.name, result)
+            state.addResult(it.name, result, "Загрузка расширения ${it.name}")
 
-            if (result.success) {
-                logger.info { "Расширение ${it.name} загружено успешно" }
-            } else {
-                logger.error { "Не удалось загрузить расширение ${it.name}" }
-            }
             if (!result.success) {
                 return@forEach
             }
         }
 
         if (!state.success) {
-            return state.toBuildResult()
+            return state.toResult("При загрузке исходников возникли ошибки")
         }
 
-        val updateResult = updateDb().also(state::registerUpdateResult)
-        if (updateResult.success) {
-            logger.info { "Обновление базы данных завершена успешно" }
-        } else {
-            logger.error { "Обновление базы данных не выполнено" }
-        }
+        updateDb()?.also(state::registerUpdateResult)
 
-        return state.toBuildResult().also { if (it.success) logger.info { "Сборка завершена успешно" } }
+        return state.toResult("Сборка завершена").also { if (it.success) logger.info { it.message } }
     }
 
     protected abstract fun initDsl(properties: ApplicationProperties): Unit
@@ -131,46 +117,50 @@ abstract class AbstractBuildAction(
     protected abstract fun loadConfiguration(
         name: String,
         path: Path,
-    ): ShellCommandResult
+    ): ProcessResult
 
     protected abstract fun loadExtension(
         name: String,
         path: Path,
-    ): ShellCommandResult
+    ): ProcessResult
 
-    protected abstract fun updateDb(): ShellCommandResult
+    protected abstract fun updateDb(): ProcessResult?
 
-    private class CurrentBuildState {
-        var success: Boolean = true
-        val sourceSet = mutableMapOf<String, ShellCommandResult>()
-        var updateResult: ShellCommandResult? = null
+    class BuildActionState : ActionState(logger) {
+        val sourceSet = mutableMapOf<String, ProcessResult>()
+        var updateResult: ProcessResult? = null
 
         fun addResult(
             name: String,
-            result: ShellCommandResult,
+            result: ProcessResult,
+            description: String,
         ) {
             sourceSet.put(name, result)
             if (!result.success) {
                 success = false
             }
+            addStep(result.toActionStepResult(description))
         }
 
-        fun registerUpdateResult(result: ShellCommandResult) {
+        fun registerUpdateResult(result: ProcessResult) {
             updateResult = result
             if (!result.success) {
                 success = false
             }
+            addStep(result.toActionStepResult("Обновление конфигурации"))
         }
 
-        fun toBuildResult(): BuildResult {
+        fun toResult(message: String): BuildResult {
             val errors = mutableListOf<String>()
             errors.addAll(sourceSet.values.mapNotNull { it.error })
             updateResult?.error?.let(errors::add)
 
             return BuildResult(
+                message = message + if (success) " успешно" else " неудачно",
                 success = success,
                 errors = errors,
                 sourceSet = sourceSet,
+                steps = steps.toList(),
             )
         }
     }

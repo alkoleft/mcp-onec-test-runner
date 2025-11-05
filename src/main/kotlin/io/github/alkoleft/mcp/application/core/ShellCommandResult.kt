@@ -19,39 +19,14 @@
  * along with METR.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.github.alkoleft.mcp.core.modules
+package io.github.alkoleft.mcp.application.core
 
-import java.nio.file.Path
+import kotlin.time.Duration
 
-// Platform utilities
-data class UtilityLocation(
-    val executablePath: Path,
-    val version: String?,
-    val platformType: PlatformType,
-)
-
-enum class PlatformType {
-    WINDOWS,
-    LINUX,
-    MACOS,
-}
-
-enum class UtilityType(
-    val fileName: String,
-) {
-    DESIGNER("1cv8"),
-    IBCMD("ibcmd"),
-    IBSRV("ibsrv"),
-    THIN_CLIENT("1cv8c"),
-    THICK_CLIENT("1cv8"),
-    EDT_CLI("1cedtcli"),
-    ;
-
-    fun isPlatform() = this != EDT_CLI
-}
-
-enum class ClientMode {
-    THIN,
-    THICK,
-    ORDINARY,
+interface ShellCommandResult {
+    val success: Boolean
+    val duration: Duration
+    val output: String
+    val error: String?
+    val exitCode: Int
 }

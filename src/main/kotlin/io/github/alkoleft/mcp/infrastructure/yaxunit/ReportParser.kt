@@ -21,13 +21,12 @@
 
 package io.github.alkoleft.mcp.infrastructure.yaxunit
 
-import io.github.alkoleft.mcp.core.modules.GenericTestCase
-import io.github.alkoleft.mcp.core.modules.GenericTestReport
-import io.github.alkoleft.mcp.core.modules.GenericTestSuite
-import io.github.alkoleft.mcp.core.modules.ReportFormat
-import io.github.alkoleft.mcp.core.modules.TestMetadata
-import io.github.alkoleft.mcp.core.modules.TestStatus
-import io.github.alkoleft.mcp.core.modules.TestSummary
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.GenericTestCase
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.GenericTestReport
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.GenericTestSuite
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestMetadata
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestStatus
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestSummary
 import org.springframework.stereotype.Component
 import org.w3c.dom.Element
 import java.io.InputStream
@@ -42,29 +41,7 @@ import kotlin.time.toDuration
  */
 @Component
 class ReportParser {
-    fun parseReport(
-        input: InputStream,
-        format: ReportFormat,
-    ): GenericTestReport {
-        require(format == ReportFormat.JUNIT_XML) { "Поддерживается только формат JUNIT_XML" }
-        return parseJUnitXml(input)
-    }
-
-    fun detectFormat(input: InputStream): ReportFormat {
-        val bytes = input.readAllBytes()
-        val content = String(bytes)
-        if (content
-                .trim()
-                .startsWith("<?xml") &&
-            content.contains("testsuite")
-        ) {
-            return ReportFormat.JUNIT_XML
-        } else {
-            return ReportFormat.JUNIT_XML
-        }
-    }
-
-    fun getSupportedFormats(): Set<ReportFormat> = setOf(ReportFormat.JUNIT_XML)
+    fun parseReport(input: InputStream) = parseJUnitXml(input)
 
     private fun parseJUnitXml(input: InputStream): GenericTestReport {
         val factory = DocumentBuilderFactory.newInstance()

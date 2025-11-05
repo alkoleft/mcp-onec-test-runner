@@ -38,7 +38,7 @@ data class EdtCliProperties(
     val version: String = "latest",
     val interactiveMode: Boolean = true,
     val workingDirectory: String? = null,
-    val startupTimeoutMs: Long = 30000, // 30 секунд по умолчанию
-    val commandTimeoutMs: Long = 300000, // 5 минут по умолчанию
-    val readyCheckTimeoutMs: Long = 5000, // 5 секунд для проверки готовности
+    val startupTimeoutMs: Long = 300_000, // 5 минут по умолчанию
+    val commandTimeoutMs: Long = 300_000, // 5 минут по умолчанию
+    val readyCheckTimeoutMs: Long = 30_000, // 30 секунд для проверки готовности
 )

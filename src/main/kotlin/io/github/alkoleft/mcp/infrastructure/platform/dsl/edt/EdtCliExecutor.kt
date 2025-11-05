@@ -21,7 +21,7 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.edt
 
-import io.github.alkoleft.mcp.core.modules.ShellCommandResult
+import io.github.alkoleft.mcp.application.core.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.CommandExecutor
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.InteractiveProcessExecutor
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -46,9 +46,6 @@ class EdtCliExecutor(
         override val output: String,
         override val error: String?,
         override val duration: Duration,
-        val command: String,
-        val hasErrors: Boolean = false,
-        val errorDetails: String? = null,
         override val exitCode: Int = 0,
     ) : ShellCommandResult
 
@@ -71,30 +68,24 @@ class EdtCliExecutor(
     /**
      * Обрабатывает результат команды
      */
-    private fun processCommandResult(result: InteractiveProcessExecutor.CommandResult): EdtCommandResult {
+    private fun processCommandResult(result: InteractiveProcessExecutor.EdtCommandResult): EdtCommandResult {
+        val output = result.output
         if (!result.success) {
             return EdtCommandResult(
                 success = false,
-                output = result.output,
+                output = output,
                 error = result.error,
                 duration = result.duration,
-                command = result.command,
-                hasErrors = true,
-                errorDetails = result.error,
+                exitCode = result.exitCode,
+            )
+        } else {
+            return EdtCommandResult(
+                success = output.isBlank(),
+                output = output,
+                error = output,
+                duration = result.duration,
                 exitCode = result.exitCode,
             )
         }
-
-        val output = result.output
-        val command = result.command
-
-        return EdtCommandResult(
-            success = output.isBlank(),
-            output = output,
-            error = output,
-            duration = result.duration,
-            command = command,
-            exitCode = result.exitCode,
-        )
     }
 }
