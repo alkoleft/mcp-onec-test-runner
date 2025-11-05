@@ -105,7 +105,7 @@ class PlatformUtilities(
      * @throws IllegalStateException если EDT CLI не запущено в интерактивном режиме
      */
     fun executor(utilityType: UtilityType): CommandExecutor {
-        if (utilityType == UtilityType.EDT_CLI && properties.tools.edtCli.interactiveMode) {
+        if (utilityType == UtilityType.EDT_CLI && properties.tools.edtCli.autoStart) {
             val service = applicationContext.getBean(EdtCliStartService::class.java)
             val executor = service.interactiveExecutor()
             return executor?.let { EdtCliExecutor(it) } ?: throw IllegalStateException("EDT cli не запущено, попробуйте позже")

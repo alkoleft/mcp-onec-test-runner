@@ -33,6 +33,9 @@ MCP 1C:Enterprise Test Runner — это MCP‑сервер, который по
 - Выполнение тестов отдельных модулей
 - Сборка проекта 1С
 - Быстрая конвертация из формата EDT за счёт автозапуска EDT CLI в интерактивном режиме
+- Запуск конфигуратора и предприятия
+
+[Полное описание возможностей](docs/FEATURES.md).
 
 ```mermaid
 flowchart LR
@@ -264,9 +267,10 @@ app:
 
 ## Документация
 
+- [Основные возможности](docs/FEATURES.md) — подробное описание всех возможностей METR
 - [Application Configuration](docs/APPLICATION_CONFIGURATION.md) — подробный пошаговый гид по настройке `application.yml`
 - [IDE Setup](docs/IDE_SETUP.md) — подробная инструкция по настройке MCP сервера в различных IDE и AI-ассистентах
 
 ## Лицензия
 
-GPL-3.0 License 
+GPL-3.0 License
