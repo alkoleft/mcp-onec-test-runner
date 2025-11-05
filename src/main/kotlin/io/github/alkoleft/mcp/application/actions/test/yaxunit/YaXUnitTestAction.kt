@@ -27,6 +27,7 @@ import io.github.alkoleft.mcp.application.actions.TestExecutionResult
 import io.github.alkoleft.mcp.application.actions.common.ActionState
 import io.github.alkoleft.mcp.application.actions.common.toActionStepResult
 import io.github.alkoleft.mcp.application.actions.exceptions.TestExecuteException
+import io.github.alkoleft.mcp.infrastructure.yaxunit.LogParser
 import io.github.alkoleft.mcp.infrastructure.yaxunit.ReportParser
 import io.github.alkoleft.mcp.infrastructure.yaxunit.YaXUnitRunner
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -55,12 +56,11 @@ class YaXUnitTestAction(
         try {
             val executionResult = runner.executeTests(request)
             state.setTestResult(executionResult)
-            // Парсим отчет если он был создан
-            val report =
-                measureTimedValue { parseTestReport(executionResult) }
-                    .also { (report, duration) ->
-                        state.setReport(report, duration)
-                    }.value
+            measureTimedValue { parseTestReport(executionResult) }
+                .also { (report, duration) ->
+                    state.setReport(report, duration)
+                }
+            executionResult.logPath?.also { state.setLogErrors(LogParser().extractErrors(it)) }
 
             return state.toResult(start.elapsedNow())
         } catch (e: Exception) {
@@ -98,6 +98,7 @@ class YaXUnitTestAction(
     private class TestActionState : ActionState(logger) {
         lateinit var executionResult: YaXUnitExecutionResult
         var report: GenericTestReport? = null
+        val errors: MutableList<String> = mutableListOf()
 
         fun setTestResult(result: YaXUnitExecutionResult) {
             executionResult = result
@@ -110,6 +111,15 @@ class YaXUnitTestAction(
                     "Конфигурация запуска yaxunit:\n${executionResult.configPath};\nлог yaxunit: ${executionResult.logPath};\nполный отчет junit: ${executionResult.reportPath}",
                 ),
             )
+        }
+
+        fun setLogErrors(value: List<String>) {
+            if (value.isEmpty()) {
+                return
+            }
+            success = false
+            errors.addAll(value)
+            logger.error { "Обнаружен ошибки в логе YAxUnit:\n" + value.joinToString("\n") }
         }
 
         fun setReport(
@@ -135,10 +145,12 @@ class YaXUnitTestAction(
                 message = "Модульное тестирование yaxunit: " + if (success) "успешно. " else "неудачно. ",
                 success = success,
                 reportPath = executionResult.reportPath,
+                logPath = executionResult.logPath,
+                enterpriseLogPath = executionResult.commandResult.logFilePath?.toString(),
                 report = report,
                 duration = duration,
                 steps = steps,
-                errors = steps.mapNotNull { it.error },
+                errors = errors + steps.mapNotNull { it.error },
             )
     }
 }

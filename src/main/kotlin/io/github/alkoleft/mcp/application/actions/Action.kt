@@ -23,11 +23,12 @@ package io.github.alkoleft.mcp.application.actions
 
 import io.github.alkoleft.mcp.application.actions.change.ChangesSet
 import io.github.alkoleft.mcp.application.actions.change.SourceSetChanges
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.GenericTestReport
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestExecutionRequest
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
+import io.github.alkoleft.mcp.core.modules.ExecuteResult
 import io.github.alkoleft.mcp.core.modules.ShellCommandResult
-import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
-import io.github.alkoleft.mcp.core.modules.TestExecutionResult
 import java.nio.file.Path
 import kotlin.time.Duration
 
@@ -133,8 +134,7 @@ data class TestExecutionResult(
     override val steps: List<ActionStepResult> = emptyList(),
     val report: GenericTestReport?,
     val reportPath: Path?,
+    val enterpriseLogPath: String?,
+    val logPath: String?,
 ) : ActionResult,
-    ExecuteResult {
-    val successRate
-        get() = report?.summary?.successRate.toString()
-}
+    ExecuteResult

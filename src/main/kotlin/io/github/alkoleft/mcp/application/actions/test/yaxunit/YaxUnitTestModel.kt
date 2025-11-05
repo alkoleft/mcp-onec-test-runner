@@ -45,10 +45,6 @@ sealed class TestExecutionError(
     data class UtilNotFound(
         val utility: String,
     ) : TestExecutionError(utility)
-
-    data class BuildFailed(
-        val reason: String,
-    ) : TestExecutionError(reason)
 }
 
 /**

@@ -25,16 +25,17 @@ import io.github.alkoleft.mcp.application.actions.ActionFactory
 import io.github.alkoleft.mcp.application.actions.ActionStepResult
 import io.github.alkoleft.mcp.application.actions.BuildResult
 import io.github.alkoleft.mcp.application.actions.ConvertResult
+import io.github.alkoleft.mcp.application.actions.TestExecutionResult
 import io.github.alkoleft.mcp.application.actions.exceptions.AnalysisError
+import io.github.alkoleft.mcp.application.actions.exceptions.TestExecutionError
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestExecutionRequest
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.ProjectFormat
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
-import io.github.alkoleft.mcp.core.modules.TestExecutionError
-import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
-import io.github.alkoleft.mcp.core.modules.TestExecutionResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import kotlin.time.Duration
+import kotlin.time.TimeSource
 
 private val logger = KotlinLogging.logger { }
 
@@ -46,13 +47,16 @@ class LauncherService(
     private val edtSourceSet: SourceSet = createEdtSourceSet()
     private val designerSourceSet: SourceSet = createDesignerSourceSet()
 
-    fun run(request: TestExecutionRequest): TestExecutionResult {
+    fun runTests(request: TestExecutionRequest): TestExecutionResult {
+        val start = TimeSource.Monotonic.markNow()
         val buildResult = build()
         if (!buildResult.success) {
             val reason = if (buildResult.errors.isNotEmpty()) buildResult.errors.joinToString("; ") else "Сборка не удалась"
-            throw TestExecutionError.BuildFailed(reason)
+            throw TestExecutionError(reason)
         }
-        return actionFactory.createRunTestAction().run(request)
+        return actionFactory.createRunTestAction().run(request).let {
+            it.copy(steps = buildResult.steps + it.steps, duration = start.elapsedNow())
+        }
     }
 
     fun build(): BuildResult {

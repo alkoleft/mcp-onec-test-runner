@@ -25,7 +25,6 @@ import io.github.alkoleft.mcp.application.actions.ActionStepResult
 import io.github.alkoleft.mcp.application.actions.TestExecutionResult
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.GenericTestSuite
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunAllTestsRequest
-import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunListTestsRequest
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunModuleTestsRequest
 import io.github.alkoleft.mcp.application.services.LauncherService
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -42,7 +41,7 @@ private val logger = KotlinLogging.logger { }
  */
 @Service
 class McpServer(
-    private val launcherService: LauncherService
+    private val launcherService: LauncherService,
 ) {
     /**
      * Запускает все тесты в проекте
@@ -63,7 +62,8 @@ class McpServer(
             logger.error(e) { "Ошибка при запуске всех тестов" }
             return McpTestResponse(
                 success = false,
-                message = "Ошибка при выполнении тестов: ${e.message}",
+                message = "Ошибка при выполнении тестов",
+                errors = listOf(e.message.toString()),
             )
         }
     }
@@ -90,34 +90,8 @@ class McpServer(
             logger.error(e) { "Ошибка при запуске тестов модуля: $moduleName" }
             return McpTestResponse(
                 success = false,
-                message = "Ошибка при выполнении тестов модуля '$moduleName': ${e.message}",
-            )
-        }
-    }
-
-    /**
-     * Запускает тесты из списка указанных модулей
-     * @param moduleNames Список имен модулей для тестирования
-     * @return Результат выполнения тестов указанных модулей
-     */
-    @Tool(
-        name = "run_list_tests",
-        description = "Запускает тесты YaXUnit из списка указанных модулей. Передайте список имен модулей.",
-    )
-    fun runListTests(
-        @ToolParam(description = "Список имен модулей для тестирования") moduleNames: List<String>,
-    ): McpTestResponse {
-        logger.info { "Запуск тестов модулей: $moduleNames" }
-
-        try {
-            val request = RunListTestsRequest(moduleNames)
-            val result = launcherService.runTests(request)
-            return result.toResponse()
-        } catch (e: Exception) {
-            logger.error(e) { "Ошибка при запуске тестов модулей: $moduleNames" }
-            return McpTestResponse(
-                success = false,
-                message = "Ошибка при выполнении тестов модулей '${moduleNames.joinToString(", ")}': ${e.message}",
+                message = "Ошибка при выполнении тестов модуля '$moduleName'",
+                errors = listOf(e.message.toString()),
             )
         }
     }
@@ -162,18 +136,36 @@ class McpServer(
     }
 }
 
+fun TestExecutionResult.toResponse() =
+    McpTestResponse(
+        success = success,
+        message = message,
+        logFile = logPath,
+        enterpriseLogPath = enterpriseLogPath,
+        totalTests = report?.summary?.totalTests,
+        passedTests = report?.summary?.passed,
+        failedTests = report?.summary?.failed,
+        executionTime = duration.inWholeMilliseconds,
+        testDetail = report?.testSuites,
+        steps = if (success) null else steps,
+        errors = errors,
+    )
+
 /**
  * Результат выполнения тестов
  */
 data class McpTestResponse(
     val success: Boolean,
     val message: String,
-    val totalTests: Int,
-    val passedTests: Int,
-    val failedTests: Int,
-    val executionTime: Long,
-    val details: Map<String, Any>,
-    val testDetail: List<GenericTestCase> = emptyList(),
+    val totalTests: Int? = null,
+    val passedTests: Int? = null,
+    val failedTests: Int? = null,
+    val executionTime: Long? = null,
+    val testDetail: List<GenericTestSuite>? = null,
+    val steps: List<ActionStepResult>? = null,
+    val errors: List<String>,
+    val enterpriseLogPath: String? = null,
+    val logFile: String? = null,
 )
 
 /**
