@@ -21,8 +21,7 @@
 
 package io.github.alkoleft.mcp.application.actions.common
 
-import io.github.alkoleft.mcp.application.actions.ActionStepResult
-import io.github.alkoleft.mcp.core.modules.ShellCommandResult
+import io.github.alkoleft.mcp.application.core.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import io.github.oshai.kotlinlogging.KLogger
 

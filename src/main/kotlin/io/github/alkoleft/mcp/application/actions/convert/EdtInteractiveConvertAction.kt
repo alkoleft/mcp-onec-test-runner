@@ -21,13 +21,13 @@
 
 package io.github.alkoleft.mcp.application.actions.convert
 
-import io.github.alkoleft.mcp.application.actions.ConvertAction
-import io.github.alkoleft.mcp.application.actions.ConvertResult
 import io.github.alkoleft.mcp.application.actions.common.ActionState
+import io.github.alkoleft.mcp.application.actions.common.ConvertAction
+import io.github.alkoleft.mcp.application.actions.common.ConvertResult
 import io.github.alkoleft.mcp.application.actions.common.toActionStepResult
+import io.github.alkoleft.mcp.application.core.ShellCommandResult
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
-import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.oshai.kotlinlogging.KotlinLogging
 

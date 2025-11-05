@@ -23,6 +23,10 @@ package io.github.alkoleft.mcp.application.actions
 
 import io.github.alkoleft.mcp.application.actions.change.FileSystemChangeAnalysisAction
 import io.github.alkoleft.mcp.application.actions.change.SourceSetChangeAnalyzer
+import io.github.alkoleft.mcp.application.actions.common.BuildAction
+import io.github.alkoleft.mcp.application.actions.common.ChangeAnalysisAction
+import io.github.alkoleft.mcp.application.actions.common.ConvertAction
+import io.github.alkoleft.mcp.application.actions.common.RunTestAction
 import io.github.alkoleft.mcp.application.actions.convert.EdtInteractiveConvertAction
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.YaXUnitTestAction
 import io.github.alkoleft.mcp.configuration.properties.BuilderType

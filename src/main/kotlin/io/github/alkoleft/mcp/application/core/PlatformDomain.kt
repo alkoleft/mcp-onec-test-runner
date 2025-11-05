@@ -19,7 +19,7 @@
  * along with METR.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.github.alkoleft.mcp.core.modules
+package io.github.alkoleft.mcp.application.core
 
 import java.nio.file.Path
 
@@ -48,10 +48,4 @@ enum class UtilityType(
     ;
 
     fun isPlatform() = this != EDT_CLI
-}
-
-enum class ClientMode {
-    THIN,
-    THICK,
-    ORDINARY,
 }

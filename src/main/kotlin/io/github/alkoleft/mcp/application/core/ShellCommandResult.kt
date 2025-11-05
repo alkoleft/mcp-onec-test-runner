@@ -19,16 +19,13 @@
  * along with METR.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.github.alkoleft.mcp.core.modules
+package io.github.alkoleft.mcp.application.core
 
 import kotlin.time.Duration
 
-interface ExecuteResult {
+interface ShellCommandResult {
     val success: Boolean
     val duration: Duration
-}
-
-interface ShellCommandResult : ExecuteResult {
     val output: String
     val error: String?
     val exitCode: Int

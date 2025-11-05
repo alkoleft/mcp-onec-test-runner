@@ -21,7 +21,7 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.search
 
-import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.alkoleft.mcp.application.core.UtilityType
 import org.junit.jupiter.api.condition.EnabledOnOs
 import org.junit.jupiter.api.condition.OS
 import kotlin.test.Test

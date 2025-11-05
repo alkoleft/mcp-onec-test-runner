@@ -21,13 +21,14 @@
 
 package io.github.alkoleft.mcp.application.actions.change
 
-import io.github.alkoleft.mcp.application.actions.ActionStepResult
-import io.github.alkoleft.mcp.application.actions.ChangeAnalysisAction
-import io.github.alkoleft.mcp.application.actions.ChangeAnalysisResult
 import io.github.alkoleft.mcp.application.actions.common.ActionState
+import io.github.alkoleft.mcp.application.actions.common.ActionStepResult
+import io.github.alkoleft.mcp.application.actions.common.ChangeAnalysisAction
+import io.github.alkoleft.mcp.application.actions.common.ChangeAnalysisResult
 import io.github.alkoleft.mcp.application.actions.exceptions.AnalyzeException
 import io.github.alkoleft.mcp.infrastructure.storage.FileBuildStateManager
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.runBlocking
 import org.springframework.stereotype.Component
 import kotlin.time.TimedValue
 import kotlin.time.measureTimedValue
@@ -48,7 +49,7 @@ class FileSystemChangeAnalysisAction(
 
         val state = ChangeAnalysisActionState()
         try {
-            state.setChanges(measureTimedValue { buildStateManager.checkChanges() })
+            state.setChanges(measureTimedValue { runBlocking { buildStateManager.checkChanges() } })
 
             if (state.changes.isEmpty()) {
                 return state.toResult()

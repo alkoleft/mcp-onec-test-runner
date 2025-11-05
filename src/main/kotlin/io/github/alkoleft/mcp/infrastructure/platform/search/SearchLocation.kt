@@ -21,7 +21,7 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.search
 
-import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.alkoleft.mcp.application.core.UtilityType
 import io.github.alkoleft.mcp.infrastructure.utility.PlatformDetector
 import java.io.File
 import java.nio.file.Files

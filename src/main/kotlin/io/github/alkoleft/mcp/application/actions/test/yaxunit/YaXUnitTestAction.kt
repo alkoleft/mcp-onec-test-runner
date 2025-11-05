@@ -21,10 +21,10 @@
 
 package io.github.alkoleft.mcp.application.actions.test.yaxunit
 
-import io.github.alkoleft.mcp.application.actions.ActionStepResult
-import io.github.alkoleft.mcp.application.actions.RunTestAction
-import io.github.alkoleft.mcp.application.actions.TestExecutionResult
 import io.github.alkoleft.mcp.application.actions.common.ActionState
+import io.github.alkoleft.mcp.application.actions.common.ActionStepResult
+import io.github.alkoleft.mcp.application.actions.common.RunTestAction
+import io.github.alkoleft.mcp.application.actions.common.RunTestResult
 import io.github.alkoleft.mcp.application.actions.common.toActionStepResult
 import io.github.alkoleft.mcp.application.actions.exceptions.TestExecuteException
 import io.github.alkoleft.mcp.infrastructure.yaxunit.LogParser
@@ -47,7 +47,7 @@ class YaXUnitTestAction(
     private val reportParser: ReportParser,
     private val runner: YaXUnitRunner,
 ) : RunTestAction {
-    override fun run(request: TestExecutionRequest): TestExecutionResult {
+    override fun run(request: TestExecutionRequest): RunTestResult {
         logger.info { "Запуск выполнения тестов YaXUnit с фильтром: $request" }
         val start = TimeSource.Monotonic.markNow()
 
@@ -121,7 +121,7 @@ class YaXUnitTestAction(
             }
             success = false
             errors.addAll(value)
-            logger.error { "Обнаружен ошибки в логе YAxUnit:\n" + value.joinToString("\n") }
+            logger.error { "Обнаружены ошибки в логе YAxUnit:\n" + value.joinToString("\n") }
         }
 
         fun setReport(
@@ -143,7 +143,7 @@ class YaXUnitTestAction(
         }
 
         fun toResult(duration: Duration) =
-            TestExecutionResult(
+            RunTestResult(
                 message = "Модульное тестирование yaxunit: " + if (success) "успешно. " else "неудачно. ",
                 success = success,
                 reportPath = executionResult.reportPath,

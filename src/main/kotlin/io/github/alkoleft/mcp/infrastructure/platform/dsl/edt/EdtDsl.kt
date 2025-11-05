@@ -21,8 +21,8 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.edt
 
-import io.github.alkoleft.mcp.core.modules.ShellCommandResult
-import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.alkoleft.mcp.application.core.ShellCommandResult
+import io.github.alkoleft.mcp.application.core.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Path

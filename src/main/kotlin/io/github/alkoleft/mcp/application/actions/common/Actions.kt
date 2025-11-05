@@ -19,16 +19,15 @@
  * along with METR.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.github.alkoleft.mcp.application.actions
+package io.github.alkoleft.mcp.application.actions.common
 
 import io.github.alkoleft.mcp.application.actions.change.ChangesSet
 import io.github.alkoleft.mcp.application.actions.change.SourceSetChanges
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.GenericTestReport
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestExecutionRequest
+import io.github.alkoleft.mcp.application.core.ShellCommandResult
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
-import io.github.alkoleft.mcp.core.modules.ExecuteResult
-import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import java.nio.file.Path
 import kotlin.time.Duration
 
@@ -42,6 +41,18 @@ interface BuildAction {
     ): BuildResult
 }
 
+/**
+ * Результат сборки
+ */
+data class BuildResult(
+    override val message: String,
+    override val success: Boolean,
+    override val errors: List<String> = emptyList(),
+    override val duration: Duration = Duration.ZERO,
+    override val steps: List<ActionStepResult> = emptyList(),
+    val sourceSet: Map<String, ShellCommandResult> = emptyMap(),
+) : ActionResult
+
 interface ConvertAction {
     fun run(
         properties: ApplicationProperties,
@@ -49,6 +60,17 @@ interface ConvertAction {
         destination: SourceSet,
     ): ConvertResult
 }
+
+/**
+ * Результат сборки
+ */
+data class ConvertResult(
+    val success: Boolean,
+    val errors: List<String> = emptyList(),
+    val duration: Duration = Duration.ZERO,
+    val sourceSet: Map<String, ShellCommandResult> = emptyMap(),
+    val steps: List<ActionStepResult> = emptyList(),
+)
 
 /**
  * Интерфейс для анализа изменений в проекте
@@ -67,11 +89,38 @@ interface ChangeAnalysisAction {
 }
 
 /**
+ * Результат анализа изменений
+ */
+data class ChangeAnalysisResult(
+    val hasChanges: Boolean,
+    val changedFiles: Set<Path> = emptySet(),
+    val changeTypes: ChangesSet = emptyMap(),
+    val sourceSetChanges: Map<String, SourceSetChanges> = emptyMap(),
+    val steps: List<ActionStepResult>,
+    val timestamp: Long,
+)
+
+/**
  * Интерфейс для запуска тестов
  */
 interface RunTestAction {
-    fun run(request: TestExecutionRequest): TestExecutionResult
+    fun run(request: TestExecutionRequest): RunTestResult
 }
+
+/**
+ * Test execution results
+ */
+data class RunTestResult(
+    override val success: Boolean,
+    override val duration: Duration,
+    override val message: String,
+    override val errors: List<String>,
+    override val steps: List<ActionStepResult> = emptyList(),
+    val report: GenericTestReport?,
+    val reportPath: Path?,
+    val enterpriseLogPath: String?,
+    val logPath: String?,
+) : ActionResult
 
 interface ActionResult {
     val message: String
@@ -87,54 +136,3 @@ data class ActionStepResult(
     val error: String? = null,
     val duration: Duration,
 )
-
-/**
- * Результат сборки
- */
-data class BuildResult(
-    override val message: String,
-    override val success: Boolean,
-    override val errors: List<String> = emptyList(),
-    override val duration: Duration = Duration.ZERO,
-    override val steps: List<ActionStepResult> = emptyList(),
-    val sourceSet: Map<String, ShellCommandResult> = emptyMap(),
-) : ActionResult
-
-/**
- * Результат сборки
- */
-data class ConvertResult(
-    val success: Boolean,
-    val errors: List<String> = emptyList(),
-    val duration: Duration = Duration.ZERO,
-    val sourceSet: Map<String, ShellCommandResult> = emptyMap(),
-    val steps: List<ActionStepResult> = emptyList(),
-)
-
-/**
- * Результат анализа изменений
- */
-data class ChangeAnalysisResult(
-    val hasChanges: Boolean,
-    val changedFiles: Set<Path> = emptySet(),
-    val changeTypes: ChangesSet = emptyMap(),
-    val sourceSetChanges: Map<String, SourceSetChanges> = emptyMap(),
-    val steps: List<ActionStepResult>,
-    val timestamp: Long,
-)
-
-/**
- * Test execution results
- */
-data class TestExecutionResult(
-    override val success: Boolean,
-    override val duration: Duration,
-    override val message: String,
-    override val errors: List<String>,
-    override val steps: List<ActionStepResult> = emptyList(),
-    val report: GenericTestReport?,
-    val reportPath: Path?,
-    val enterpriseLogPath: String?,
-    val logPath: String?,
-) : ActionResult,
-    ExecuteResult

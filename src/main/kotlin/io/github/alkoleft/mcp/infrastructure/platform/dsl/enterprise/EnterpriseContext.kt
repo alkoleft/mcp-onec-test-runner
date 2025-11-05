@@ -21,7 +21,7 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.enterprise
 
-import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.alkoleft.mcp.application.core.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.V8Context
 import java.nio.file.Path

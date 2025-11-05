@@ -21,7 +21,7 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.process
 
-import io.github.alkoleft.mcp.core.modules.ShellCommandResult
+import io.github.alkoleft.mcp.application.core.ShellCommandResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.BufferedReader
 import java.io.BufferedWriter

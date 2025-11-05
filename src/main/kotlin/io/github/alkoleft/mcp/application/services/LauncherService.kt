@@ -22,10 +22,10 @@
 package io.github.alkoleft.mcp.application.services
 
 import io.github.alkoleft.mcp.application.actions.ActionFactory
-import io.github.alkoleft.mcp.application.actions.ActionStepResult
-import io.github.alkoleft.mcp.application.actions.BuildResult
-import io.github.alkoleft.mcp.application.actions.ConvertResult
-import io.github.alkoleft.mcp.application.actions.TestExecutionResult
+import io.github.alkoleft.mcp.application.actions.common.ActionStepResult
+import io.github.alkoleft.mcp.application.actions.common.BuildResult
+import io.github.alkoleft.mcp.application.actions.common.ConvertResult
+import io.github.alkoleft.mcp.application.actions.common.RunTestResult
 import io.github.alkoleft.mcp.application.actions.exceptions.AnalysisError
 import io.github.alkoleft.mcp.application.actions.exceptions.TestExecutionError
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestExecutionRequest
@@ -47,7 +47,7 @@ class LauncherService(
     private val edtSourceSet: SourceSet = createEdtSourceSet()
     private val designerSourceSet: SourceSet = createDesignerSourceSet()
 
-    fun runTests(request: TestExecutionRequest): TestExecutionResult {
+    fun runTests(request: TestExecutionRequest): RunTestResult {
         val start = TimeSource.Monotonic.markNow()
         val buildResult = build()
         if (!buildResult.success) {

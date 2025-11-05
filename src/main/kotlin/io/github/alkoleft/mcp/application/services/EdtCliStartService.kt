@@ -21,9 +21,9 @@
 
 package io.github.alkoleft.mcp.application.services
 
+import io.github.alkoleft.mcp.application.core.UtilityType
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.ProjectFormat
-import io.github.alkoleft.mcp.core.modules.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.InteractiveProcessExecutor
 import io.github.oshai.kotlinlogging.KotlinLogging

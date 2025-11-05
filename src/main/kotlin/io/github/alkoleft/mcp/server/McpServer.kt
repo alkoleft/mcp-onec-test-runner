@@ -21,8 +21,8 @@
 
 package io.github.alkoleft.mcp.server
 
-import io.github.alkoleft.mcp.application.actions.ActionStepResult
-import io.github.alkoleft.mcp.application.actions.TestExecutionResult
+import io.github.alkoleft.mcp.application.actions.common.ActionStepResult
+import io.github.alkoleft.mcp.application.actions.common.RunTestResult
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.GenericTestSuite
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunAllTestsRequest
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunModuleTestsRequest
@@ -136,7 +136,7 @@ class McpServer(
     }
 }
 
-fun TestExecutionResult.toResponse() =
+fun RunTestResult.toResponse() =
     McpTestResponse(
         success = success,
         message = message,

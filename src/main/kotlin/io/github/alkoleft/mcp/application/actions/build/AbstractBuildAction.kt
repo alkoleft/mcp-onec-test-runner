@@ -21,9 +21,9 @@
 
 package io.github.alkoleft.mcp.application.actions.build
 
-import io.github.alkoleft.mcp.application.actions.BuildAction
-import io.github.alkoleft.mcp.application.actions.BuildResult
 import io.github.alkoleft.mcp.application.actions.common.ActionState
+import io.github.alkoleft.mcp.application.actions.common.BuildAction
+import io.github.alkoleft.mcp.application.actions.common.BuildResult
 import io.github.alkoleft.mcp.application.actions.common.toActionStepResult
 import io.github.alkoleft.mcp.application.actions.exceptions.BuildException
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties

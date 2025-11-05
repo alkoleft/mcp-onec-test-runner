@@ -27,12 +27,12 @@ import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.toSet
-import kotlinx.coroutines.runBlocking
 import org.springframework.stereotype.Component
 import java.nio.file.Files
 import java.nio.file.Path
@@ -55,7 +55,7 @@ class FileBuildStateManager(
     private val maxConcurrentHashCalculations = 4
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun checkChanges(): ChangesSet {
+    suspend fun checkChanges(): ChangesSet {
         val startTime = Instant.now()
         logger.debug { "Анализ изменений: ${properties.basePath}" }
 
@@ -63,7 +63,8 @@ class FileBuildStateManager(
             // Phase 1: Fast timestamp pre-scan
             val candidateFiles =
                 properties.sourceSet
-                    .flatMap { scanForPotentialChanges(properties.basePath.resolve(it.path), it.name) }
+                    .asFlow()
+                    .flatMapMerge { scanForPotentialChanges(properties.basePath.resolve(it.path), it.name) }
                     .toSet()
 
             logger.debug { "Фаза 1: Найдено ${candidateFiles.size} потенциальных изменений после сканирования временных меток" }
@@ -109,56 +110,50 @@ class FileBuildStateManager(
      * Phase 1: Fast timestamp pre-scan to identify potential changes
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun scanForPotentialChanges(
+    private suspend fun scanForPotentialChanges(
         projectPath: Path,
         projectName: String,
-    ): Set<Path> {
+    ): Flow<Path> {
         logger.debug { "Сканирование изменений временных меток в: $projectPath" }
 
         val sourceFiles = getAllSourceFiles(projectPath)
         val projectTimestamp = hashStorage.getSourceSetTimestamp(projectName)
 
-        val changed =
-            runBlocking {
-                sourceFiles
-                    .asFlow()
-                    .flowOn(Dispatchers.IO)
-                    .flatMapMerge { file ->
-                        flow {
-                            try {
-                                val currentTimestamp = Files.getLastModifiedTime(file).toMillis()
+        return sourceFiles
+            .asFlow()
+            .flowOn(Dispatchers.IO)
+            .flatMapMerge { file ->
+                flow {
+                    try {
+                        val currentTimestamp = Files.getLastModifiedTime(file).toMillis()
 
-                                when {
-                                    projectTimestamp == null -> {
-                                        // New file
-                                        logger.trace { "Обнаружен новый файл: $file" }
-                                        emit(file)
-                                    }
+                        when {
+                            projectTimestamp == null -> {
+                                // New file
+                                logger.trace { "Обнаружен новый файл: $file" }
+                                emit(file)
+                            }
 
-                                    currentTimestamp > projectTimestamp -> {
-                                        // Potentially modified file
-                                        logger.trace {
-                                            "Потенциально измененный файл: $file (текущая: $currentTimestamp, сохраненная: $projectTimestamp)"
-                                        }
-                                        emit(file)
-                                    }
-
-                                    else -> false
+                            currentTimestamp > projectTimestamp -> {
+                                // Potentially modified file
+                                logger.trace {
+                                    "Потенциально измененный файл: $file (текущая: $currentTimestamp, сохраненная: $projectTimestamp)"
                                 }
-                            } catch (e: Exception) {
-                                logger.debug(e) { "Ошибка при проверке временной метки для файла: $file" }
-                                emit(file) // Include in potential changes if we can't verify
+                                emit(file)
                             }
                         }
-                    }.toSet()
+                    } catch (e: Exception) {
+                        logger.debug(e) { "Ошибка при проверке временной метки для файла: $file" }
+                        emit(file) // Include in potential changes if we can't verify
+                    }
+                }
             }
-        return changed
     }
 
     /**
      * Phase 2: Hash verification for potential changes with parallel processing
      */
-    private fun verifyChangesWithHashes(candidates: Set<Path>): ChangesSet {
+    private suspend fun verifyChangesWithHashes(candidates: Set<Path>): ChangesSet {
         logger.debug { "Проверка ${candidates.size} потенциальных изменений с вычислением хешей" }
 
         // Process files in batches to avoid overwhelming the system

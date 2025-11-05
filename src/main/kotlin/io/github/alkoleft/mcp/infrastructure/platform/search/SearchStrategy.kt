@@ -22,9 +22,9 @@
 package io.github.alkoleft.mcp.infrastructure.platform.search
 
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestExecutionError
-import io.github.alkoleft.mcp.core.modules.PlatformType
-import io.github.alkoleft.mcp.core.modules.UtilityLocation
-import io.github.alkoleft.mcp.core.modules.UtilityType
+import io.github.alkoleft.mcp.application.core.PlatformType
+import io.github.alkoleft.mcp.application.core.UtilityLocation
+import io.github.alkoleft.mcp.application.core.UtilityType
 import io.github.alkoleft.mcp.infrastructure.utility.PlatformDetector
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Paths
