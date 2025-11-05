@@ -12,13 +12,13 @@
 
 ## 📚 DOCUMENTATION ANALYSIS
 
-### YaXUnit Run Methods (https://bia-technologies.github.io/yaxunit/docs/getting-started/run/)
+### YaXUnit Run Methods <https://bia-technologies.github.io/yaxunit/docs/getting-started/run/>
 - **EDT Plugin Integration** - запуск из 1С:EDT
 - **Enterprise Mode** - запуск через 1С:Предприятие с параметром RunUnitTests
 - **Configuration File** - использование JSON конфигурации
 - **Command Line** - строка запуска предприятия
 
-### Configuration Parameters (https://bia-technologies.github.io/yaxunit/docs/getting-started/run/configuration)
+### Configuration Parameters <https://bia-technologies.github.io/yaxunit/docs/getting-started/run/configuration>
 - **filter** - параметры фильтрации тестов
 - **reportFormat** - формат отчета (jUnit XML)
 - **reportPath** - путь к отчету
@@ -82,3 +82,12 @@
 **Дата:** 2025-08-11 UTC  
 **Статус:** ✅ Завершено  
 **Результат:** Полный анализ текущего состояния проекта, оценка прогресса 60%, планирование следующих этапов
+
+### EDT Known Issues and Solutions
+- **Issue #1758**: EDT < 2025.1 имеет проблемы с блокировками workspace
+- **Симптомы**: Блокировка Конфигуратора, невозможность подключения к ИБ
+- **Решения**:
+  1. Обновление до EDT 2025.1+
+  2. Использование отдельных рабочих областей
+  3. Отключение interactive-mode при необходимости
+- **Документация**: `docs/EDT_KNOWN_ISSUES.md`

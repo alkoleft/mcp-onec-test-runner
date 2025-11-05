@@ -49,6 +49,14 @@ import org.springframework.stereotype.Service
 private val logger = KotlinLogging.logger {}
 
 /**
+/**
+ * ИЗВЕСТНАЯ ПРОБЛЕМА EDT < 2025.1:
+ * EDT создает блокировки workspace, которые могут конфликтовать с Конфигуратором
+ * и другими экземплярами EDT. Для решения:
+ * 1. Используйте EDT 2025.1+ (рекомендуется)
+ * 2. Настройте отдельную рабочую область в workingDirectory
+ * 3. См. docs/EDT_KNOWN_ISSUES.md для деталей
+ */
  * Сервис для автозапуска 1C:EDT CLI при старте приложения
  *
  * Запускает 1C:EDT CLI и инициализирует интерактивную сессию.

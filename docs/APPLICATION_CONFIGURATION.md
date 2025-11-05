@@ -10,6 +10,9 @@
 - **Строка подключения** к вашей ИБ (файловой или серверной)
 - Если используете EDT: **1C:EDT 2025.1+ (минимальная версия)**. Обоснование см. [Issue #1758](https://github.com/1C-Company/1c-edt-issues/issues/1758).
 
+> **Подробнее:** См. [документ с описанием известных проблем EDT](EDT_KNOWN_ISSUES.md) для детального анализа и решений.
+
+
 ## Шаг 1. Скопируйте шаблон и заполните плейсхолдеры
 
 ```yaml
@@ -133,6 +136,9 @@ app:
 Если ваш проект в формате EDT, укажите `app.format: EDT`. Для автозапуска и управления интерактивной сессией EDT CLI настройте блок `tools.edt-cli`.
 
 Требуется версия 1C:EDT не ниже 2025.1 из-за известных проблем экспорта/работы из существующей рабочей области в предыдущих версиях (см. [Issue #1758](https://github.com/1C-Company/1c-edt-issues/issues/1758)).
+
+> **Подробнее:** См. [документ с описанием известных проблем EDT](EDT_KNOWN_ISSUES.md) для детального анализа и решений.
+
 
 ```yaml
 app:
@@ -267,11 +273,11 @@ app:
 
 - «Base path does not exist» — проверьте абсолютный путь в `app.base-path`.
 - «Source set path does not exist» — путь в `source-set` не найден относительно `base-path`.
-- «Connection string must contain '=' character» — исправьте `connection-string`.
+- «Connection string must contain "=" character» — исправьте `connection-string`.
 - «Invalid builder type» — используйте `DESIGNER` или `IBMCMD` в `app.tools.builder`.
 - `tools-properties` вместо `tools` — используйте корректный ключ `app.tools`.
 - «Invalid project format» — используйте `DESIGNER` или `EDT` в `app.format`.
-- «Source set path must be relative / cannot contain '..'» — укажите относительный путь без `..`.
+- «Source set path must be relative / cannot contain ".."» — укажите относительный путь без `..`.
 - «Source set name cannot contain path separators» — имя не должно содержать `/` или `\`.
 
 ## Как запустить с вашим конфигом
