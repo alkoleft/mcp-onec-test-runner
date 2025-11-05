@@ -21,12 +21,10 @@
 
 package io.github.alkoleft.mcp.application.actions
 
-import io.github.alkoleft.mcp.application.actions.build.DesignerBuildAction
-import io.github.alkoleft.mcp.application.actions.build.IbcmdBuildAction
 import io.github.alkoleft.mcp.application.actions.change.FileSystemChangeAnalysisAction
 import io.github.alkoleft.mcp.application.actions.change.SourceSetChangeAnalyzer
 import io.github.alkoleft.mcp.application.actions.convert.EdtInteractiveConvertAction
-import io.github.alkoleft.mcp.application.actions.test.YaXUnitTestAction
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.YaXUnitTestAction
 import io.github.alkoleft.mcp.configuration.properties.BuilderType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.storage.FileBuildStateManager
@@ -44,12 +42,9 @@ class ActionFactory(
     private val reportParser: ReportParser,
     private val buildStateManager: FileBuildStateManager,
     private val sourceSetAnalyzer: SourceSetChangeAnalyzer,
+    private val buildAction: BuildAction,
 ) {
-    fun createBuildAction(type: BuilderType): BuildAction =
-        when (type) {
-            BuilderType.DESIGNER -> DesignerBuildAction(platformDsl)
-            BuilderType.IBMCMD -> IbcmdBuildAction(platformDsl)
-        }
+    fun createBuildAction(type: BuilderType) = buildAction
 
     fun convertAction(): ConvertAction = EdtInteractiveConvertAction(platformDsl)
 

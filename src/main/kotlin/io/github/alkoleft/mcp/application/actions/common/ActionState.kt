@@ -24,19 +24,26 @@ package io.github.alkoleft.mcp.application.actions.common
 import io.github.alkoleft.mcp.application.actions.ActionStepResult
 import io.github.alkoleft.mcp.core.modules.ShellCommandResult
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
+import io.github.oshai.kotlinlogging.KLogger
 
-abstract class ActionState {
+open class ActionState(
+    private val logger: KLogger,
+) {
     var success: Boolean = true
     val steps: MutableList<ActionStepResult> = mutableListOf()
+
+    fun addStep(step: ActionStepResult) = steps.add(step.also { logger.debug { it.message } })
 }
 
-fun ShellCommandResult.toActionStepResult(description: String) =
-    ActionStepResult(
-        description + if (success) ": успешно" else ": неудачно",
-        success,
-        fullError(),
-        duration,
-    )
+fun ShellCommandResult.toActionStepResult(
+    description: String,
+    additionMessage: String? = null,
+) = ActionStepResult(
+    "$description ${if (success) ": успешно" else ": неудачно"}${if (additionMessage == null) "" else "\n" + additionMessage}",
+    success,
+    fullError(),
+    duration,
+)
 
 fun ShellCommandResult.fullError() =
     when {

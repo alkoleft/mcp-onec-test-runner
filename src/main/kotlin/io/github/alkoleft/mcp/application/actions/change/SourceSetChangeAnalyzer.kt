@@ -21,8 +21,8 @@
 
 package io.github.alkoleft.mcp.application.actions.change
 
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.ChangeType
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
-import io.github.alkoleft.mcp.core.modules.ChangeType
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.nio.file.Path

@@ -19,15 +19,14 @@
  * along with METR.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.github.alkoleft.mcp.application.actions.test
+package io.github.alkoleft.mcp.application.actions.test.yaxunit
 
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import java.nio.file.Path
 
 data class YaXUnitExecutionResult(
-    val success: Boolean,
+    val commandResult: ProcessResult,
     val reportPath: Path?,
-    val exitCode: Int,
-    val standardOutput: String,
-    val errorOutput: String,
-    val duration: java.time.Duration,
+    val configPath: Path,
+    val logPath: String?,
 )

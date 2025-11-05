@@ -22,10 +22,10 @@
 package io.github.alkoleft.mcp
 
 import io.github.alkoleft.mcp.application.actions.build.DesignerBuildAction
-import io.github.alkoleft.mcp.application.actions.test.YaXUnitTestAction
-import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
-import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
-import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunAllTestsRequest
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunListTestsRequest
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunModuleTestsRequest
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.YaXUnitTestAction
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.yaxunit.ReportParser
 import io.github.alkoleft.mcp.infrastructure.yaxunit.YaXUnitRunner
@@ -48,7 +48,7 @@ class RealTests(
 ) {
     @Test
     fun designerRealExecute() {
-        platformDsl.configurator {
+        platformDsl.designer {
             connectToFile(IB_PATH)
             disableStartupDialogs()
             disableStartupMessages()

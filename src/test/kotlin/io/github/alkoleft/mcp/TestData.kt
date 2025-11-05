@@ -30,8 +30,8 @@ import io.github.alkoleft.mcp.configuration.properties.SourceSetType
 import io.github.alkoleft.mcp.configuration.properties.ToolsProperties
 import kotlin.io.path.Path
 
-const val SOURCE_PATH = "/home/akoryakin@dellin.local/Загрузки/sources"
-const val IB_PATH = "/home/common/develop/file-data-base/YAxUnit"
+const val SOURCE_PATH = "/home/alko/develop/temp/yaxunit-designer"
+const val IB_PATH = "/home/alko/develop/onec_file_db/YaxUnit-dev"
 const val VERSION = "8.3.22.1709"
 
 /**

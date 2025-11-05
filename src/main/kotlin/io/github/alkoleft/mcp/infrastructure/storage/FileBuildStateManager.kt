@@ -22,8 +22,8 @@
 package io.github.alkoleft.mcp.infrastructure.storage
 
 import io.github.alkoleft.mcp.application.actions.change.ChangesSet
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.ChangeType
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
-import io.github.alkoleft.mcp.core.modules.ChangeType
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -57,7 +57,7 @@ class FileBuildStateManager(
     @OptIn(ExperimentalCoroutinesApi::class)
     fun checkChanges(): ChangesSet {
         val startTime = Instant.now()
-        logger.debug { "Запуск Enhanced Hybrid Hash Detection для проекта: ${properties.basePath}" }
+        logger.debug { "Анализ изменений: ${properties.basePath}" }
 
         try {
             // Phase 1: Fast timestamp pre-scan

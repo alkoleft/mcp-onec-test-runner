@@ -21,8 +21,8 @@
 
 package io.github.alkoleft.mcp
 
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunModuleTestsRequest
 import io.github.alkoleft.mcp.application.services.LauncherService
-import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -39,7 +39,7 @@ class LaunchTest(
 ) {
     @Test
     fun launchYaxUnit() {
-        launcher.run(RunModuleTestsRequest("ОМ_ЮТКоллекции"))
+        launcher.runTests(RunModuleTestsRequest("ОМ_ЮТКоллекции"))
     }
 
     @Test

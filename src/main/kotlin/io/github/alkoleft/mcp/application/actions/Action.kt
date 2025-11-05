@@ -77,6 +77,7 @@ interface ActionResult {
     val success: Boolean
     val errors: List<String>
     val duration: Duration
+    val steps: List<ActionStepResult>
 }
 
 data class ActionStepResult(
@@ -94,8 +95,8 @@ data class BuildResult(
     override val success: Boolean,
     override val errors: List<String> = emptyList(),
     override val duration: Duration = Duration.ZERO,
+    override val steps: List<ActionStepResult> = emptyList(),
     val sourceSet: Map<String, ShellCommandResult> = emptyMap(),
-    val steps: List<ActionStepResult> = emptyList(),
 ) : ActionResult
 
 /**
@@ -120,3 +121,20 @@ data class ChangeAnalysisResult(
     val steps: List<ActionStepResult>,
     val timestamp: Long,
 )
+
+/**
+ * Test execution results
+ */
+data class TestExecutionResult(
+    override val success: Boolean,
+    override val duration: Duration,
+    override val message: String,
+    override val errors: List<String>,
+    override val steps: List<ActionStepResult> = emptyList(),
+    val report: GenericTestReport?,
+    val reportPath: Path?,
+) : ActionResult,
+    ExecuteResult {
+    val successRate
+        get() = report?.summary?.successRate.toString()
+}

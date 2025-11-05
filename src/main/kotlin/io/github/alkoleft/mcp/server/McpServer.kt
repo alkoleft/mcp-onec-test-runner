@@ -22,13 +22,12 @@
 package io.github.alkoleft.mcp.server
 
 import io.github.alkoleft.mcp.application.actions.ActionStepResult
+import io.github.alkoleft.mcp.application.actions.TestExecutionResult
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.GenericTestSuite
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunAllTestsRequest
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunListTestsRequest
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunModuleTestsRequest
 import io.github.alkoleft.mcp.application.services.LauncherService
-import io.github.alkoleft.mcp.core.modules.GenericTestCase
-import io.github.alkoleft.mcp.core.modules.GenericTestReport
-import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
-import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
-import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.ai.tool.annotation.ToolParam
@@ -43,8 +42,7 @@ private val logger = KotlinLogging.logger { }
  */
 @Service
 class McpServer(
-    private val launcherService: LauncherService,
-    private val platformUtilities: PlatformUtilities,
+    private val launcherService: LauncherService
 ) {
     /**
      * Запускает все тесты в проекте
@@ -59,31 +57,13 @@ class McpServer(
 
         try {
             val request = RunAllTestsRequest()
-            val result = launcherService.run(request)
-            return McpTestResponse(
-                success = result.success,
-                message = if (result.success) "Все тесты выполнены успешно" else "Ошибка при выполнении тестов",
-                totalTests = result.report.summary.totalTests,
-                passedTests = result.report.summary.passed,
-                failedTests = result.report.summary.failed,
-                executionTime = result.duration.inWholeMilliseconds,
-                details =
-                    mapOf(
-                        "duration" to result.duration.toString(),
-                        "successRate" to result.successRate,
-                    ),
-                testDetail = collectTestDetails(result.report),
-            )
+            val result = launcherService.runTests(request)
+            return result.toResponse()
         } catch (e: Exception) {
             logger.error(e) { "Ошибка при запуске всех тестов" }
             return McpTestResponse(
                 success = false,
                 message = "Ошибка при выполнении тестов: ${e.message}",
-                totalTests = 0,
-                passedTests = 0,
-                failedTests = 0,
-                executionTime = 0,
-                details = mapOf("error" to e.message.toString()),
             )
         }
     }
@@ -104,37 +84,16 @@ class McpServer(
 
         try {
             val request = RunModuleTestsRequest(moduleName)
-            val result = launcherService.run(request)
-            return McpTestResponse(
-                success = result.success,
-                message = if (result.success) "Тесты модуля '$moduleName' выполнены" else "Ошибка при выполнении тестов модуля",
-                totalTests = result.report.summary.totalTests,
-                passedTests = result.report.summary.passed,
-                failedTests = result.report.summary.failed,
-                executionTime = result.duration.inWholeMilliseconds,
-                details =
-                    mapOf(
-                        "duration" to result.duration.toString(),
-                        "successRate" to result.successRate,
-                        "module" to moduleName,
-                    ),
-                testDetail = collectTestDetails(result.report),
-            )
+            val result = launcherService.runTests(request)
+            return result.toResponse()
         } catch (e: Exception) {
             logger.error(e) { "Ошибка при запуске тестов модуля: $moduleName" }
             return McpTestResponse(
                 success = false,
                 message = "Ошибка при выполнении тестов модуля '$moduleName': ${e.message}",
-                totalTests = 0,
-                passedTests = 0,
-                failedTests = 0,
-                executionTime = 0,
-                details = mapOf("error" to e.message.toString(), "module" to moduleName),
             )
         }
     }
-
-    fun collectTestDetails(report: GenericTestReport) = report.testSuites.flatMap { it.testCases }
 
     /**
      * Запускает тесты из списка указанных модулей
@@ -152,36 +111,13 @@ class McpServer(
 
         try {
             val request = RunListTestsRequest(moduleNames)
-            val result = launcherService.run(request)
-            return McpTestResponse(
-                success = result.success,
-                message =
-                    if (result.success) {
-                        "Тесты модулей выполнены: ${moduleNames.joinToString(", ")}"
-                    } else {
-                        "Ошибка при выполнении тестов модулей"
-                    },
-                totalTests = result.report.summary.totalTests,
-                passedTests = result.report.summary.passed,
-                failedTests = result.report.summary.failed,
-                executionTime = result.duration.inWholeMilliseconds,
-                details =
-                    mapOf(
-                        "duration" to result.duration.toString(),
-                        "successRate" to result.successRate,
-                        "modules" to moduleNames.joinToString(", "),
-                    ),
-            )
+            val result = launcherService.runTests(request)
+            return result.toResponse()
         } catch (e: Exception) {
             logger.error(e) { "Ошибка при запуске тестов модулей: $moduleNames" }
             return McpTestResponse(
                 success = false,
                 message = "Ошибка при выполнении тестов модулей '${moduleNames.joinToString(", ")}': ${e.message}",
-                totalTests = 0,
-                passedTests = 0,
-                failedTests = 0,
-                executionTime = 0,
-                details = mapOf("error" to e.message.toString(), "modules" to moduleNames.joinToString(", ")),
             )
         }
     }

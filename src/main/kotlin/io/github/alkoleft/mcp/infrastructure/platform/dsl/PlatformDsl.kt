@@ -41,7 +41,7 @@ class PlatformDsl(
     /**
      * DSL для работы с конфигуратором 1С
      */
-    fun configurator(block: DesignerDsl.() -> Unit): DesignerDsl {
+    fun designer(block: DesignerDsl.() -> Unit): DesignerDsl {
         val designerDsl = DesignerDsl(context)
         designerDsl.block()
         return designerDsl

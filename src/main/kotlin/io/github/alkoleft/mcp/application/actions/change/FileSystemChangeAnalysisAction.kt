@@ -48,20 +48,17 @@ class FileSystemChangeAnalysisAction(
 
         val state = ChangeAnalysisActionState()
         try {
-            // Use FileBuildStateManager's Enhanced Hybrid Hash Detection
             state.setChanges(measureTimedValue { buildStateManager.checkChanges() })
 
             if (state.changes.isEmpty()) {
-                logger.info { "Изменения в проекте не обнаружены" }
                 return state.toResult()
             }
 
-            logger.info { "Найдено ${state.changes.size} измененных файлов, анализ по подпроектам" }
-
             // Group changes by подпроекта
-            val sourceSetChanges = sourceSetAnalyzer.analyzeSourceSetChanges(state.changes)
-
-            logger.info { "Изменения сгруппированы в ${sourceSetChanges.size} затронутых подпроекта" }
+            val sourceSetChanges =
+                sourceSetAnalyzer
+                    .analyzeSourceSetChanges(state.changes)
+                    .also { logger.info { "Изменения сгруппированы в ${it.size} затронутых подпроекта" } }
 
             return state.toResult(sourceSetChanges)
         } catch (e: Exception) {
@@ -104,13 +101,13 @@ class FileSystemChangeAnalysisAction(
         }
     }
 
-    private class ChangeAnalysisActionState : ActionState() {
+    private class ChangeAnalysisActionState : ActionState(logger) {
         lateinit var changes: ChangesSet
         val timestamp = System.currentTimeMillis()
 
         fun setChanges(value: TimedValue<ChangesSet>) {
             changes = value.value
-            steps.add(
+            addStep(
                 ActionStepResult(
                     message =
                         "Анализ изменений: " +

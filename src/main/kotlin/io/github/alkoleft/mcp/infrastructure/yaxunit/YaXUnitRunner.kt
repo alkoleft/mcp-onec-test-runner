@@ -22,9 +22,9 @@
 package io.github.alkoleft.mcp.infrastructure.yaxunit
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.alkoleft.mcp.application.actions.test.YaXUnitExecutionResult
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestExecutionRequest
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.YaXUnitExecutionResult
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
-import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
@@ -32,8 +32,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.nio.file.Files
 import java.nio.file.Path
-import java.time.Duration
-import java.time.Instant
 import kotlin.io.path.Path
 
 private val logger = KotlinLogging.logger { }
@@ -49,49 +47,31 @@ class YaXUnitRunner(
     private val objectMapper: ObjectMapper,
 ) {
     fun executeTests(request: TestExecutionRequest): YaXUnitExecutionResult {
-        val startTime = Instant.now()
         logger.info { "Запуск выполнения тестов YaXUnit для ${request.javaClass.simpleName}" }
 
         // Создаем временную конфигурацию
         val (configPath, config) = createConfigFile(request)
-        try {
-            // Запускаем тесты через EnterpriseDsl
-            logger.debug { "Выполнение тестов через EnterpriseDsl" }
-            val result = executeTests(configPath = configPath)
 
-            logger.info { "Процесс завершен с кодом выхода: ${result.exitCode}" }
+        // Запускаем тесты через EnterpriseDsl
+        logger.debug { "Выполнение тестов" }
+        val result = executeTests(configPath = configPath)
 
-            val duration = Duration.between(startTime, Instant.now())
-            logger.info { "Выполнение тестов завершено за ${duration.toSeconds()}с" }
+        logger.info { "Процесс завершен с кодом выхода: ${result.exitCode}" }
 
-            // Определяем путь к отчету
-            val reportPath = Path(config.reportPath)
-            if (Files.exists(reportPath)) {
-                logger.info { "Отчет о тестах найден по пути: $reportPath" }
-            } else {
-                logger.warn { "Отчет о тестах не найден по ожидаемому пути" }
-            }
-
-            return YaXUnitExecutionResult(
-                success = result.success,
-                reportPath = reportPath,
-                exitCode = result.exitCode,
-                standardOutput = result.output,
-                errorOutput = result.error ?: "",
-                duration = duration,
-            )
-        } catch (e: Exception) {
-            val duration = Duration.between(startTime, Instant.now())
-            logger.error(e) { "Выполнение тестов YaXUnit завершилось с ошибкой после ${duration.toSeconds()}с" }
-            return YaXUnitExecutionResult(
-                success = false,
-                reportPath = null,
-                exitCode = -1,
-                standardOutput = "",
-                errorOutput = e.message ?: "Неизвестная ошибка",
-                duration = duration,
-            )
+        // Определяем путь к отчету
+        val reportPath = Path(config.reportPath)
+        if (Files.exists(reportPath)) {
+            logger.info { "Отчет о тестах найден по пути: $reportPath" }
+        } else {
+            logger.warn { "Отчет о тестах не найден по ожидаемому пути ($reportPath)" }
         }
+
+        return YaXUnitExecutionResult(
+            commandResult = result,
+            configPath = configPath,
+            logPath = config.logging.file,
+            reportPath = reportPath,
+        )
     }
 
     private fun createConfigFile(request: TestExecutionRequest): Pair<Path, YaXUnitConfig> {

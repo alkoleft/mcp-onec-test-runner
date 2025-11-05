@@ -21,10 +21,10 @@
 
 package io.github.alkoleft.mcp.infrastructure.yaxunit
 
-import io.github.alkoleft.mcp.core.modules.RunAllTestsRequest
-import io.github.alkoleft.mcp.core.modules.RunListTestsRequest
-import io.github.alkoleft.mcp.core.modules.RunModuleTestsRequest
-import io.github.alkoleft.mcp.core.modules.TestExecutionRequest
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunAllTestsRequest
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunListTestsRequest
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunModuleTestsRequest
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestExecutionRequest
 import io.github.oshai.kotlinlogging.KotlinLogging
 
 private val logger = KotlinLogging.logger { }

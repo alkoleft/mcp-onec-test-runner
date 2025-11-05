@@ -85,12 +85,6 @@ abstract class AbstractBuildAction(
             logger.info { "Загружаю основную конфигурацию" }
             val result = loadConfiguration(configuration.name, sourceSet.basePath.resolve(configuration.path))
             state.addResult(configuration.name, result, "Загрузка конфигурации")
-
-            if (result.success) {
-                logger.info { "Конфигурация загружена успешно" }
-            } else {
-                logger.error { "Не удалось загрузить конфигурацию" }
-            }
         }
 
         if (!state.success) {
@@ -104,11 +98,6 @@ abstract class AbstractBuildAction(
             val result = loadExtension(it.name, sourceSet.basePath.resolve(it.path))
             state.addResult(it.name, result, "Загрузка расширения ${it.name}")
 
-            if (result.success) {
-                logger.info { "Расширение ${it.name} загружено успешно" }
-            } else {
-                logger.error { "Не удалось загрузить расширение ${it.name}" }
-            }
             if (!result.success) {
                 return@forEach
             }
@@ -118,14 +107,9 @@ abstract class AbstractBuildAction(
             return state.toResult("При загрузке исходников возникли ошибки")
         }
 
-        val updateResult = updateDb().also(state::registerUpdateResult)
-        if (updateResult.success) {
-            logger.info { "Обновление базы данных завершена успешно" }
-        } else {
-            logger.error { "Обновление базы данных не выполнено" }
-        }
+        updateDb()?.also(state::registerUpdateResult)
 
-        return state.toResult("Сборка завершена успешно").also { if (it.success) logger.info { "Сборка завершена успешно" } }
+        return state.toResult("Сборка завершена").also { if (it.success) logger.info { it.message } }
     }
 
     protected abstract fun initDsl(properties: ApplicationProperties): Unit
@@ -140,9 +124,9 @@ abstract class AbstractBuildAction(
         path: Path,
     ): ProcessResult
 
-    protected abstract fun updateDb(): ProcessResult
+    protected abstract fun updateDb(): ProcessResult?
 
-    class BuildActionState : ActionState() {
+    class BuildActionState : ActionState(logger) {
         val sourceSet = mutableMapOf<String, ProcessResult>()
         var updateResult: ProcessResult? = null
 
@@ -155,7 +139,7 @@ abstract class AbstractBuildAction(
             if (!result.success) {
                 success = false
             }
-            steps.add(result.toActionStepResult(description))
+            addStep(result.toActionStepResult(description))
         }
 
         fun registerUpdateResult(result: ProcessResult) {
@@ -163,7 +147,7 @@ abstract class AbstractBuildAction(
             if (!result.success) {
                 success = false
             }
-            steps.add(result.toActionStepResult("Обновление конфигурации"))
+            addStep(result.toActionStepResult("Обновление конфигурации"))
         }
 
         fun toResult(message: String): BuildResult {
@@ -172,7 +156,7 @@ abstract class AbstractBuildAction(
             updateResult?.error?.let(errors::add)
 
             return BuildResult(
-                message = message,
+                message = message + if (success) " успешно" else " неудачно",
                 success = success,
                 errors = errors,
                 sourceSet = sourceSet,

@@ -21,12 +21,12 @@
 
 package io.github.alkoleft.mcp.infrastructure.yaxunit
 
-import io.github.alkoleft.mcp.core.modules.GenericTestCase
-import io.github.alkoleft.mcp.core.modules.GenericTestReport
-import io.github.alkoleft.mcp.core.modules.GenericTestSuite
-import io.github.alkoleft.mcp.core.modules.TestMetadata
-import io.github.alkoleft.mcp.core.modules.TestStatus
-import io.github.alkoleft.mcp.core.modules.TestSummary
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.GenericTestCase
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.GenericTestReport
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.GenericTestSuite
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestMetadata
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestStatus
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestSummary
 import org.springframework.stereotype.Component
 import org.w3c.dom.Element
 import java.io.InputStream

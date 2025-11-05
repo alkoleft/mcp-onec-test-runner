@@ -41,7 +41,7 @@ class DesignerBuildAction(
 
     override fun initDsl(properties: ApplicationProperties) {
         actionDsl =
-            dsl.configurator {
+            dsl.designer {
                 // Подключаемся к информационной базе
                 connect(properties.connection.connectionString)
                 properties.connection.user?.ifNoBlank { user(it) }
@@ -58,6 +58,7 @@ class DesignerBuildAction(
         path: Path,
     ) = actionDsl.loadConfigFromFiles {
         fromPath(path)
+        updateDBCfg()
     }
 
     override fun loadExtension(
@@ -66,7 +67,8 @@ class DesignerBuildAction(
     ) = actionDsl.loadConfigFromFiles {
         fromPath(path)
         extension(name)
+        updateDBCfg()
     }
 
-    override fun updateDb() = actionDsl.updateDBCfg {}
+    override fun updateDb() = null
 }

@@ -19,9 +19,8 @@
  * along with METR.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.github.alkoleft.mcp.core.modules
+package io.github.alkoleft.mcp.application.actions.test.yaxunit
 
-import java.nio.file.Path
 import java.time.Instant
 import kotlin.time.Duration
 
@@ -39,19 +38,6 @@ class RunModuleTestsRequest(
 data class RunListTestsRequest(
     val moduleNames: List<String>,
 ) : TestExecutionRequest
-
-/**
- * Test execution results
- */
-data class TestExecutionResult(
-    override val success: Boolean,
-    val report: GenericTestReport,
-    val reportPath: Path,
-    override val duration: Duration,
-) : ExecuteResult {
-    val successRate
-        get() = report.summary.successRate.toString()
-}
 
 sealed class TestExecutionError(
     message: String,

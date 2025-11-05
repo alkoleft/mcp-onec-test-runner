@@ -75,12 +75,6 @@ class TestExecutionError(
     context: Map<String, Any> = emptyMap(),
 ) : ActionError(message, cause, context)
 
-// Обратная совместимость с существующими исключениями
-sealed class ActionException(
-    message: String,
-    cause: Throwable? = null,
-) : Exception(message, cause)
-
 // Алиасы для обратной совместимости
 typealias BuildException = BuildError
 typealias AnalyzeException = AnalysisError
