@@ -99,7 +99,7 @@ app:
     builder: DESIGNER
 ```
 
-#### IBMCMD
+#### IBCMD
 
 Инструмент командной строки для автоматизации сборки без графического интерфейса.
 
@@ -113,7 +113,7 @@ app:
 ```yaml
 app:
   tools:
-    builder: IBMCMD
+    builder: IBCMD
 ```
 
 ## Запуск приложений 1С

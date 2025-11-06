@@ -39,7 +39,7 @@ app:
 
   # Инструменты сборки/запуска
   tools:
-    # DESIGNER — локальная разработка, IBMCMD — CI/CD
+    # DESIGNER — локальная разработка, IBCMD — CI/CD
     builder: DESIGNER
 
   # Версия платформы
@@ -124,9 +124,9 @@ app:
 ## Шаг 4. Выберите тип сборщика
 
 - **DESIGNER** — удобно для локальной разработки.
-- **IBMCMD** — надежно для CI/CD и headless-сборок.
+- **IBCMD** — надежно для CI/CD и headless-сборок.
 
-Укажите в `app.tools.builder`: `DESIGNER` или `IBMCMD`.
+Укажите в `app.tools.builder`: `DESIGNER` или `IBCMD`.
 
 ## Шаг 5. (опционально) Включите поддержку EDT CLI
 
@@ -156,7 +156,7 @@ app:
 - `source-set` — пути уникальны, относительны `base-path`, на диске существуют.
 - Есть хотя бы один `CONFIGURATION`.
 - `connection.connection-string` содержит `=` и валидна для вашей ИБ.
-- `tools.builder` — одно из: `DESIGNER`, `IBMCMD`.
+- `tools.builder` — одно из: `DESIGNER`, `IBCMD`.
 - Для EDT при необходимости настроен `tools.edt-cli`.
 
 ## Готовые примеры
@@ -201,7 +201,7 @@ app:
       builder: DESIGNER
   ```
 
-- **Серверная ИБ + IBMCMD**
+- **Серверная ИБ + IBCMD**
 
   ```yaml
   app:
@@ -217,7 +217,7 @@ app:
       user: "Tester"
       password: "secret"
     tools:
-      builder: IBMCMD
+      builder: IBCMD
   ```
 
 - **EDT проект с автозапуском EDT CLI**
@@ -268,7 +268,7 @@ app:
 - «Base path does not exist» — проверьте абсолютный путь в `app.base-path`.
 - «Source set path does not exist» — путь в `source-set` не найден относительно `base-path`.
 - «Connection string must contain '=' character» — исправьте `connection-string`.
-- «Invalid builder type» — используйте `DESIGNER` или `IBMCMD` в `app.tools.builder`.
+- «Invalid builder type» — используйте `DESIGNER` или `IBCMD` в `app.tools.builder`.
 - `tools-properties` вместо `tools` — используйте корректный ключ `app.tools`.
 - «Invalid project format» — используйте `DESIGNER` или `EDT` в `app.format`.
 - «Source set path must be relative / cannot contain '..'» — укажите относительный путь без `..`.
@@ -301,7 +301,7 @@ app:
     user: string?                # опционально
     password: string?            # опционально
   tools:
-    builder: DESIGNER|IBMCMD     # обязателен
+    builder: DESIGNER|IBCMD     # обязателен
     edt-work-space: string?      # опционально (рабочая папка EDT, при необходимости)
     edt-cli:                     # опционально, для EDT
       auto-start: boolean        # по умолчанию false

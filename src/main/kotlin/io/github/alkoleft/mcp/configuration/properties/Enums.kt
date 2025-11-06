@@ -39,7 +39,7 @@ enum class ProjectFormat {
  */
 enum class BuilderType {
     DESIGNER,
-    IBMCMD,
+    IBCMD,
 }
 
 /**

@@ -37,5 +37,5 @@ app:
   
   # Настройки инструментов
   tools:
-    # Тип сборщика: DESIGNER или IBMCMD
+    # Тип сборщика: DESIGNER или IBCMD
     builder: DESIGNER

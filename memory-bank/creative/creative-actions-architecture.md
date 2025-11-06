@@ -191,7 +191,7 @@ class ActionRegistry(
     fun getBuildAction(type: BuilderType): BuildAction {
         return when (type) {
             BuilderType.DESIGNER -> buildActions.find { it is DesignerBuildAction }
-            BuilderType.IBMCMD -> buildActions.find { it is IbcmdBuildAction }
+            BuilderType.IBCMD -> buildActions.find { it is IbcmdBuildAction }
         } ?: throw IllegalArgumentException("Unknown builder type: $type")
     }
 }

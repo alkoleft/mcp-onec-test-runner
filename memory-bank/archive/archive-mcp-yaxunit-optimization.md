@@ -129,7 +129,7 @@ class ApplicationConfiguration {
         DesignerBuildAction(dsl)
     
     @Bean
-    @ConditionalOnProperty(name = ["app.tools.builder"], havingValue = "IBMCMD")
+    @ConditionalOnProperty(name = ["app.tools.builder"], havingValue = "IBCMD")
     fun ibcmdBuildAction(dsl: PlatformUtilityDsl): BuildAction = 
         IbcmdBuildAction(dsl)
     
