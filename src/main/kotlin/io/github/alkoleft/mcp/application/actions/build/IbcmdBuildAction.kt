@@ -27,6 +27,8 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.stereotype.Component
 import java.nio.file.Path
 
 private val FILE_PATH_PATTERN = "File\\s*=\\s*(['\"]?)([^'\";\\n]+)\\1\\s*".toRegex()
@@ -34,6 +36,8 @@ private val FILE_PATH_PATTERN = "File\\s*=\\s*(['\"]?)([^'\";\\n]+)\\1\\s*".toRe
 /**
  * Реализация BuildAction для сборки через ibcmd
  */
+@Component
+@ConditionalOnProperty(name = ["app.tools.builder"], havingValue = "IBCMD")
 class IbcmdBuildAction(
     dsl: PlatformDsl,
 ) : AbstractBuildAction(dsl) {
