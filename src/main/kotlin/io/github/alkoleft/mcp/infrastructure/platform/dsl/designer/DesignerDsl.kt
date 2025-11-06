@@ -21,8 +21,9 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.designer
 
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.Dsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.V8Dsl
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.V8ContextConfig
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.ApplyCfgCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.CheckCanApplyConfigurationExtensionsCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.CheckConfigCommand
@@ -37,6 +38,7 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.Load
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands.UpdateDBCfgCommand
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
+import java.nio.file.Path
 
 /**
  * DSL для работы с конфигуратором 1С:Предприятие
@@ -44,9 +46,12 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
  * Предоставляет удобный интерфейс для выполнения операций конфигуратора
  * через fluent API и DSL синтаксис с немедленным выполнением команд.
  */
-class DesignerDsl(
-    context: PlatformUtilities,
-) : V8Dsl<DesignerContext, DesignerCommand>(DesignerContext(context)) {
+class DesignerDsl private constructor(
+    context: DesignerContext,
+) : Dsl<DesignerContext, DesignerCommand>(context),
+    V8ContextConfig by context {
+    constructor(context: PlatformUtilities) : this(DesignerContext(context))
+
     fun loadCfg(block: LoadCfgCommand.() -> Unit) = configureAndExecute(LoadCfgCommand(), block)
 
     fun loadConfigFromFiles(block: LoadConfigFromFilesCommand.() -> Unit) = configureAndExecute(LoadConfigFromFilesCommand(), block)
@@ -85,4 +90,14 @@ class DesignerDsl(
         command: C,
         configure: ((C.() -> Unit)?),
     ): ProcessResult = executeCommand(command.also { if (configure != null) it.configure() }, generateLogFilePath())
+
+    override fun buildCommandArgs(
+        command: DesignerCommand,
+        logPath: Path?,
+    ): List<String> =
+        if (logPath != null) {
+            super.buildCommandArgs(command, null) + listOf("/Out", logPath.toString())
+        } else {
+            super.buildCommandArgs(command, null)
+        }
 }

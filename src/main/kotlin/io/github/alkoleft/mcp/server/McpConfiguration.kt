@@ -26,8 +26,28 @@ import org.springframework.ai.tool.method.MethodToolCallbackProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
+/**
+ * Конфигурация MCP сервера
+ *
+ * Настраивает интеграцию MCP сервера с Spring AI Framework. Регистрирует
+ * [McpServer] как провайдер инструментов (tools) для MCP протокола.
+ *
+ * Основная функция:
+ * - Создает [ToolCallbackProvider], который предоставляет доступ к инструментам
+ *   MCP сервера через Spring AI Framework
+ */
 @Configuration
 class McpConfiguration {
+    /**
+     * Создает провайдер инструментов MCP
+     *
+     * Регистрирует все методы [McpServer], помеченные аннотацией [org.springframework.ai.tool.annotation.Tool],
+     * как доступные инструменты для MCP протокола. Это позволяет AI-ассистентам
+     * вызывать методы сервера через протокол MCP.
+     *
+     * @param platformMcp Экземпляр MCP сервера, содержащий инструменты
+     * @return Провайдер инструментов, который может быть использован Spring AI Framework
+     */
     @Bean
     fun platformTools(platformMcp: McpServer): ToolCallbackProvider =
         MethodToolCallbackProvider

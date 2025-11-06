@@ -23,19 +23,26 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.enterprise
 
 import io.github.alkoleft.mcp.application.core.UtilityType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.Command
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.Dsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
-import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.V8Dsl
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.V8ContextConfig
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
+import java.nio.file.Path
 import kotlin.time.Duration
 
 /**
  * DSL для работы с 1С:Предприятие
  */
-class EnterpriseDsl(
-    utilityContext: PlatformUtilities,
-    utilityType: UtilityType,
-) : V8Dsl<EnterpriseContext, Command>(EnterpriseContext(utilityContext, utilityType)) {
+class EnterpriseDsl private constructor(
+    context: EnterpriseContext,
+) : Dsl<EnterpriseContext, Command>(context),
+    V8ContextConfig by context {
+    constructor(
+        utilityContext: PlatformUtilities,
+        utilityType: UtilityType,
+    ) : this(EnterpriseContext(utilityContext, utilityType))
+
     fun runArguments(value: String) {
         context.runArguments = value
     }
@@ -54,4 +61,14 @@ class EnterpriseDsl(
         }
 
     fun launch(): ProcessResult = ProcessExecutor().launch(context.buildBaseArgs())
+
+    override fun buildCommandArgs(
+        command: Command,
+        logPath: Path?,
+    ): List<String> =
+        if (logPath != null) {
+            super.buildCommandArgs(command, null) + listOf("/Out", logPath.toString())
+        } else {
+            super.buildCommandArgs(command, null)
+        }
 }

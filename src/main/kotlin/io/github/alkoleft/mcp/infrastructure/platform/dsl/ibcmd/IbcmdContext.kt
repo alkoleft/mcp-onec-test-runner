@@ -47,7 +47,7 @@ class IbcmdContext(
      *
      * Автоматически определяется через [PlatformUtilities] по типу утилиты [UtilityType.IBCMD].
      */
-    val utilityPath
+    internal val utilityPath
         get() = platformContext.locateUtility(UtilityType.IBCMD).executablePath.toString()
 
     /**

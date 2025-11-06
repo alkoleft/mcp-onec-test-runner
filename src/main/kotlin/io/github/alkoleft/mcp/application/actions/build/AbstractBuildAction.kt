@@ -21,10 +21,8 @@
 
 package io.github.alkoleft.mcp.application.actions.build
 
-import io.github.alkoleft.mcp.application.actions.common.ActionState
 import io.github.alkoleft.mcp.application.actions.common.BuildAction
 import io.github.alkoleft.mcp.application.actions.common.BuildResult
-import io.github.alkoleft.mcp.application.actions.common.toActionStepResult
 import io.github.alkoleft.mcp.application.actions.exceptions.BuildException
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
@@ -125,43 +123,4 @@ abstract class AbstractBuildAction(
     ): ProcessResult
 
     protected abstract fun updateDb(): ProcessResult?
-
-    class BuildActionState : ActionState(logger) {
-        val sourceSet = mutableMapOf<String, ProcessResult>()
-        var updateResult: ProcessResult? = null
-
-        fun addResult(
-            name: String,
-            result: ProcessResult,
-            description: String,
-        ) {
-            sourceSet.put(name, result)
-            if (!result.success) {
-                success = false
-            }
-            addStep(result.toActionStepResult(description))
-        }
-
-        fun registerUpdateResult(result: ProcessResult) {
-            updateResult = result
-            if (!result.success) {
-                success = false
-            }
-            addStep(result.toActionStepResult("Обновление конфигурации"))
-        }
-
-        fun toResult(message: String): BuildResult {
-            val errors = mutableListOf<String>()
-            errors.addAll(sourceSet.values.mapNotNull { it.error })
-            updateResult?.error?.let(errors::add)
-
-            return BuildResult(
-                message = message + if (success) " успешно" else " неудачно",
-                success = success,
-                errors = errors,
-                sourceSet = sourceSet,
-                steps = steps.toList(),
-            )
-        }
-    }
 }
