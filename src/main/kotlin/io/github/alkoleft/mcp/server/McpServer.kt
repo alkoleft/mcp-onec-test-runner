@@ -22,14 +22,12 @@
 package io.github.alkoleft.mcp.server
 
 import io.github.alkoleft.mcp.application.actions.common.LaunchRequest
-import io.github.alkoleft.mcp.application.actions.common.RunTestResult
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunAllTestsRequest
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunModuleTestsRequest
 import io.github.alkoleft.mcp.application.services.DesignerConfigCheckRequest
 import io.github.alkoleft.mcp.application.services.DesignerModulesCheckRequest
 import io.github.alkoleft.mcp.application.services.EdtCheckRequest
 import io.github.alkoleft.mcp.application.services.LauncherService
-import io.github.alkoleft.mcp.application.services.SyntaxCheckResult
 import io.github.alkoleft.mcp.application.services.SyntaxCheckService
 import io.github.alkoleft.mcp.server.dto.McpBuildResponse
 import io.github.alkoleft.mcp.server.dto.McpLaunchResponse
@@ -40,7 +38,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.ai.tool.annotation.ToolParam
 import org.springframework.stereotype.Service
-import kotlin.time.Duration
 import kotlin.time.TimeSource
 import kotlin.time.measureTimedValue
 
@@ -368,7 +365,7 @@ class McpServer(
                     checkUseModality = checkUseModality == true,
                     unsupportedFunctional = unsupportedFunctional == true,
                     extension = extension,
-                    allExtensions = allExtensions != false,
+                    allExtensions = allExtensions ?: (extension.isNullOrBlank()),
                 )
             val result = measureTimedValue { syntaxCheckService.checkDesigner(request) }
             result.value.toResponse("CheckConfig", result.duration)
@@ -432,7 +429,7 @@ class McpServer(
                     mobileClient = mobileClient == true,
                     extendedModulesCheck = extendedModulesCheck != false,
                     extension = extension,
-                    allExtensions = allExtensions != false,
+                    allExtensions = allExtensions ?: (extension.isNullOrBlank()),
                 )
             val result = measureTimedValue { syntaxCheckService.checkDesigner(request) }
             result.value.toResponse("CheckModules", result.duration)

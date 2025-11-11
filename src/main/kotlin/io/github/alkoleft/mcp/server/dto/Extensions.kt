@@ -25,7 +25,6 @@ import io.github.alkoleft.mcp.application.actions.common.RunTestResult
 import io.github.alkoleft.mcp.application.services.SyntaxCheckResult
 import kotlin.time.Duration
 
-
 /**
  * Преобразует результат выполнения тестов в формат MCP-ответа
  *
