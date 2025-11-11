@@ -39,6 +39,8 @@ class SourceSet(
 
     fun pathByName(name: String): Path = basePath.resolve(byName(name).path)
 
+    fun byPurpose(purpose: SourceSetPurpose) = filter { it.purpose.contains(purpose) }
+
     companion object {
         val EMPTY: SourceSet = SourceSet(Path(""))
     }

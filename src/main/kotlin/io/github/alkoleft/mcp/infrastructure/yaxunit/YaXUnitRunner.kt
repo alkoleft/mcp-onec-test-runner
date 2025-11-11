@@ -24,10 +24,8 @@ package io.github.alkoleft.mcp.infrastructure.yaxunit
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestExecutionRequest
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.YaXUnitExecutionResult
-import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
-import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.nio.file.Files
@@ -43,7 +41,6 @@ private val logger = KotlinLogging.logger { }
 @Component
 class YaXUnitRunner(
     private val platformDsl: PlatformDsl,
-    private val applicationProperties: ApplicationProperties,
     private val objectMapper: ObjectMapper,
 ) {
     fun executeTests(request: TestExecutionRequest): YaXUnitExecutionResult {
@@ -93,9 +90,6 @@ class YaXUnitRunner(
     private fun executeTests(configPath: Path): ProcessResult =
         platformDsl
             .enterprise {
-                connect(applicationProperties.connection.connectionString)
-                applicationProperties.connection.user?.ifNoBlank { user(it) }
-                applicationProperties.connection.password?.ifNoBlank { password(it) }
                 runArguments("RunUnitTests=${configPath.toAbsolutePath()}")
             }.run()
 }

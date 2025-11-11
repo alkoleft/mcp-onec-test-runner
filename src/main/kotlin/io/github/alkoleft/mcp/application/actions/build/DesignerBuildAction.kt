@@ -24,7 +24,6 @@ package io.github.alkoleft.mcp.application.actions.build
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.DesignerDsl
-import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import java.nio.file.Path
@@ -42,11 +41,6 @@ class DesignerBuildAction(
     override fun initDsl(properties: ApplicationProperties) {
         actionDsl =
             dsl.designer {
-                // Подключаемся к информационной базе
-                connect(properties.connection.connectionString)
-                properties.connection.user?.ifNoBlank { user(it) }
-                properties.connection.password?.ifNoBlank { password(it) }
-
                 // Отключаем диалоги и сообщения для автоматической работы
                 disableStartupDialogs()
                 disableStartupMessages()

@@ -21,18 +21,25 @@
 
 package io.github.alkoleft.mcp.server
 
-import io.github.alkoleft.mcp.application.actions.common.ActionStepResult
 import io.github.alkoleft.mcp.application.actions.common.LaunchRequest
-import io.github.alkoleft.mcp.application.actions.common.RunTestResult
-import io.github.alkoleft.mcp.application.actions.test.yaxunit.GenericTestSuite
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunAllTestsRequest
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunModuleTestsRequest
+import io.github.alkoleft.mcp.application.services.DesignerConfigCheckRequest
+import io.github.alkoleft.mcp.application.services.DesignerModulesCheckRequest
+import io.github.alkoleft.mcp.application.services.EdtCheckRequest
 import io.github.alkoleft.mcp.application.services.LauncherService
+import io.github.alkoleft.mcp.application.services.SyntaxCheckService
+import io.github.alkoleft.mcp.server.dto.McpBuildResponse
+import io.github.alkoleft.mcp.server.dto.McpLaunchResponse
+import io.github.alkoleft.mcp.server.dto.McpSyntaxCheckResponse
+import io.github.alkoleft.mcp.server.dto.McpTestResponse
+import io.github.alkoleft.mcp.server.dto.toResponse
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.ai.tool.annotation.ToolParam
 import org.springframework.stereotype.Service
 import kotlin.time.TimeSource
+import kotlin.time.measureTimedValue
 
 private val logger = KotlinLogging.logger { }
 
@@ -54,6 +61,7 @@ private val logger = KotlinLogging.logger { }
 @Service
 class McpServer(
     private val launcherService: LauncherService,
+    private val syntaxCheckService: SyntaxCheckService,
 ) {
     /**
      * Запускает все тесты в проекте
@@ -219,92 +227,220 @@ class McpServer(
             )
         }
     }
-}
 
-/**
- * Преобразует результат выполнения тестов в формат MCP-ответа
- *
- * Расширяет функциональность [RunTestResult], преобразуя внутренний формат результата
- * в формат, понятный MCP-клиентам. Извлекает статистику тестов, детали выполнения
- * и информацию об ошибках из отчета.
- *
- * @receiver Результат выполнения тестов, полученный от LauncherService
- * @return MCP-ответ с результатами выполнения тестов
- */
-fun RunTestResult.toResponse() =
-    McpTestResponse(
-        success = success,
-        message = message,
-        logFile = logPath,
-        enterpriseLogPath = enterpriseLogPath,
-        totalTests = report?.summary?.totalTests,
-        passedTests = report?.summary?.passed,
-        failedTests = report?.summary?.failed,
-        executionTime = duration.inWholeMilliseconds,
-        testDetail = report?.testSuites,
-        steps = if (success) null else steps,
-        errors = errors,
+    /**
+     * Выполняет синтаксис-проверку исходников через ЕДТ (validate)
+     *
+     * Выполняет синтаксис-проверку проекта через 1C:EDT CLI команду validate.
+     * Проверяет все проекты типа CONFIGURATION из sourceSet.
+     *
+     * Процесс выполнения:
+     * 1. Определение проектов для проверки из sourceSet
+     * 2. Выполнение команды validate через EDT CLI
+     * 3. Сохранение результатов в файл лога
+     *
+     * @return Результат выполнения проверки через ЕДТ
+     * @throws Exception при возникновении ошибок во время выполнения проверки
+     */
+    @Tool(
+        name = "check_syntax_edt",
+        description = "Выполняет синтаксис-проверку исходников через ЕДТ (validate). Проверяет все проекты из sourceSet.",
     )
+    fun checkSyntaxEdt(
+        @ToolParam(
+            description = "Имя проекта EDT для проверки. Если не указано, проверяются все проекты из sourceSet.",
+            required = false,
+        ) projectName: String?,
+    ): McpSyntaxCheckResponse {
+        logger.info { "Запуск синтаксис-проверки через ЕДТ" }
 
-/**
- * Результат выполнения тестов в формате MCP
- *
- * Содержит полную информацию о результатах выполнения тестов YaXUnit, включая
- * статистику, детали тестов, пути к логам и информацию об ошибках.
- *
- * @param success Успешность выполнения тестов (true, если все тесты прошли успешно)
- * @param message Сообщение о результате выполнения
- * @param totalTests Общее количество выполненных тестов
- * @param passedTests Количество успешно пройденных тестов
- * @param failedTests Количество проваленных тестов
- * @param executionTime Время выполнения тестов в миллисекундах
- * @param testDetail Детальная информация о наборах тестов (test suites)
- * @param steps Список шагов выполнения (заполняется только при ошибках)
- * @param errors Список ошибок, возникших во время выполнения
- * @param enterpriseLogPath Путь к логу 1С:Предприятие
- * @param logFile Путь к файлу лога выполнения тестов
- */
-data class McpTestResponse(
-    val success: Boolean,
-    val message: String,
-    val totalTests: Int? = null,
-    val passedTests: Int? = null,
-    val failedTests: Int? = null,
-    val executionTime: Long? = null,
-    val testDetail: List<GenericTestSuite>? = null,
-    val steps: List<ActionStepResult>? = null,
-    val errors: List<String>,
-    val enterpriseLogPath: String? = null,
-    val logFile: String? = null,
-)
+        return try {
+            val result = measureTimedValue { syntaxCheckService.checkEdt(EdtCheckRequest(projectName)) }
+            result.value.toResponse("через ЕДТ", result.duration)
+        } catch (e: Exception) {
+            logger.error(e) { "Ошибка при выполнении проверки через ЕДТ" }
+            McpSyntaxCheckResponse(
+                success = false,
+                message = "Ошибка при выполнении проверки через ЕДТ: ${e.message}",
+                errors = listOf(e.message ?: "Неизвестная ошибка"),
+            )
+        }
+    }
 
-/**
- * Результат сборки проекта в формате MCP
- *
- * Содержит информацию о результатах сборки проекта 1С:Предприятие, включая
- * статус, сообщение, время сборки и детали шагов выполнения (при ошибках).
- *
- * @param success Успешность сборки (true, если сборка завершилась без ошибок)
- * @param message Сообщение о результате сборки
- * @param buildTime Время выполнения сборки в миллисекундах
- * @param steps Список шагов выполнения сборки (заполняется только при ошибках для диагностики)
- */
-data class McpBuildResponse(
-    val success: Boolean,
-    val message: String,
-    val buildTime: Long? = null,
-    val steps: List<ActionStepResult>? = null,
-)
+    /**
+     * Выполняет синтаксис-проверку конфигурации через Конфигуратор (CheckConfig)
+     *
+     * Выполняет полную синтаксис-проверку конфигурации через команду CheckConfig конфигуратора 1С:Предприятие.
+     * Проверяет всю конфигурацию без дополнительных параметров (пользователь может настроить параметры в будущем).
+     *
+     * Процесс выполнения:
+     * 1. Подключение к информационной базе через конфигуратор
+     * 2. Выполнение команды CheckConfig
+     * 3. Сохранение результатов в файл лога
+     *
+     * @return Результат выполнения проверки CheckConfig
+     * @throws Exception при возникновении ошибок во время выполнения проверки
+     */
+    @Tool(
+        name = "check_syntax_designer_config",
+        description = "Выполняет синтаксис-проверку конфигурации через Конфигуратор (CheckConfig). Проверяет всю конфигурацию.",
+    )
+    fun checkSyntaxDesignerConfig(
+        @ToolParam(description = "Выполнять проверку логической целостности конфигурации", required = false) configLogIntegrity: Boolean?,
+        @ToolParam(description = "Искать некорректные ссылки", required = false) incorrectReferences: Boolean?,
+        @ToolParam(description = "Эмулировать режим тонкого клиента", required = false) thinClient: Boolean?,
+        @ToolParam(description = "Эмулировать режим веб-клиента", required = false) webClient: Boolean?,
+        @ToolParam(description = "Эмулировать режим мобильного клиента", required = false) mobileClient: Boolean?,
+        @ToolParam(description = "Эмулировать режим сервера 1С:Предприятия", required = false) server: Boolean?,
+        @ToolParam(description = "Эмулировать режим внешнего соединения в файловом режиме", required = false) externalConnection: Boolean?,
+        @ToolParam(
+            description = "Эмулировать режим внешнего соединения в клиент-серверном режиме",
+            required = false,
+        ) externalConnectionServer: Boolean?,
+        @ToolParam(description = "Эмулировать режим клиента мобильного приложения", required = false) mobileAppClient: Boolean?,
+        @ToolParam(description = "Эмулировать режим сервера мобильного приложения", required = false) mobileAppServer: Boolean?,
+        @ToolParam(
+            description = "Эмулировать режим управляемого приложения (толстый клиент) в файловом режиме",
+            required = false,
+        ) thickClientManagedApplication: Boolean?,
+        @ToolParam(
+            description = "Эмулировать режим управляемого приложения (толстый клиент) в клиент-серверном режиме",
+            required = false,
+        ) thickClientServerManagedApplication: Boolean?,
+        @ToolParam(
+            description = "Эмулировать режим обычного приложения (толстый клиент) в файловом режиме",
+            required = false,
+        ) thickClientOrdinaryApplication: Boolean?,
+        @ToolParam(
+            description = "Эмулировать режим обычного приложения (толстый клиент) в клиент-серверном режиме",
+            required = false,
+        ) thickClientServerOrdinaryApplication: Boolean?,
+        @ToolParam(description = "Проверять корректность подписи мобильного клиента", required = false) mobileClientDigiSign: Boolean?,
+        @ToolParam(description = "Проверять поставку модулей без исходных текстов", required = false) distributiveModules: Boolean?,
+        @ToolParam(description = "Искать неиспользуемые процедуры и функции", required = false) unreferenceProcedures: Boolean?,
+        @ToolParam(description = "Проверять существование назначенных обработчиков", required = false) handlersExistence: Boolean?,
+        @ToolParam(description = "Искать пустые обработчики", required = false) emptyHandlers: Boolean?,
+        @ToolParam(description = "Включить расширенную проверку модулей", required = false) extendedModulesCheck: Boolean?,
+        @ToolParam(
+            description = "Проверять использование синхронных вызовов (требует ExtendedModulesCheck)",
+            required = false,
+        ) checkUseSynchronousCalls: Boolean?,
+        @ToolParam(
+            description = "Проверять использование модальности (требует ExtendedModulesCheck)",
+            required = false,
+        ) checkUseModality: Boolean?,
+        @ToolParam(
+            description = "Искать неподдерживаемый функционал для мобильной платформы",
+            required = false,
+        ) unsupportedFunctional: Boolean?,
+        @ToolParam(description = "Проверять только расширение с указанным именем", required = false) extension: String? = null,
+        @ToolParam(description = "Проверять все расширения", required = false) allExtensions: Boolean?,
+    ): McpSyntaxCheckResponse {
+        logger.info { "Запуск синтаксис-проверки через Конфигуратор (CheckConfig)" }
 
-/**
- * Результат запуска приложения в формате MCP
- *
- * Содержит информацию о результатах запуска приложения 1С:Предприятие.
- *
- * @param success Успешность запуска (true, если приложение запущено успешно)
- * @param message Сообщение о результате запуска (может содержать PID процесса или описание ошибки)
- */
-data class McpLaunchResponse(
-    val success: Boolean,
-    val message: String,
-)
+        return try {
+            val request =
+                DesignerConfigCheckRequest(
+                    configLogIntegrity = configLogIntegrity == true,
+                    incorrectReferences = incorrectReferences == true,
+                    thinClient = thinClient != false,
+                    webClient = webClient == true,
+                    mobileClient = mobileClient == true,
+                    server = server != false,
+                    externalConnection = externalConnection == true,
+                    externalConnectionServer = externalConnectionServer == true,
+                    mobileAppClient = mobileAppClient == true,
+                    mobileAppServer = mobileAppServer == true,
+                    thickClientManagedApplication = thickClientManagedApplication == true,
+                    thickClientServerManagedApplication = thickClientServerManagedApplication == true,
+                    thickClientOrdinaryApplication = thickClientOrdinaryApplication == true,
+                    thickClientServerOrdinaryApplication = thickClientServerOrdinaryApplication == true,
+                    mobileClientDigiSign = mobileClientDigiSign == true,
+                    distributiveModules = distributiveModules == true,
+                    unreferenceProcedures = unreferenceProcedures != false,
+                    handlersExistence = handlersExistence != false,
+                    emptyHandlers = emptyHandlers != false,
+                    extendedModulesCheck = extendedModulesCheck != false,
+                    checkUseSynchronousCalls = checkUseSynchronousCalls == true,
+                    checkUseModality = checkUseModality == true,
+                    unsupportedFunctional = unsupportedFunctional == true,
+                    extension = extension,
+                    allExtensions = allExtensions ?: (extension.isNullOrBlank()),
+                )
+            val result = measureTimedValue { syntaxCheckService.checkDesigner(request) }
+            result.value.toResponse("CheckConfig", result.duration)
+        } catch (e: Exception) {
+            logger.error(e) { "Ошибка при выполнении проверки CheckConfig" }
+            McpSyntaxCheckResponse(
+                success = false,
+                message = "Ошибка при выполнении проверки CheckConfig: ${e.message}",
+                errors = listOf(e.message ?: "Неизвестная ошибка"),
+            )
+        }
+    }
+
+    /**
+     * Выполняет синтаксис-проверку модулей через Конфигуратор (CheckModules)
+     *
+     * Выполняет синтаксис-проверку модулей конфигурации через команду CheckModules конфигуратора 1С:Предприятие.
+     * Пользователь может указать один или несколько режимов проверки и уточнить расширения для проверки.
+     * По умолчанию проверяются все модули конфигурации.
+     *
+     * Процесс выполнения:
+     * 1. Подключение к информационной базе через конфигуратор
+     * 2. Формирование команды CheckModules с указанными режимами и параметрами расширений
+     * 3. Сохранение результатов в файл лога
+     *
+     * @return Результат выполнения проверки CheckModules
+     * @throws Exception при возникновении ошибок во время выполнения проверки
+     */
+    @Tool(
+        name = "check_syntax_designer_modules",
+        description = "Выполняет синтаксис-проверку модулей через Конфигуратор (CheckModules)",
+    )
+    fun checkSyntaxDesignerModules(
+        @ToolParam(description = "Выполнять проверку в режиме тонкого клиента", required = false) thinClient: Boolean?,
+        @ToolParam(description = "Выполнять проверку в режиме веб-клиента", required = false) webClient: Boolean?,
+        @ToolParam(description = "Выполнять проверку в режиме сервера 1С:Предприятия", required = false) server: Boolean?,
+        @ToolParam(description = "Выполнять проверку в режиме внешнего соединения", required = false) externalConnection: Boolean?,
+        @ToolParam(
+            description = "Выполнять проверку в режиме клиентского приложения (толстый клиент)",
+            required = false,
+        ) thickClientOrdinaryApplication: Boolean?,
+        @ToolParam(description = "Выполнять проверку в режиме клиента мобильного приложения", required = false) mobileAppClient: Boolean?,
+        @ToolParam(description = "Выполнять проверку в режиме сервера мобильного приложения", required = false) mobileAppServer: Boolean?,
+        @ToolParam(description = "Выполнять проверку в режиме мобильного клиента", required = false) mobileClient: Boolean?,
+        @ToolParam(description = "Включить расширенную проверку модулей", required = false) extendedModulesCheck: Boolean?,
+        @ToolParam(description = "Проверять только расширение с указанным именем", required = false) extension: String? = null,
+        @ToolParam(description = "Проверять все расширения", required = false) allExtensions: Boolean?,
+    ): McpSyntaxCheckResponse {
+        logger.info { "Запуск синтаксис-проверки через Конфигуратор (CheckModules)" }
+
+        return try {
+            val request =
+                DesignerModulesCheckRequest(
+                    thinClient = thinClient != false,
+                    webClient = webClient == true,
+                    server = server != false,
+                    externalConnection = externalConnection == true,
+                    thickClientOrdinaryApplication = thickClientOrdinaryApplication == true,
+                    mobileAppClient = mobileAppClient == true,
+                    mobileAppServer = mobileAppServer == true,
+                    mobileClient = mobileClient == true,
+                    extendedModulesCheck = extendedModulesCheck != false,
+                    extension = extension,
+                    allExtensions = allExtensions ?: (extension.isNullOrBlank()),
+                )
+            val result = measureTimedValue { syntaxCheckService.checkDesigner(request) }
+            result.value.toResponse("CheckModules", result.duration)
+        } catch (e: Exception) {
+            logger.error(e) { "Ошибка при выполнении проверки CheckModules" }
+            val errorMessage = e.message ?: "Неизвестная ошибка"
+            McpSyntaxCheckResponse(
+                success = false,
+                message = "Ошибка при выполнении проверки CheckModules: $errorMessage",
+                errors = listOf(errorMessage),
+            )
+        }
+    }
+}
