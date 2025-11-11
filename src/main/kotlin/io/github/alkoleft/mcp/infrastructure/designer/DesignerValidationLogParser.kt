@@ -1,5 +1,6 @@
 package io.github.alkoleft.mcp.infrastructure.designer
 
+import io.github.alkoleft.mcp.application.services.validation.Issue
 import org.springframework.stereotype.Component
 import java.nio.file.Files
 import java.nio.file.Path
@@ -9,19 +10,19 @@ class DesignerValidationLogParser {
     private val moduleIssueRegex = Regex("""^\{([^}]+\s)?([^}]+)\((\d+),(\d+)\)}:\s*(.+)$""")
     private val objectIssueRegex = Regex("""^([\wа-яА-Я_]+\s)?([\wа-яА-Я_.]+)\s(.+)$""")
 
-    fun parse(path: Path): ConfiguratorLogAnalysis =
+    fun parse(path: Path): List<Issue> =
         if (!Files.exists(path)) {
-            ConfiguratorLogAnalysis(emptyList())
+            emptyList()
         } else {
             Files.newBufferedReader(path).use { reader ->
                 parse(reader.lineSequence())
             }
         }
 
-    fun parse(content: String): ConfiguratorLogAnalysis = parse(content.lineSequence())
+    fun parse(content: String) = parse(content.lineSequence())
 
-    private fun parse(sequence: Sequence<String>): ConfiguratorLogAnalysis {
-        val entries: MutableList<ConfiguratorIssue> = mutableListOf()
+    private fun parse(sequence: Sequence<String>): List<Issue> {
+        val entries: MutableList<Issue> = mutableListOf()
         val iterator: Iterator<String> = sequence.iterator()
 
         while (iterator.hasNext()) {
@@ -40,20 +41,20 @@ class DesignerValidationLogParser {
                 entries.add(issue)
             }
         }
-        return ConfiguratorLogAnalysis(entries)
+        return entries
     }
 
     private fun parseModuleIssue(
         line: String,
         nextLine: String?,
-    ): ConfiguratorIssue.ModuleIssue? =
+    ): Issue.ModuleIssue? =
         moduleIssueRegex.matchEntire(line.trim())?.let { match ->
-            ConfiguratorIssue.ModuleIssue(
+            Issue.ModuleIssue(
                 path = match.groupValues[2],
                 extension = match.groupValues[1].trim().ifEmpty { null },
                 line = match.groupValues[3].toIntOrNull() ?: 0,
                 column = match.groupValues[4].toIntOrNull() ?: 0,
-                description = match.groupValues[5].trim(),
+                message = match.groupValues[5].trim(),
                 context = nextLine?.let(::extractContext),
             )
         }
@@ -68,36 +69,12 @@ class DesignerValidationLogParser {
         return description.substring(contextStart + 1, endIndex).trim().takeIf { it.isNotBlank() }
     }
 
-    private fun parseObjectIssue(line: String): ConfiguratorIssue? =
+    private fun parseObjectIssue(line: String): Issue? =
         objectIssueRegex.matchEntire(line.trim())?.let { match ->
-            ConfiguratorIssue.ObjectIssue(
+            Issue.ObjectIssue(
                 path = match.groupValues[2],
                 message = match.groupValues[3],
                 extension = match.groupValues[1].trim().ifEmpty { null },
             )
         }
-}
-
-data class ConfiguratorLogAnalysis(
-    val entries: List<ConfiguratorIssue>,
-)
-
-sealed interface ConfiguratorIssue {
-    val path: String
-    val extension: String?
-
-    data class ModuleIssue(
-        override val path: String,
-        override val extension: String?,
-        val line: Int,
-        val column: Int,
-        val description: String,
-        val context: String?,
-    ) : ConfiguratorIssue
-
-    data class ObjectIssue(
-        override val path: String,
-        override val extension: String?,
-        val message: String,
-    ) : ConfiguratorIssue
 }

@@ -87,9 +87,11 @@ class PlatformDsl(
     /**
      * DSL для работы с 1C:EDT CLI. Команды выполняются сразу и возвращают результат.
      */
-    fun edt(block: EdtDsl.() -> Unit): EdtDsl {
+    fun edt(block: (EdtDsl.() -> Unit)? = null): EdtDsl {
         val edtDsl = EdtDsl(context)
-        edtDsl.block()
+        if (block != null) {
+            edtDsl.block()
+        }
         return edtDsl
     }
 }

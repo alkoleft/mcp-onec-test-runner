@@ -29,9 +29,11 @@ import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunAllTestsReques
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunModuleTestsRequest
 import io.github.alkoleft.mcp.application.services.DesignerConfigCheckRequest
 import io.github.alkoleft.mcp.application.services.DesignerModulesCheckRequest
+import io.github.alkoleft.mcp.application.services.EdtCheckRequest
 import io.github.alkoleft.mcp.application.services.LauncherService
+import io.github.alkoleft.mcp.application.services.SyntaxCheckResult
 import io.github.alkoleft.mcp.application.services.SyntaxCheckService
-import io.github.alkoleft.mcp.infrastructure.designer.ConfiguratorLogAnalysis
+import io.github.alkoleft.mcp.application.services.validation.Issue
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.ai.tool.annotation.ToolParam
@@ -245,11 +247,16 @@ class McpServer(
         name = "check_syntax_edt",
         description = "Выполняет синтаксис-проверку исходников через ЕДТ (validate). Проверяет все проекты из sourceSet.",
     )
-    fun checkSyntaxEdt(): McpSyntaxCheckResponse {
+    fun checkSyntaxEdt(
+        @ToolParam(
+            description = "Имя проекта EDT для проверки. Если не указано, проверяются все проекты из sourceSet.",
+            required = false,
+        ) projectName: String?,
+    ): McpSyntaxCheckResponse {
         logger.info { "Запуск синтаксис-проверки через ЕДТ" }
 
         return try {
-            val result = measureTimedValue { syntaxCheckService.checkEdt() }
+            val result = measureTimedValue { syntaxCheckService.checkEdt(EdtCheckRequest(projectName)) }
             result.value.toResponse("через ЕДТ", result.duration)
         } catch (e: Exception) {
             logger.error(e) { "Ошибка при выполнении проверки через ЕДТ" }
@@ -543,48 +550,29 @@ data class McpSyntaxCheckResponse(
     val message: String,
     val checkResult: String? = null,
     val errors: List<String> = emptyList(),
-    val analysis: ConfiguratorLogAnalysis? = null,
+    val issues: List<Issue>? = null,
     val duration: Long? = null,
-)
-
-/**
- * Результат отдельной проверки синтаксиса
- *
- * Содержит детальную информацию о результате выполнения одной проверки,
- * включая сырой вывод команды, код возврата и путь к файлу логов.
- *
- * @param success Успешность проверки (true, если exitCode == 0)
- * @param output Сырой вывод команды из stdout
- * @param error Ошибки из stderr или error поля
- * @param exitCode Код возврата команды
- * @param logFilePath Путь к файлу логов с результатами проверки
- */
-data class SyntaxCheckResult(
-    val success: Boolean,
-    val output: String?,
-    val error: String?,
-    val exitCode: Int,
-    val logFilePath: String?,
-    val analysis: ConfiguratorLogAnalysis?,
 )
 
 fun SyntaxCheckResult.toResponse(
     checkName: String,
     duration: Duration,
-) = if (analysis?.entries.isNullOrEmpty()) {
+) = if (!hasIssues()) {
     McpSyntaxCheckResponse(
         success = success,
         message = if (success) "Проверка $checkName выполнена успешно" else "Проверка $checkName завершилась с ошибками",
         checkResult = if (!success) output else null,
         errors = if (success) emptyList() else listOf(error ?: "Неизвестная ошибка"),
-        analysis = analysis,
+        issues = issues,
         duration = duration.inWholeMilliseconds,
     )
 } else {
     McpSyntaxCheckResponse(
         success = success,
         message = "Проверка $checkName завершилась с ошибками",
-        analysis = analysis,
+        issues = issues,
         duration = duration.inWholeMilliseconds,
     )
 }
+
+private fun SyntaxCheckResult.hasIssues() = !issues.isNullOrEmpty()

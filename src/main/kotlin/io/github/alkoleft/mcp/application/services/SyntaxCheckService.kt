@@ -21,14 +21,13 @@
 
 package io.github.alkoleft.mcp.application.services
 
-import io.github.alkoleft.mcp.application.core.ShellCommandResult
+import io.github.alkoleft.mcp.application.services.validation.Issue
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSetPurpose
-import io.github.alkoleft.mcp.infrastructure.designer.ConfiguratorLogAnalysis
 import io.github.alkoleft.mcp.infrastructure.designer.DesignerValidationLogParser
+import io.github.alkoleft.mcp.infrastructure.edt.EdtValidationLogParser
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
-import io.github.alkoleft.mcp.server.SyntaxCheckResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import java.nio.file.Files
@@ -105,11 +104,16 @@ data class DesignerModulesCheckRequest(
             extendedModulesCheck
 }
 
+data class EdtCheckRequest(
+    val projectName: String?,
+)
+
 @Service
 class SyntaxCheckService(
     private val platformDsl: PlatformDsl,
     private val properties: ApplicationProperties,
     private val validationLogParser: DesignerValidationLogParser,
+    private val edtValidationLogParser: EdtValidationLogParser,
 ) {
     /**
      * Выполняет синтаксис-проверку через Конфигуратор (CheckConfig)
@@ -184,30 +188,49 @@ class SyntaxCheckService(
      * @return Результат проверки через ЕДТ
      * @throws IllegalStateException если не найдены проекты типа CONFIGURATION в sourceSet
      */
-    fun checkEdt(): SyntaxCheckResult {
+    fun checkEdt(request: EdtCheckRequest): SyntaxCheckResult {
         logger.info { "Выполнение синтаксис-проверки через ЕДТ (validate)" }
-        val logPath = generateSyntaxCheckLogPath("edt")
-        val outputFile = logPath.toString()
 
         val projectNames =
-            properties.sourceSet
-                .byPurpose(SourceSetPurpose.MAIN)
-                .map { it.name }
+            if (!request.projectName.isNullOrBlank()) {
+                listOf(request.projectName)
+            } else {
+                properties.sourceSet
+                    .byPurpose(SourceSetPurpose.MAIN)
+                    .map { it.name }
+            }
 
         if (projectNames.isEmpty()) {
             throw IllegalStateException("Не найдены проекты для проверки в sourceSet")
         }
 
-        lateinit var result: ShellCommandResult
-        platformDsl.edt {
-            result =
-                validate(
-                    outputFile = outputFile,
-                    projectNames = projectNames,
-                )
-        }
+        val errors = mutableListOf<String?>()
+        val outputs = mutableListOf<String?>()
+        var success = true
+        val dsl = platformDsl.edt()
+        val results =
+            projectNames
+                .map {
+                    val logPath = generateSyntaxCheckLogPath("edt")
+                    logPath to
+                        dsl.validate(
+                            outputFile = logPath.toAbsolutePath().toString(),
+                            projectNames = listOf(it),
+                        )
+                }.flatMap { (logPath, result) ->
+                    success = success && result.success
+                    errors.add(result.error)
+                    outputs.add(result.output)
+                    parseEdtAnalysis(logPath) ?: emptyList()
+                }
 
-        return shellCommandResultToSyntaxCheckResult(result, logPath)
+        return SyntaxCheckResult(
+            success = success,
+            output = outputs.filterNotNull().joinToString("\n").ifBlank { null },
+            error = errors.filterNotNull().joinToString("\n").ifBlank { null },
+            0,
+            issues = results,
+        )
     }
 
     /**
@@ -230,43 +253,52 @@ class SyntaxCheckService(
      * Преобразует ProcessResult в SyntaxCheckResult
      */
     private fun processResultToSyntaxCheckResult(result: ProcessResult): SyntaxCheckResult {
-        val analysis: ConfiguratorLogAnalysis? = parseConfiguratorAnalysis(result.logFilePath)
+        val analysis = parseConfiguratorAnalysis(result.logFilePath)
         return SyntaxCheckResult(
             success = result.success,
             output = result.output,
             error = result.error,
             exitCode = result.exitCode,
-            logFilePath = result.logFilePath.toString(),
-            analysis = analysis,
+            issues = analysis,
         )
     }
 
-    /**
-     * Преобразует ShellCommandResult в SyntaxCheckResult
-     */
-    private fun shellCommandResultToSyntaxCheckResult(
-        result: ShellCommandResult,
-        logPath: Path,
-    ): SyntaxCheckResult =
-        SyntaxCheckResult(
-            success = result.success,
-            output = result.output,
-            error = result.error,
-            exitCode = result.exitCode,
-            logFilePath = logPath.toString(),
-            analysis = null,
-        )
-
-    private fun parseConfiguratorAnalysis(logFilePath: Path?): ConfiguratorLogAnalysis? {
+    private fun parseConfiguratorAnalysis(logFilePath: Path?): List<Issue>? {
         if (logFilePath == null) {
             return null
         }
         return try {
-            val analysis: ConfiguratorLogAnalysis = validationLogParser.parse(logFilePath)
-            if (analysis.entries.isEmpty()) null else analysis
+            validationLogParser.parse(logFilePath)
         } catch (error: Exception) {
             logger.warn(error) { "Не удалось разобрать лог проверки конфигуратора: $logFilePath" }
             null
         }
     }
+
+    private fun parseEdtAnalysis(logFilePath: Path) =
+        try {
+            edtValidationLogParser.parse(logFilePath)
+        } catch (error: Exception) {
+            logger.warn(error) { "Не удалось разобрать лог проверки ЕДТ: $logFilePath" }
+            null
+        }
 }
+
+/**
+ * Результат отдельной проверки синтаксиса
+ *
+ * Содержит детальную информацию о результате выполнения одной проверки,
+ * включая сырой вывод команды, код возврата и путь к файлу логов.
+ *
+ * @param success Успешность проверки (true, если exitCode == 0)
+ * @param output Сырой вывод команды из stdout
+ * @param error Ошибки из stderr или error поля
+ * @param exitCode Код возврата команды
+ */
+data class SyntaxCheckResult(
+    val success: Boolean,
+    val output: String?,
+    val error: String?,
+    val exitCode: Int,
+    val issues: List<Issue>?,
+)
