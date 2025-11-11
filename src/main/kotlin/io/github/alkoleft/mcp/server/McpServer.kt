@@ -21,10 +21,8 @@
 
 package io.github.alkoleft.mcp.server
 
-import io.github.alkoleft.mcp.application.actions.common.ActionStepResult
 import io.github.alkoleft.mcp.application.actions.common.LaunchRequest
 import io.github.alkoleft.mcp.application.actions.common.RunTestResult
-import io.github.alkoleft.mcp.application.actions.test.yaxunit.GenericTestSuite
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunAllTestsRequest
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunModuleTestsRequest
 import io.github.alkoleft.mcp.application.services.DesignerConfigCheckRequest
@@ -33,7 +31,11 @@ import io.github.alkoleft.mcp.application.services.EdtCheckRequest
 import io.github.alkoleft.mcp.application.services.LauncherService
 import io.github.alkoleft.mcp.application.services.SyntaxCheckResult
 import io.github.alkoleft.mcp.application.services.SyntaxCheckService
-import io.github.alkoleft.mcp.application.services.validation.Issue
+import io.github.alkoleft.mcp.server.dto.McpBuildResponse
+import io.github.alkoleft.mcp.server.dto.McpLaunchResponse
+import io.github.alkoleft.mcp.server.dto.McpSyntaxCheckResponse
+import io.github.alkoleft.mcp.server.dto.McpTestResponse
+import io.github.alkoleft.mcp.server.dto.toResponse
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.ai.tool.annotation.ToolParam
@@ -445,134 +447,3 @@ class McpServer(
         }
     }
 }
-
-/**
- * Преобразует результат выполнения тестов в формат MCP-ответа
- *
- * Расширяет функциональность [RunTestResult], преобразуя внутренний формат результата
- * в формат, понятный MCP-клиентам. Извлекает статистику тестов, детали выполнения
- * и информацию об ошибках из отчета.
- *
- * @receiver Результат выполнения тестов, полученный от LauncherService
- * @return MCP-ответ с результатами выполнения тестов
- */
-fun RunTestResult.toResponse() =
-    McpTestResponse(
-        success = success,
-        message = message,
-        logFile = logPath,
-        enterpriseLogPath = enterpriseLogPath,
-        totalTests = report?.summary?.totalTests,
-        passedTests = report?.summary?.passed,
-        failedTests = report?.summary?.failed,
-        executionTime = duration.inWholeMilliseconds,
-        testDetail = report?.testSuites,
-        steps = if (success) null else steps,
-        errors = errors,
-    )
-
-/**
- * Результат выполнения тестов в формате MCP
- *
- * Содержит полную информацию о результатах выполнения тестов YaXUnit, включая
- * статистику, детали тестов, пути к логам и информацию об ошибках.
- *
- * @param success Успешность выполнения тестов (true, если все тесты прошли успешно)
- * @param message Сообщение о результате выполнения
- * @param totalTests Общее количество выполненных тестов
- * @param passedTests Количество успешно пройденных тестов
- * @param failedTests Количество проваленных тестов
- * @param executionTime Время выполнения тестов в миллисекундах
- * @param testDetail Детальная информация о наборах тестов (test suites)
- * @param steps Список шагов выполнения (заполняется только при ошибках)
- * @param errors Список ошибок, возникших во время выполнения
- * @param enterpriseLogPath Путь к логу 1С:Предприятие
- * @param logFile Путь к файлу лога выполнения тестов
- */
-data class McpTestResponse(
-    val success: Boolean,
-    val message: String,
-    val totalTests: Int? = null,
-    val passedTests: Int? = null,
-    val failedTests: Int? = null,
-    val executionTime: Long? = null,
-    val testDetail: List<GenericTestSuite>? = null,
-    val steps: List<ActionStepResult>? = null,
-    val errors: List<String>,
-    val enterpriseLogPath: String? = null,
-    val logFile: String? = null,
-)
-
-/**
- * Результат сборки проекта в формате MCP
- *
- * Содержит информацию о результатах сборки проекта 1С:Предприятие, включая
- * статус, сообщение, время сборки и детали шагов выполнения (при ошибках).
- *
- * @param success Успешность сборки (true, если сборка завершилась без ошибок)
- * @param message Сообщение о результате сборки
- * @param buildTime Время выполнения сборки в миллисекундах
- * @param steps Список шагов выполнения сборки (заполняется только при ошибках для диагностики)
- */
-data class McpBuildResponse(
-    val success: Boolean,
-    val message: String,
-    val buildTime: Long? = null,
-    val steps: List<ActionStepResult>? = null,
-)
-
-/**
- * Результат запуска приложения в формате MCP
- *
- * Содержит информацию о результатах запуска приложения 1С:Предприятие.
- *
- * @param success Успешность запуска (true, если приложение запущено успешно)
- * @param message Сообщение о результате запуска (может содержать PID процесса или описание ошибки)
- */
-data class McpLaunchResponse(
-    val success: Boolean,
-    val message: String,
-)
-
-/**
- * Результат синтаксис-проверки в формате MCP
- *
- * Содержит информацию о результатах выполнения синтаксис-проверки через различные инструменты
- * (Конфигуратор и/или ЕДТ), включая детали каждой проверки и пути к файлам логов.
- *
- * @param success Общий успех (true, если все выполненные проверки успешны)
- * @param message Общее сообщение о результате
- * @param checkResult Результат проверки
- * @param errors Список ошибок выполнения
- */
-data class McpSyntaxCheckResponse(
-    val success: Boolean,
-    val message: String,
-    val checkResult: String? = null,
-    val errors: List<String> = emptyList(),
-    val issues: List<Issue>? = null,
-    val duration: Long? = null,
-)
-
-fun SyntaxCheckResult.toResponse(
-    checkName: String,
-    duration: Duration,
-) = if (!hasIssues()) {
-    McpSyntaxCheckResponse(
-        success = success,
-        message = if (success) "Проверка $checkName выполнена успешно" else "Проверка $checkName завершилась с ошибками",
-        checkResult = if (!success) output else null,
-        errors = if (success) emptyList() else listOf(error ?: "Неизвестная ошибка"),
-        issues = issues,
-        duration = duration.inWholeMilliseconds,
-    )
-} else {
-    McpSyntaxCheckResponse(
-        success = success,
-        message = "Проверка $checkName завершилась с ошибками",
-        issues = issues,
-        duration = duration.inWholeMilliseconds,
-    )
-}
-
-private fun SyntaxCheckResult.hasIssues() = !issues.isNullOrEmpty()
