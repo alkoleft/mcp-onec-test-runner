@@ -76,6 +76,7 @@ class EdtInteractiveConvertAction(
 
         fun toResult() =
             ConvertResult(
+                message = "Конвертация проекта ${if (success) "завершена успешно" else "завершилась с ошибками"}",
                 success = success,
                 sourceSet = results.toMap(),
                 errors = steps.mapNotNull { it.error },

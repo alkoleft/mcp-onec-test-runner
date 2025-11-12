@@ -24,23 +24,18 @@ package io.github.alkoleft.mcp.infrastructure.platform.dsl.common
 import java.nio.file.Path
 
 /**
- * Базовый DSL класс для работы с платформой 1С
+ * Интерфейс для конфигурации контекста V8 (платформа 1С)
  *
- * @param T тип контекста платформы
- * @param C тип команды
- * @param context контекст платформы
+ * Определяет методы для настройки подключения и параметров выполнения
+ * утилит платформы 1С (конфигуратор, предприятие).
  */
-abstract class V8Dsl<T : V8Context, C : Command>(
-    context: T,
-) : Dsl<T, C>(context) {
+interface V8ContextConfig {
     /**
      * Устанавливает строку подключения
      *
      * @param connectionString строка подключения к ИБ
      */
-    fun connect(connectionString: String) {
-        context.connect(connectionString)
-    }
+    fun connect(connectionString: String)
 
     /**
      * Подключается к серверу приложений
@@ -51,92 +46,62 @@ abstract class V8Dsl<T : V8Context, C : Command>(
     fun connectToServer(
         serverName: String,
         dbName: String,
-    ) {
-        context.connectToServer(serverName, dbName)
-    }
+    )
 
     /**
      * Подключается к файловой БД
      *
      * @param path путь к файлу БД
      */
-    fun connectToFile(path: String) {
-        context.connectToFile(path)
-    }
+    fun connectToFile(path: String)
 
     /**
      * Устанавливает имя пользователя
      *
      * @param user имя пользователя
      */
-    fun user(user: String) {
-        context.user(user)
-    }
+    fun user(user: String)
 
     /**
      * Устанавливает пароль
      *
      * @param password пароль
      */
-    fun password(password: String) {
-        context.password(password)
-    }
+    fun password(password: String)
 
     /**
      * Устанавливает путь к файлу вывода
      *
      * @param path путь к файлу
      */
-    fun output(path: Path) {
-        context.output(path)
-    }
+    fun output(path: Path)
 
     /**
      * Устанавливает код языка интерфейса
      *
      * @param code код языка
      */
-    fun language(code: String) {
-        context.language(code)
-    }
+    fun language(code: String)
 
     /**
      * Устанавливает код локализации
      *
      * @param code код локализации
      */
-    fun localization(code: String) {
-        context.localization(code)
-    }
+    fun localization(code: String)
 
     /**
      * Отключает стартовые диалоги
      */
-    fun disableStartupDialogs() {
-        context.disableStartupDialogs()
-    }
+    fun disableStartupDialogs()
 
     /**
      * Отключает стартовые сообщения
      */
-    fun disableStartupMessages() {
-        context.disableStartupMessages()
-    }
+    fun disableStartupMessages()
 
     /**
      * Устанавливает флаг не очищать файл вывода при записи
      */
-    fun noTruncate() {
-        context.noTruncate()
-    }
-
-    override fun buildCommandArgs(
-        command: C,
-        logPath: Path?,
-    ): List<String> =
-        if (logPath != null) {
-            super.buildCommandArgs(command, null) + listOf("/Out", logPath.toString())
-        } else {
-            super.buildCommandArgs(command, null)
-        }
+    fun noTruncate()
 }

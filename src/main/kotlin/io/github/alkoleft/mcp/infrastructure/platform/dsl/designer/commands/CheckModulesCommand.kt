@@ -21,6 +21,8 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.commands
 
+import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
+
 /**
  * Команда CheckModules с DSL функциональностью
  */
@@ -29,26 +31,61 @@ class CheckModulesCommand : DesignerCommand() {
     override val description: String = "Проверка модулей конфигурации"
 
     // DSL параметры
+    var thinClient: Boolean = false
+    var webClient: Boolean = false
+    var server: Boolean = false
+    var externalConnection: Boolean = false
+    var thickClientOrdinaryApplication: Boolean = false
+    var mobileAppClient: Boolean = false
+    var mobileAppServer: Boolean = false
+    var mobileClient: Boolean = false
+    var extendedModulesCheck: Boolean = false
     var extension: String? = null
     var allExtensions: Boolean = false
-    var modules: String? = null
-    var allModules: Boolean = false
 
     // DSL методы
+    fun thinClient() {
+        thinClient = true
+    }
+
+    fun webClient() {
+        webClient = true
+    }
+
+    fun server() {
+        server = true
+    }
+
+    fun externalConnection() {
+        externalConnection = true
+    }
+
+    fun thickClientOrdinaryApplication() {
+        thickClientOrdinaryApplication = true
+    }
+
+    fun mobileAppClient() {
+        mobileAppClient = true
+    }
+
+    fun mobileAppServer() {
+        mobileAppServer = true
+    }
+
+    fun mobileClient() {
+        mobileClient = true
+    }
+
+    fun extendedModulesCheck() {
+        extendedModulesCheck = true
+    }
+
     fun extension(name: String) {
-        this.extension = name
+        extension = name
     }
 
     fun allExtensions() {
-        this.allExtensions = true
-    }
-
-    fun modules(modulesList: String) {
-        this.modules = modulesList
-    }
-
-    fun allModules() {
-        this.allModules = true
+        allExtensions = true
     }
 
     override val arguments: List<String>
@@ -58,19 +95,15 @@ class CheckModulesCommand : DesignerCommand() {
             // Команда
             args.add("/$name")
 
+            addModeArguments(args)
+            requireModeSpecified()
+
             // Параметры расширения
-            extension?.let { ext ->
+            extension?.ifNoBlank { ext ->
                 args.add("-Extension")
                 args.add(ext)
             }
             if (allExtensions) args.add("-AllExtensions")
-
-            // Параметры модулей
-            modules?.let { mods ->
-                args.add("-Modules")
-                args.add(mods)
-            }
-            if (allModules) args.add("-AllModules")
 
             return args
         }
@@ -79,11 +112,46 @@ class CheckModulesCommand : DesignerCommand() {
         get() {
             val params = mutableMapOf<String, String>()
 
+            if (thinClient) params["thinClient"] = "true"
+            if (webClient) params["webClient"] = "true"
+            if (server) params["server"] = "true"
+            if (externalConnection) params["externalConnection"] = "true"
+            if (thickClientOrdinaryApplication) params["thickClientOrdinaryApplication"] = "true"
+            if (mobileAppClient) params["mobileAppClient"] = "true"
+            if (mobileAppServer) params["mobileAppServer"] = "true"
+            if (mobileClient) params["mobileClient"] = "true"
+            if (extendedModulesCheck) params["extendedModulesCheck"] = "true"
             extension?.let { params["extension"] = it }
             if (allExtensions) params["allExtensions"] = "true"
-            modules?.let { params["modules"] = it }
-            if (allModules) params["allModules"] = "true"
 
             return params
         }
+
+    private fun addModeArguments(target: MutableList<String>) {
+        if (thinClient) target.add("-ThinClient")
+        if (webClient) target.add("-WebClient")
+        if (server) target.add("-Server")
+        if (externalConnection) target.add("-ExternalConnection")
+        if (thickClientOrdinaryApplication) target.add("-ThickClientOrdinaryApplication")
+        if (mobileAppClient) target.add("-MobileAppClient")
+        if (mobileAppServer) target.add("-MobileAppServer")
+        if (mobileClient) target.add("-MobileClient")
+        if (extendedModulesCheck) target.add("-ExtendedModulesCheck")
+    }
+
+    private fun requireModeSpecified() {
+        if (
+            !thinClient &&
+            !webClient &&
+            !server &&
+            !externalConnection &&
+            !thickClientOrdinaryApplication &&
+            !mobileAppClient &&
+            !mobileAppServer &&
+            !mobileClient &&
+            !extendedModulesCheck
+        ) {
+            throw IllegalStateException("Для CheckModules должен быть указан хотя бы один режим проверки")
+        }
+    }
 }

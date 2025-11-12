@@ -22,6 +22,7 @@
 package io.github.alkoleft.mcp.infrastructure.platform.dsl
 
 import io.github.alkoleft.mcp.application.core.UtilityType
+import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.common.PlatformUtilities
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.DesignerDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.edt.EdtDsl
@@ -38,13 +39,15 @@ import org.springframework.stereotype.Component
 @Component
 class PlatformDsl(
     private val context: PlatformUtilities,
+    private val properties: ApplicationProperties,
 ) {
     /**
      * DSL для работы с конфигуратором 1С
      */
-    fun designer(block: DesignerDsl.() -> Unit): DesignerDsl {
+    fun designer(block: (DesignerDsl.() -> Unit)? = null): DesignerDsl {
         val designerDsl = DesignerDsl(context)
-        designerDsl.block()
+        designerDsl.connect(properties)
+        block?.let { designerDsl.block() }
         return designerDsl
     }
 
@@ -53,6 +56,7 @@ class PlatformDsl(
      */
     fun ibcmd(block: IbcmdDsl.() -> Unit): IbcmdDsl {
         val ibcmdDsl = IbcmdDsl(context)
+        ibcmdDsl.connect(properties)
         ibcmdDsl.block()
         return ibcmdDsl
     }
@@ -62,6 +66,7 @@ class PlatformDsl(
      */
     fun enterprise(block: EnterpriseDsl.() -> Unit): EnterpriseDsl {
         val enterpriseDsl = EnterpriseDsl(context, UtilityType.THIN_CLIENT)
+        enterpriseDsl.connect(properties)
         enterpriseDsl.block()
         return enterpriseDsl
     }
@@ -74,6 +79,7 @@ class PlatformDsl(
         block: EnterpriseDsl.() -> Unit,
     ): EnterpriseDsl {
         val enterpriseDsl = EnterpriseDsl(context, utilityType)
+        enterpriseDsl.connect(properties)
         enterpriseDsl.block()
         return enterpriseDsl
     }
@@ -81,9 +87,11 @@ class PlatformDsl(
     /**
      * DSL для работы с 1C:EDT CLI. Команды выполняются сразу и возвращают результат.
      */
-    fun edt(block: EdtDsl.() -> Unit): EdtDsl {
+    fun edt(block: (EdtDsl.() -> Unit)? = null): EdtDsl {
         val edtDsl = EdtDsl(context)
-        edtDsl.block()
+        if (block != null) {
+            edtDsl.block()
+        }
         return edtDsl
     }
 }

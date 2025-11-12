@@ -32,7 +32,8 @@ import java.nio.file.Path
  */
 abstract class V8Context(
     platformContext: PlatformUtilities,
-) : DslContext(platformContext) {
+) : DslContext(platformContext),
+    V8ContextConfig {
     /** Строка подключения к информационной базе */
     protected var connectionString: String = ""
 
@@ -59,7 +60,7 @@ abstract class V8Context(
      *
      * @param connectionString строка подключения к ИБ
      */
-    fun connect(connectionString: String) {
+    override fun connect(connectionString: String) {
         this.connectionString = "\"${connectionString.replace("\"", "\"\"")}\""
     }
 
@@ -69,7 +70,7 @@ abstract class V8Context(
      * @param serverName имя сервера
      * @param dbName имя базы данных
      */
-    fun connectToServer(
+    override fun connectToServer(
         serverName: String,
         dbName: String,
     ) {
@@ -81,7 +82,7 @@ abstract class V8Context(
      *
      * @param path путь к файлу БД
      */
-    fun connectToFile(path: String) {
+    override fun connectToFile(path: String) {
         this.connectionString = "File=\"$path\";"
     }
 
@@ -90,7 +91,7 @@ abstract class V8Context(
      *
      * @param user имя пользователя
      */
-    fun user(user: String) {
+    override fun user(user: String) {
         this.user = user
     }
 
@@ -99,7 +100,7 @@ abstract class V8Context(
      *
      * @param password пароль
      */
-    fun password(password: String) {
+    override fun password(password: String) {
         this.password = password
     }
 
@@ -108,7 +109,7 @@ abstract class V8Context(
      *
      * @param path путь к файлу
      */
-    fun output(path: Path) {
+    override fun output(path: Path) {
         this.outputPath = path
     }
 
@@ -117,7 +118,7 @@ abstract class V8Context(
      *
      * @param code код языка
      */
-    fun language(code: String) {
+    override fun language(code: String) {
         this.language = code
     }
 
@@ -126,28 +127,28 @@ abstract class V8Context(
      *
      * @param code код локализации
      */
-    fun localization(code: String) {
+    override fun localization(code: String) {
         this.localization = code
     }
 
     /**
      * Отключает стартовые диалоги
      */
-    fun disableStartupDialogs() {
+    override fun disableStartupDialogs() {
         this.disableStartupDialogs = true
     }
 
     /**
      * Отключает стартовые сообщения
      */
-    fun disableStartupMessages() {
+    override fun disableStartupMessages() {
         this.disableStartupMessages = true
     }
 
     /**
      * Не очищает файл вывода при записи
      */
-    fun noTruncate() {
+    override fun noTruncate() {
         this.noTruncate = true
     }
 

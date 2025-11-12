@@ -21,17 +21,13 @@
 
 package io.github.alkoleft.mcp.application.actions.build
 
-import io.github.alkoleft.mcp.application.actions.exceptions.BuildError
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
-import io.github.alkoleft.mcp.infrastructure.utility.ifNoBlank
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import java.nio.file.Path
-
-private val FILE_PATH_PATTERN = "File\\s*=\\s*(['\"]?)([^'\";\\n]+)\\1\\s*".toRegex()
 
 /**
  * Реализация BuildAction для сборки через ibcmd
@@ -46,10 +42,6 @@ class IbcmdBuildAction(
     override fun initDsl(properties: ApplicationProperties) {
         actionDsl =
             dsl.ibcmd {
-                dbPath = extractFilePath(properties.connection.connectionString)
-                    ?: throw BuildError("Не удалось определить путь к файлу из строки подключения")
-                properties.connection.user?.ifNoBlank { user = it }
-                properties.connection.password?.ifNoBlank { password = it }
             }
     }
 
@@ -81,6 +73,4 @@ class IbcmdBuildAction(
         actionDsl.config { result = apply() }
         return result
     }
-
-    private fun extractFilePath(connectionString: String) = FILE_PATH_PATTERN.find(connectionString)?.groupValues[2]
 }

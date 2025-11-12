@@ -36,7 +36,7 @@ plugins {
 }
 
 group = "io.github.alkoleft.mcp"
-version = "1.0-SNAPSHOT"
+version = "0.4.0-SNAPSHOT"
 
 gitVersioning.apply {
     refs {

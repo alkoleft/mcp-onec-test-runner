@@ -21,18 +21,27 @@
 
 package io.github.alkoleft.mcp.application.services
 
-import io.github.alkoleft.mcp.application.actions.ActionFactory
 import io.github.alkoleft.mcp.application.actions.common.ActionStepResult
+import io.github.alkoleft.mcp.application.actions.common.BuildAction
 import io.github.alkoleft.mcp.application.actions.common.BuildResult
+import io.github.alkoleft.mcp.application.actions.common.ChangeAnalysisAction
+import io.github.alkoleft.mcp.application.actions.common.ConvertAction
 import io.github.alkoleft.mcp.application.actions.common.ConvertResult
+import io.github.alkoleft.mcp.application.actions.common.LaunchAction
 import io.github.alkoleft.mcp.application.actions.common.LaunchRequest
+import io.github.alkoleft.mcp.application.actions.common.RunTestAction
 import io.github.alkoleft.mcp.application.actions.common.RunTestResult
+import io.github.alkoleft.mcp.application.actions.convert.EdtInteractiveConvertAction
 import io.github.alkoleft.mcp.application.actions.exceptions.AnalysisError
 import io.github.alkoleft.mcp.application.actions.exceptions.TestExecutionError
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestExecutionRequest
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.YaXUnitTestAction
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.ProjectFormat
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
+import io.github.alkoleft.mcp.infrastructure.yaxunit.ReportParser
+import io.github.alkoleft.mcp.infrastructure.yaxunit.YaXUnitRunner
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import kotlin.time.Duration
@@ -42,11 +51,17 @@ private val logger = KotlinLogging.logger { }
 
 @Service
 class LauncherService(
-    private val actionFactory: ActionFactory,
+    private val buildAction: BuildAction,
+    private val changeAnalysisAction: ChangeAnalysisAction,
+    private val launchAction: LaunchAction,
+    private val platformDsl: PlatformDsl,
+    private val reportParser: ReportParser,
+    private val yaxUnitRunner: YaXUnitRunner,
     private val properties: ApplicationProperties,
+    private val sourceSetFactory: SourceSetFactory,
 ) {
-    private val edtSourceSet: SourceSet = createEdtSourceSet()
-    private val designerSourceSet: SourceSet = createDesignerSourceSet()
+    private val edtSourceSet: SourceSet = sourceSetFactory.createEdtSourceSet()
+    private val designerSourceSet: SourceSet = sourceSetFactory.createDesignerSourceSet()
 
     fun runTests(request: TestExecutionRequest): RunTestResult {
         val start = TimeSource.Monotonic.markNow()
@@ -55,16 +70,16 @@ class LauncherService(
             val reason = if (buildResult.errors.isNotEmpty()) buildResult.errors.joinToString("; ") else "Сборка не удалась"
             throw TestExecutionError(reason)
         }
-        return actionFactory.createRunTestAction().run(request).let {
+        val runTestAction: RunTestAction = YaXUnitTestAction(reportParser, yaxUnitRunner)
+        return runTestAction.run(request).let {
             it.copy(steps = buildResult.steps + it.steps, duration = start.elapsedNow())
         }
     }
 
-    fun launch(request: LaunchRequest) = actionFactory.createLaunchAction().run(request)
+    fun launch(request: LaunchRequest) = launchAction.run(request)
 
     fun build(): BuildResult {
-        val changeAnalyzer = actionFactory.createChangeAnalysisAction()
-        val changes = changeAnalyzer.run()
+        val changes = changeAnalysisAction.run()
 
         val steps = mutableListOf<ActionStepResult>()
         steps.addAll(changes.steps)
@@ -107,7 +122,7 @@ class LauncherService(
         val errors = mutableListOf<String>()
         result.sourceSet.forEach { (name, result) ->
             success = success && result.success
-            changeAnalyzer.saveSourceSetState(changes.sourceSetChanges[name]!!, changes.timestamp, result.success)
+            changeAnalysisAction.saveSourceSetState(changes.sourceSetChanges[name]!!, changes.timestamp, result.success)
             if (!result.success) {
                 result.error?.takeIf { it.isNotBlank() }?.let { errors.add(it) }
             }
@@ -119,41 +134,18 @@ class LauncherService(
     private fun convertSources(
         changedSourceSets: SourceSet,
         destination: SourceSet,
-    ): ConvertResult =
-        actionFactory.convertAction().run(
+    ): ConvertResult {
+        val convertAction: ConvertAction = EdtInteractiveConvertAction(platformDsl)
+        return convertAction.run(
             properties,
             edtSourceSet.subSourceSet { changedSourceSets.find { item -> item.name == it.name } != null },
             destination,
         )
+    }
 
-    private fun updateIB(changedSourceSets: SourceSet): BuildResult {
-        val builder = actionFactory.createBuildAction(properties.tools.builder)
-        return builder.run(
+    private fun updateIB(changedSourceSets: SourceSet): BuildResult =
+        buildAction.run(
             properties,
             designerSourceSet.subSourceSet { changedSourceSets.find { item -> item.name == it.name } != null },
         )
-    }
-
-    private fun createEdtSourceSet() =
-        if (properties.format == ProjectFormat.EDT) {
-            SourceSet(
-                properties.basePath,
-                properties.sourceSet,
-            )
-        } else {
-            SourceSet.EMPTY
-        }
-
-    private fun createDesignerSourceSet() =
-        if (properties.format == ProjectFormat.EDT) {
-            SourceSet(
-                properties.workPath,
-                properties.sourceSet.map { it.copy(path = it.name) },
-            )
-        } else {
-            SourceSet(
-                properties.basePath,
-                properties.sourceSet,
-            )
-        }
 }
