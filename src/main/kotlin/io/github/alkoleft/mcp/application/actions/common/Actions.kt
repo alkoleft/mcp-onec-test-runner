@@ -312,3 +312,98 @@ data class LaunchResult(
     override val steps: List<ActionStepResult> = emptyList(),
     val processId: Long? = null,
 ) : ActionResult
+
+/**
+ * Режим выгрузки конфигурации
+ */
+enum class DumpMode {
+    /** Полная выгрузка всей конфигурации */
+    FULL,
+
+    /** Инкрементальная выгрузка только измененных объектов (требует ConfigDumpInfo.xml) */
+    INCREMENTAL,
+
+    /** Частичная выгрузка конкретных объектов по списку */
+    PARTIAL,
+}
+
+/**
+ * Интерфейс для выгрузки конфигурации из ИБ в файлы
+ *
+ * Определяет контракт для выгрузки конфигурации 1С:Предприятие из информационной базы
+ * в файлы проекта. Реализации этого интерфейса могут использовать различные инструменты
+ * (например, конфигуратор или ibcmd).
+ */
+interface DumpAction {
+    /**
+     * Выполняет полную выгрузку конфигурации
+     *
+     * @param properties Свойства приложения с конфигурацией
+     * @param sourceSet Описание целевого каталога проекта
+     * @param extension Имя расширения для выгрузки (null - основная конфигурация)
+     * @param allExtensions Выгрузить все расширения
+     * @return Результат выгрузки
+     */
+    fun run(
+        properties: ApplicationProperties,
+        sourceSet: SourceSet,
+        extension: String? = null,
+        allExtensions: Boolean = false,
+    ): DumpResult
+
+    /**
+     * Выполняет инкрементальную выгрузку только измененных объектов
+     *
+     * Использует ConfigDumpInfo.xml для определения изменений между конфигурацией в ИБ
+     * и выгруженными файлами. Выгружает только объекты, которые были изменены.
+     *
+     * @param properties Свойства приложения с конфигурацией
+     * @param sourceSet Описание целевого каталога проекта
+     * @param extension Имя расширения для выгрузки (null - основная конфигурация)
+     * @return Результат выгрузки
+     */
+    fun runIncremental(
+        properties: ApplicationProperties,
+        sourceSet: SourceSet,
+        extension: String? = null,
+    ): DumpResult
+
+    /**
+     * Выполняет частичную выгрузку конкретных объектов по списку
+     *
+     * @param properties Свойства приложения с конфигурацией
+     * @param sourceSet Описание целевого каталога проекта
+     * @param objects Список объектов метаданных для выгрузки (например, "Справочник.Номенклатура")
+     * @param extension Имя расширения для выгрузки (null - основная конфигурация)
+     * @return Результат выгрузки
+     */
+    fun runPartial(
+        properties: ApplicationProperties,
+        sourceSet: SourceSet,
+        objects: List<String>,
+        extension: String? = null,
+    ): DumpResult
+}
+
+/**
+ * Результат выгрузки конфигурации
+ *
+ * Содержит информацию о результатах выгрузки конфигурации из ИБ в файлы.
+ *
+ * @param message Сообщение о результате выгрузки
+ * @param success Успешность выгрузки (true, если выгрузка завершилась без ошибок)
+ * @param mode Режим выгрузки, который был использован
+ * @param errors Список ошибок, возникших во время выгрузки
+ * @param duration Время выполнения выгрузки
+ * @param steps Список шагов выполнения выгрузки для диагностики
+ * @param dumpedObjects Количество выгруженных объектов (если известно)
+ */
+data class DumpResult(
+    override val message: String,
+    override val success: Boolean,
+    val mode: DumpMode,
+    override val errors: List<String> = emptyList(),
+    override val duration: Duration = Duration.ZERO,
+    override val steps: List<ActionStepResult> = emptyList(),
+    val dumpedObjects: Int? = null,
+) : ActionResult

@@ -21,15 +21,19 @@
 
 package io.github.alkoleft.mcp.server
 
+import io.github.alkoleft.mcp.application.actions.common.DumpMode
 import io.github.alkoleft.mcp.application.actions.common.LaunchRequest
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunAllTestsRequest
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunModuleTestsRequest
 import io.github.alkoleft.mcp.application.services.DesignerConfigCheckRequest
 import io.github.alkoleft.mcp.application.services.DesignerModulesCheckRequest
+import io.github.alkoleft.mcp.application.services.DumpRequest
+import io.github.alkoleft.mcp.application.services.DumpService
 import io.github.alkoleft.mcp.application.services.EdtCheckRequest
 import io.github.alkoleft.mcp.application.services.LauncherService
 import io.github.alkoleft.mcp.application.services.SyntaxCheckService
 import io.github.alkoleft.mcp.server.dto.McpBuildResponse
+import io.github.alkoleft.mcp.server.dto.McpDumpResponse
 import io.github.alkoleft.mcp.server.dto.McpLaunchResponse
 import io.github.alkoleft.mcp.server.dto.McpSyntaxCheckResponse
 import io.github.alkoleft.mcp.server.dto.McpTestResponse
@@ -62,6 +66,7 @@ private val logger = KotlinLogging.logger { }
 class McpServer(
     private val launcherService: LauncherService,
     private val syntaxCheckService: SyntaxCheckService,
+    private val dumpService: DumpService,
 ) {
     /**
      * Запускает все тесты в проекте
@@ -182,6 +187,90 @@ class McpServer(
             return McpBuildResponse(
                 success = false,
                 message = "Ошибка при сборке: ${e.message}",
+            )
+        }
+    }
+
+    /**
+     * Выгружает конфигурацию из ИБ в файлы проекта
+     *
+     * Выполняет выгрузку конфигурации 1С:Предприятие из информационной базы
+     * в каталог проекта. Полезно для синхронизации изменений, сделанных
+     * в конфигураторе, с исходными файлами проекта.
+     *
+     * Поддерживаемые режимы выгрузки:
+     * - FULL: Полная выгрузка всей конфигурации
+     * - INCREMENTAL: Инкрементальная выгрузка только измененных объектов (требует ConfigDumpInfo.xml)
+     * - PARTIAL: Частичная выгрузка конкретных объектов по списку
+     *
+     * @param mode Режим выгрузки (FULL, INCREMENTAL, PARTIAL). По умолчанию FULL
+     * @param extension Имя расширения для выгрузки (опционально, если null - основная конфигурация)
+     * @param allExtensions Выгрузить все расширения (опционально)
+     * @param objects Список объектов метаданных для режима PARTIAL (например, "Справочник.Номенклатура")
+     * @return Результат выгрузки конфигурации
+     * @throws Exception при возникновении ошибок во время выгрузки
+     */
+    @Tool(
+        name = "dump_config",
+        description = """Выгружает конфигурацию из ИБ в файлы проекта.
+            |Режимы выгрузки:
+            |* FULL - полная выгрузка всей конфигурации
+            |* INCREMENTAL - только измененные объекты (требует предыдущую выгрузку)
+            |* PARTIAL - конкретные объекты по списку
+            |Используйте для синхронизации изменений, сделанных в конфигураторе.""",
+    )
+    fun dumpConfig(
+        @ToolParam(
+            description = "Режим выгрузки: FULL (полная), INCREMENTAL (только изменения), PARTIAL (по списку)",
+            required = false,
+        ) mode: String?,
+        @ToolParam(
+            description = "Имя расширения для выгрузки. Если не указано, выгружается основная конфигурация",
+            required = false,
+        ) extension: String?,
+        @ToolParam(
+            description = "Выгрузить все расширения",
+            required = false,
+        ) allExtensions: Boolean?,
+        @ToolParam(
+            description = "Список объектов метаданных для режима PARTIAL (например: Справочник.Номенклатура, Документ.Заказ)",
+            required = false,
+        ) objects: List<String>?,
+    ): McpDumpResponse {
+        logger.info { "Выгрузка конфигурации: режим=$mode, расширение=$extension, все расширения=$allExtensions" }
+
+        return try {
+            val dumpMode = when (mode?.uppercase()) {
+                "INCREMENTAL" -> DumpMode.INCREMENTAL
+                "PARTIAL" -> DumpMode.PARTIAL
+                else -> DumpMode.FULL
+            }
+
+            val request = DumpRequest(
+                mode = dumpMode,
+                extension = extension,
+                allExtensions = allExtensions ?: false,
+                objects = objects ?: emptyList(),
+            )
+
+            val result = dumpService.dump(request)
+
+            McpDumpResponse(
+                success = result.success,
+                message = result.message,
+                mode = result.mode.name,
+                dumpTime = result.duration.inWholeMilliseconds,
+                dumpedObjects = result.dumpedObjects,
+                errors = if (result.errors.isNotEmpty()) result.errors else null,
+                steps = if (!result.success) result.steps else null,
+            )
+        } catch (e: Exception) {
+            logger.error(e) { "Ошибка при выгрузке конфигурации" }
+            McpDumpResponse(
+                success = false,
+                message = "Ошибка при выгрузке: ${e.message}",
+                mode = mode ?: "FULL",
+                errors = listOf(e.message ?: "Неизвестная ошибка"),
             )
         }
     }

@@ -75,7 +75,17 @@ class TestExecutionError(
     context: Map<String, Any> = emptyMap(),
 ) : ActionError(message, cause, context)
 
+/**
+ * Ошибка выгрузки конфигурации
+ */
+class DumpError(
+    message: String,
+    cause: Throwable? = null,
+    context: Map<String, Any> = emptyMap(),
+) : ActionError(message, cause, context)
+
 // Алиасы для обратной совместимости
 typealias BuildException = BuildError
 typealias AnalyzeException = AnalysisError
 typealias TestExecuteException = TestExecutionError
+typealias DumpException = DumpError
