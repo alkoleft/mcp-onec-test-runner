@@ -201,28 +201,35 @@ app:
 
 ## Доступные MCP-инструменты
 
-- `yaxunit_run_all_tests` - запуск всех тестов
-- `yaxunit_run_module_tests` - запуск тестов модуля
-- `yaxunit_build_project` - сборка проекта
-- `yaxunit_list_modules` - получение списка модулей
-- `yaxunit_get_configuration` - получение конфигурации
-- `yaxunit_check_platform` - проверка платформы
+- `run_all_tests` - запуск всех тестов
+- `run_module_tests` - запуск тестов модуля
+- `build_project` - сборка проекта
+- `dump_config` - выгрузка конфигурации (FULL/INCREMENTAL/PARTIAL)
+- `launch_app` - запуск приложений 1С (конфигуратор, тонкий/толстый клиент)
+- `list_modules` - получение списка модулей
+- `get_configuration` - получение конфигурации
+- `check_platform` - проверка платформы
 - `check_syntax_edt` - проверка исходников через 1C:EDT (validate)
 - `check_syntax_designer_config` - выполнение CheckConfig в конфигураторе 1С
 - `check_syntax_designer_modules` - выполнение CheckModules в конфигураторе 1С
 
 ## Дорожная карта разработки 🚀
 
-- [ ] 🔄 Поддержка EDT + умная конвертация
+- [x] 🔄 Поддержка EDT + умная конвертация
   - [x] **Интеграция с EDT (Enterprise Development Tools)**
   - [ ] **Умная конвертация модулей** - при изменении модуля автоматическое копирование и обновление
-  - [ ] **Автоматическое определение изменений** в исходном коде
+  - [x] **Автоматическое определение изменений** в исходном коде
 
-- [ ] 🖥️ Поддержка IBCMD
-  - **Интеграция с IBCMD** для автоматизации сборки
+- [x] 🖥️ Поддержка IBCMD
+  - [x] **Интеграция с IBCMD** для автоматизации сборки
 
 - [ ] 🌐 Запуск тестов через WebSocket
   - **Быстрое выполнение** тестов
+
+- [ ] 📦 Выгрузка конфигурации
+  - [x] **FULL** - полная выгрузка
+  - [x] **INCREMENTAL** - инкрементальная выгрузка
+  - [x] **PARTIAL** - частичная выгрузка
 
 ## Разработка
 
@@ -277,6 +284,7 @@ app:
 - [Основные возможности](docs/FEATURES.md) — подробное описание всех возможностей METR
 - [Application Configuration](docs/APPLICATION_CONFIGURATION.md) — подробный пошаговый гид по настройке `application.yml`
 - [IDE Setup](docs/IDE_SETUP.md) — подробная инструкция по настройке MCP сервера в различных IDE и AI-ассистентах
+- [Changelog](CHANGELOG.md) — история изменений проекта
 
 ## Лицензия
 
