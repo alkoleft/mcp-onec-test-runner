@@ -6,7 +6,7 @@ app:
   id: yaxunit
   format: EDT
   # Базовый путь к проекту
-  base-path: "/home/common/develop/repos/yaxunit/yaxunit"
+  base-path: "/home/alko/develop/bia/YAxUnit-Repos/yaxunit/"
   
   # Набор исходного кода проекта
   source-set:
