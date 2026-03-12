@@ -22,19 +22,46 @@
 package io.github.alkoleft.mcp.infrastructure.storage
 
 import io.github.alkoleft.mcp.application.core.PlatformType
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class HashStorageMapDbModeTest {
     @Test
-    fun `should disable memory mapping on Windows`() {
-        assertFalse(shouldUseMemoryMapping(PlatformType.WINDOWS))
+    fun shouldDisableMemoryMappingOnWindows(): Unit {
+        // Arrange
+        val inputPlatform = PlatformType.WINDOWS
+        val expectedResult = false
+
+        // Act
+        val actualResult = canUseMemoryMapping(inputPlatform)
+
+        // Assert
+        assertEquals(expectedResult, actualResult)
     }
 
     @Test
-    fun `should keep memory mapping on non-Windows platforms`() {
-        assertTrue(shouldUseMemoryMapping(PlatformType.LINUX))
-        assertTrue(shouldUseMemoryMapping(PlatformType.MACOS))
+    fun shouldKeepMemoryMappingOnLinux(): Unit {
+        // Arrange
+        val inputPlatform = PlatformType.LINUX
+        val expectedResult = true
+
+        // Act
+        val actualResult = canUseMemoryMapping(inputPlatform)
+
+        // Assert
+        assertEquals(expectedResult, actualResult)
+    }
+
+    @Test
+    fun shouldKeepMemoryMappingOnMacOs(): Unit {
+        // Arrange
+        val inputPlatform = PlatformType.MACOS
+        val expectedResult = true
+
+        // Act
+        val actualResult = canUseMemoryMapping(inputPlatform)
+
+        // Assert
+        assertEquals(expectedResult, actualResult)
     }
 }

@@ -173,14 +173,14 @@ class HashStorage(
     }
 }
 
-private fun createDb(dbPath: Path): DB {
-    val dbMaker =
+private fun createDb(dbPath: Path, platform: PlatformType = PlatformDetector.current): DB {
+    val dbMaker: DBMaker.Maker =
         DBMaker
             .fileDB(dbPath.toFile())
             .transactionEnable()
             .closeOnJvmShutdown()
 
-    if (shouldUseMemoryMapping(PlatformDetector.current)) {
+    if (canUseMemoryMapping(platform)) {
         dbMaker.fileMmapEnable()
     } else {
         logger.info { "Для Windows отключено memory-mapped хранилище MapDB для обхода проблем с WAL/truncate" }
@@ -189,4 +189,4 @@ private fun createDb(dbPath: Path): DB {
     return dbMaker.make()
 }
 
-internal fun shouldUseMemoryMapping(platform: PlatformType): Boolean = platform != PlatformType.WINDOWS
+internal fun canUseMemoryMapping(platform: PlatformType): Boolean = platform != PlatformType.WINDOWS
