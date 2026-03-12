@@ -21,6 +21,8 @@
 
 package io.github.alkoleft.mcp.infrastructure.storage
 
+import io.github.alkoleft.mcp.application.core.PlatformType
+import io.github.alkoleft.mcp.infrastructure.utility.PlatformDetector
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.mapdb.DB
 import org.mapdb.DBMaker
@@ -53,14 +55,7 @@ class HashStorage(
             // Ensure directory exists
             Files.createDirectories(dbPath.parent)
 
-            // Initialize MapDB with optimized settings
-            db =
-                DBMaker
-                    .fileDB(dbPath.toFile())
-                    .transactionEnable()
-                    .closeOnJvmShutdown()
-                    .fileMmapEnable()
-                    .make()
+            db = createDb(dbPath)
 
             // Create hash map for file content hashes
             hashMap =
@@ -177,3 +172,21 @@ class HashStorage(
         }
     }
 }
+
+private fun createDb(dbPath: Path): DB {
+    val dbMaker =
+        DBMaker
+            .fileDB(dbPath.toFile())
+            .transactionEnable()
+            .closeOnJvmShutdown()
+
+    if (shouldUseMemoryMapping(PlatformDetector.current)) {
+        dbMaker.fileMmapEnable()
+    } else {
+        logger.info { "Для Windows отключено memory-mapped хранилище MapDB для обхода проблем с WAL/truncate" }
+    }
+
+    return dbMaker.make()
+}
+
+internal fun shouldUseMemoryMapping(platform: PlatformType): Boolean = platform != PlatformType.WINDOWS
