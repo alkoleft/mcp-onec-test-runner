@@ -30,6 +30,28 @@ import kotlin.io.path.walk
 
 private val logger = KotlinLogging.logger { }
 
+private val IGNORED_PATTERNS =
+    listOf(
+        ".yaxunit/",
+        "build/",
+        "target/",
+        ".git/",
+        ".gradle/",
+        "temp/",
+        "tmp/",
+        "ConfigDumpInfo.xml",
+    )
+
+fun isIgnoredPath(
+    path: Path,
+    projectRoot: Path,
+): Boolean {
+    val relativePath = projectRoot.relativize(path).toString().replace("\\", "/")
+    return IGNORED_PATTERNS.any { pattern ->
+        relativePath.startsWith(pattern) || relativePath.contains("/$pattern")
+    }
+}
+
 @Service
 class Scanner {
     suspend fun scanByLastModifiedTime(
@@ -84,29 +106,4 @@ class Scanner {
         }
     }
 
-    /**
-     * Determines if a path should be ignored (e.g., build outputs, temp files)
-     */
-    private fun isIgnoredPath(
-        path: Path,
-        projectRoot: Path,
-    ): Boolean {
-        val relativePath = projectRoot.relativize(path).toString().replace("\\", "/")
-
-        val ignoredPatterns =
-            listOf(
-                ".yaxunit/",
-                "build/",
-                "target/",
-                ".git/",
-                ".gradle/",
-                "temp/",
-                "tmp/",
-                "ConfigDumpInfo.xml",
-            )
-
-        return ignoredPatterns.any { pattern ->
-            relativePath.startsWith(pattern) || relativePath.contains("/$pattern")
-        }
-    }
 }

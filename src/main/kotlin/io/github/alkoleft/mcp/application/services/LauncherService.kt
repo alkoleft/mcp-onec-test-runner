@@ -50,9 +50,6 @@ import kotlin.time.TimeSource
 
 private val logger = KotlinLogging.logger { }
 
-private const val BUILD_REQUIRED_BEFORE_TESTS_MESSAGE =
-    "Обнаружены изменения в исходниках. Сперва нужно воспользоваться инструментом build_project, а затем запускать тесты"
-
 @Service
 class LauncherService(
     private val buildAction: BuildAction,

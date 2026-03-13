@@ -22,7 +22,6 @@
 package io.github.alkoleft.mcp.infrastructure.log
 
 import ch.qos.logback.classic.LoggerContext
-import ch.qos.logback.core.Appender
 import ch.qos.logback.core.FileAppender
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.slf4j.LoggerFactory
@@ -36,26 +35,14 @@ private val logger = KotlinLogging.logger { }
  */
 @Component
 class LogManager {
-    private val logFilePath: String? by lazy {
+    private val logFilePaths: List<String> by lazy {
         val lc = LoggerFactory.getILoggerFactory() as LoggerContext
-        var fileAppender: Appender<*>? = null
-
-        // Ищем FileAppender в корневом logger
         lc.loggerList
             .filter { it.level != null }
-            .forEach { l ->
-                l.iteratorForAppenders().forEach { appender ->
-                    if (appender is FileAppender<*>) {
-                        fileAppender = appender
-                    }
-                }
-            }
-
-        if (fileAppender != null) {
-            (fileAppender as FileAppender<*>).file
-        } else {
-            null
-        }
+            .flatMap { l -> l.iteratorForAppenders().asSequence().toList() }
+            .filterIsInstance<FileAppender<*>>()
+            .map { it.file }
+            .distinct()
     }
 
     /**
@@ -65,17 +52,18 @@ class LogManager {
     fun cleanLogIfEnabled(cleanLogBeforeExecution: Boolean) {
         if (!cleanLogBeforeExecution) return
 
-        val filePath = logFilePath
-        if (filePath == null) {
+        if (logFilePaths.isEmpty()) {
             logger.warn { "Не удалось определить путь к файлу лога" }
             return
         }
 
-        try {
-            File(filePath).writeText("")
-            logger.info { "Лог очищен перед выполнением: $filePath" }
-        } catch (e: Exception) {
-            logger.error(e) { "Ошибка при очистке лога: $filePath" }
+        logFilePaths.forEach { filePath ->
+            try {
+                File(filePath).writeText("")
+                logger.info { "Лог очищен перед выполнением: $filePath" }
+            } catch (e: Exception) {
+                logger.error(e) { "Ошибка при очистке лога: $filePath" }
+            }
         }
     }
 }

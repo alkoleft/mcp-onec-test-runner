@@ -51,13 +51,7 @@ class SourceSetsService(
      * For DESIGNER format: returns the designer source set.
      * For EDT format: returns the converted Designer source set.
      */
-    fun getSourceSet(): SourceSetContext =
-        when (properties.format) {
-            ProjectFormat.DESIGNER -> getDesignerSourceSet()!!
-            ProjectFormat.EDT ->
-                getDesignerSourceSet()
-                    ?: throw IllegalStateException("Designer source set not available for EDT format")
-        }
+    fun getSourceSet(): SourceSetContext = getDesignerSourceSet()!!
 
     /**
      * Returns the EDT source set context if format is EDT, null otherwise.

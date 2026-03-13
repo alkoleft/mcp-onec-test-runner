@@ -112,7 +112,9 @@ data class ApplicationProperties(
         require(item.path.isNotBlank()) { "Путь элемента source set не может быть пустым" }
         require(item.name.isNotBlank()) { "Имя элемента source set не может быть пустым" }
 
-        // Проверяем, что путь существует относительно basePath
+        // For EDT format, workPath-based designer sources are created at runtime — skip existence check
+        if (format == ProjectFormat.EDT) return
+
         val fullPath = basePath.resolve(item.path)
         require(Files.exists(fullPath)) {
             "Путь source set не существует: ${item.path}"

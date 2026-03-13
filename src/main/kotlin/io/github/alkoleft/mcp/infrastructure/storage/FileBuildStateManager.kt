@@ -24,6 +24,7 @@ package io.github.alkoleft.mcp.infrastructure.storage
 import io.github.alkoleft.mcp.application.actions.change.ChangesSet
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.ChangeType
 import io.github.alkoleft.mcp.infrastructure.changes.Scanner
+import io.github.alkoleft.mcp.infrastructure.changes.isIgnoredPath
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -165,29 +166,4 @@ class FileBuildStateManager(
         }
     }
 
-    /**
-     * Determines if a path should be ignored (e.g., build outputs, temp files)
-     */
-    private fun isIgnoredPath(
-        path: Path,
-        projectRoot: Path,
-    ): Boolean {
-        val relativePath = projectRoot.relativize(path).toString().replace("\\", "/")
-
-        val ignoredPatterns =
-            listOf(
-                ".yaxunit/",
-                "build/",
-                "target/",
-                ".git/",
-                ".gradle/",
-                "temp/",
-                "tmp/",
-                "ConfigDumpInfo.xml",
-            )
-
-        return ignoredPatterns.any { pattern ->
-            relativePath.startsWith(pattern) || relativePath.contains("/$pattern")
-        }
-    }
 }
