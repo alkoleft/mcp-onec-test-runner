@@ -26,6 +26,7 @@ import io.github.alkoleft.mcp.application.actions.common.ActionStepResult
 import io.github.alkoleft.mcp.application.actions.common.BuildAction
 import io.github.alkoleft.mcp.application.actions.common.BuildResult
 import io.github.alkoleft.mcp.application.actions.common.ChangeAnalysisAction
+import io.github.alkoleft.mcp.application.actions.common.ChangeAnalysisResult
 import io.github.alkoleft.mcp.application.actions.common.ConvertAction
 import io.github.alkoleft.mcp.application.actions.common.ConvertResult
 import io.github.alkoleft.mcp.application.actions.common.LaunchAction
@@ -37,10 +38,12 @@ import io.github.alkoleft.mcp.application.actions.exceptions.AnalysisError
 import io.github.alkoleft.mcp.application.actions.exceptions.TestExecutionError
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestExecutionRequest
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.YaXUnitTestAction
+import io.github.alkoleft.mcp.application.core.ShellCommandResult
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.ProjectFormat
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
+import io.github.alkoleft.mcp.infrastructure.storage.SourceSetContext
 import io.github.alkoleft.mcp.infrastructure.yaxunit.ReportParser
 import io.github.alkoleft.mcp.infrastructure.yaxunit.YaXUnitRunner
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -77,9 +80,65 @@ class LauncherService(
     fun launch(request: LaunchRequest) = launchAction.run(request)
 
     fun build(): BuildResult {
-        val changes = changeAnalysisAction.run()
-
         val steps = mutableListOf<ActionStepResult>()
+
+        if (properties.format == ProjectFormat.EDT) {
+            val convertResult = convertSources()
+            if (!convertResult.success) {
+                return BuildResult(
+                    message = "Ошибки конвертации исходников EDT: ${convertResult.errors.joinToString()}",
+                    success = false,
+                    errors = convertResult.errors,
+                    duration = Duration.ZERO,
+                    sourceSet = emptyMap(),
+                    steps = steps,
+                ).also { logger.error { it.message } }
+            }
+            steps.addAll(convertResult.steps)
+        }
+        return buildSourceSet(steps)
+    }
+
+    private fun convertSources(): ConvertResult {
+        val sourceSetContext = sourceSetsService.getEdtSourceSet()!!
+
+        val changes = changeAnalysisAction.run(sourceSetContext)
+        val steps = mutableListOf<ActionStepResult>()
+        steps.addAll(changes.steps)
+        if (!changes.hasChanges) {
+            return ConvertResult(
+                message = "Исходные файлы не изменены. Конвертация исходников EDT -> Designer пропущена",
+                success = true,
+                errors = emptyList(),
+                duration = Duration.ZERO,
+                steps = steps,
+            ).also { logger.info { it.message } }
+        }
+        val changedSourceSets = sourceSetContext.sourceSet.subSourceSet { it.name in changes.sourceSetChanges.keys }
+
+        if (changedSourceSets.isEmpty()) {
+            throw AnalysisError("Не удалось распределить изменения по подпроектам.")
+        }
+        logger.info { "Обнаружены изменения (EDT): ${changedSourceSets.joinToString { it.name }}" }
+
+        val result = convertSources(changedSourceSets)
+        saveSourceSetState(sourceSetContext, result.sourceSet, changes)
+        return result.copy(steps = steps + result.steps)
+    }
+
+    private fun saveSourceSetState(
+        sourceSetContext: SourceSetContext,
+        sourceSetResults: Map<String, ShellCommandResult>,
+        changes: ChangeAnalysisResult,
+    ) {
+        sourceSetResults.forEach { name, result ->
+            changeAnalysisAction.saveSourceSetState(sourceSetContext, changes.sourceSetChanges[name]!!, changes.timestamp, result.success)
+        }
+    }
+
+    private fun buildSourceSet(steps: MutableList<ActionStepResult>): BuildResult {
+        val sourceSetContext = sourceSetsService.getDesignerSourceSet()!!
+        val changes = changeAnalysisAction.run(sourceSetContext)
         steps.addAll(changes.steps)
 
         if (!changes.hasChanges) {
@@ -92,51 +151,26 @@ class LauncherService(
                 steps = steps,
             ).also { logger.info { it.message } }
         }
-        val changedSourceSets = properties.sourceSet.subSourceSet { it.name in changes.sourceSetChanges.keys }
+        val changedSourceSets = sourceSetContext.sourceSet.subSourceSet { it.name in changes.sourceSetChanges.keys }
 
         if (changedSourceSets.isEmpty()) {
             throw AnalysisError("Не удалось распределить изменения по подпроектам.")
         }
-        logger.info { "Обнаружены изменения: ${changedSourceSets.joinToString { it.name }}" }
-
-        if (properties.format == ProjectFormat.EDT) {
-            val convertResult = convertSources(changedSourceSets)
-            steps.addAll(convertResult.steps)
-            if (!convertResult.success) {
-                return BuildResult(
-                    message = "Ошибки конвертации исходников EDT: ${convertResult.errors.joinToString()}",
-                    success = false,
-                    errors = convertResult.errors,
-                    duration = Duration.ZERO,
-                    sourceSet = emptyMap(),
-                    steps = steps,
-                ).also { logger.error { it.message } }
-            }
-        }
+        logger.info { "Обнаружены изменения (DESIGNER): ${changedSourceSets.joinToString { it.name }}" }
 
         val result = updateIB(changedSourceSets, changes.sourceSetChanges)
-
-        var success = true
-        val errors = mutableListOf<String>()
-        result.sourceSet.forEach { (name, result) ->
-            success = success && result.success
-            changeAnalysisAction.saveSourceSetState(changes.sourceSetChanges[name]!!, changes.timestamp, result.success)
-            if (!result.success) {
-                result.error?.takeIf { it.isNotBlank() }?.let { errors.add(it) }
-            }
-        }
+        saveSourceSetState(sourceSetContext, result.sourceSet, changes)
 
         return result.copy(steps = steps + result.steps)
     }
 
     private fun convertSources(changedSourceSets: SourceSet): ConvertResult {
-        val edtSourceSet = sourceSetsService.getEdtSourceSet()?.sourceSet ?: SourceSet.EMPTY
         val designerSourceSet = sourceSetsService.getDesignerSourceSet()?.sourceSet ?: SourceSet.EMPTY
 
         val convertAction: ConvertAction = EdtInteractiveConvertAction(platformDsl)
         return convertAction.run(
             properties,
-            edtSourceSet.subSourceSet { changedSourceSets.find { item -> item.name == it.name } != null },
+            changedSourceSets,
             designerSourceSet,
         )
     }
@@ -151,11 +185,9 @@ class LauncherService(
         changedSourceSets: SourceSet,
         sourceSetChanges: Map<String, SourceSetChanges>,
     ): BuildResult {
-        val designerSourceSet = sourceSetsService.getDesignerSourceSet()?.sourceSet ?: SourceSet.EMPTY
-
         return buildAction.runPartial(
             properties,
-            designerSourceSet.subSourceSet { changedSourceSets.find { item -> item.name == it.name } != null },
+            changedSourceSets,
             sourceSetChanges,
         )
     }

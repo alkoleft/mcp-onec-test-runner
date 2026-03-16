@@ -157,11 +157,4 @@ data class ApplicationProperties(
             "Недопустимый тип сборщика: ${tools.builder}"
         }
     }
-
-    val testsPath: Path by lazy {
-        sourceSet
-            .find { it.purpose.contains(SourceSetPurpose.TESTS) }
-            ?.let { basePath.resolve(it.path) }
-            ?: basePath.resolve(TEST_PATH)
-    }
 }

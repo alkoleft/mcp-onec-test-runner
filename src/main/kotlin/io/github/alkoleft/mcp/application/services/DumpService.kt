@@ -53,7 +53,7 @@ data class DumpRequest(
 class DumpService(
     private val dumpAction: DumpAction,
     private val properties: ApplicationProperties,
-    private val sourceSetFactory: SourceSetFactory,
+    private val sourceSetsService: SourceSetsService,
 ) {
     /**
      * Выполняет выгрузку конфигурации согласно запросу
@@ -68,20 +68,20 @@ class DumpService(
                 "расширение=${normalizedExtension ?: "основная конфигурация"}"
         }
 
-        val sourceSet = sourceSetFactory.createDesignerSourceSet()
+        val sourceSetContext = sourceSetsService.getDesignerSourceSet()!!
 
         return when (request.mode) {
             DumpMode.FULL ->
                 dumpAction.run(
                     properties = properties,
-                    sourceSet = sourceSet,
+                    sourceSet = sourceSetContext.sourceSet,
                     extension = normalizedExtension,
                 )
 
             DumpMode.INCREMENTAL ->
                 dumpAction.runIncremental(
                     properties = properties,
-                    sourceSet = sourceSet,
+                    sourceSet = sourceSetContext.sourceSet,
                     extension = normalizedExtension,
                 )
 
@@ -96,7 +96,7 @@ class DumpService(
                 }
                 dumpAction.runPartial(
                     properties = properties,
-                    sourceSet = sourceSet,
+                    sourceSet = sourceSetContext.sourceSet,
                     objects = request.objects,
                     extension = normalizedExtension,
                 )

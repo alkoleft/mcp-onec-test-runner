@@ -23,6 +23,7 @@ package io.github.alkoleft.mcp.application.actions.change
 
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.ChangeType
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
+import io.github.alkoleft.mcp.infrastructure.storage.SourceSetContext
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.nio.file.Path
@@ -42,7 +43,7 @@ class SourceSetChangeAnalyzer(
     /**
      * Analyzes all changes and groups them by source set with detailed change type information
      */
-    fun analyzeSourceSetChanges(allChanges: ChangesSet): Map<String, SourceSetChanges> {
+    fun analyzeSourceSetChanges(sourceSetContext: SourceSetContext, allChanges: ChangesSet): Map<String, SourceSetChanges> {
         logger.debug { "Анализ ${allChanges.size} изменений для группировки по source set" }
 
         if (allChanges.isEmpty()) {
@@ -52,8 +53,8 @@ class SourceSetChangeAnalyzer(
 
         val sourceSetChanges = mutableMapOf<String, SourceSetChanges>()
 
-        properties.sourceSet.forEach { sourceItem ->
-            val sourceSetPath = properties.basePath.resolve(sourceItem.path)
+        sourceSetContext.sourceSet.forEach { sourceItem ->
+            val sourceSetPath = sourceSetContext.basePath.resolve(sourceItem.path)
 
             // Find changes that belong to this source set
             val sourceSetFileChanges =
@@ -86,7 +87,7 @@ class SourceSetChangeAnalyzer(
         }
 
         logger.info {
-            "Проанализированы изменения для ${sourceSetChanges.size} затронутых source sets из ${properties.sourceSet.size} всего"
+            "Проанализированы изменения для ${sourceSetChanges.size} затронутых source sets из ${sourceSetContext.sourceSet.size} всего"
         }
         return sourceSetChanges
     }

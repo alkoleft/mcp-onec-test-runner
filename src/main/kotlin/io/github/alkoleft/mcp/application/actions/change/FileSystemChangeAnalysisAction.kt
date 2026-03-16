@@ -30,6 +30,7 @@ import io.github.alkoleft.mcp.application.actions.test.yaxunit.ChangeType
 import io.github.alkoleft.mcp.application.services.SourceSetsService
 import io.github.alkoleft.mcp.infrastructure.changes.Scanner
 import io.github.alkoleft.mcp.infrastructure.storage.FileBuildStateManager
+import io.github.alkoleft.mcp.infrastructure.storage.SourceSetContext
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
 import org.springframework.stereotype.Component
@@ -48,9 +49,7 @@ class FileSystemChangeAnalysisAction(
     private val sourceSetAnalyzer: SourceSetChangeAnalyzer,
     private val scanner: Scanner,
 ) : ChangeAnalysisAction {
-    override fun run(): ChangeAnalysisResult {
-        logger.info { "Анализ изменений по проекту (${sourceSetsService.getAllSourceSets().size} source sets)" }
-
+    override fun run(sourceSetContext: SourceSetContext): ChangeAnalysisResult {
         val state = ChangeAnalysisActionState()
 
         try {
@@ -58,46 +57,43 @@ class FileSystemChangeAnalysisAction(
             val combinedChanges = mutableMapOf<Path, Pair<ChangeType, String>>()
             val allSourceSetChanges = mutableMapOf<String, SourceSetChanges>()
 
-            for (sourceSetContext in sourceSetsService.getAllSourceSets()) {
-                logger.debug { "Анализ изменений для source set: ${sourceSetContext.name}" }
+            logger.debug { "Анализ изменений для source set: ${sourceSetContext.name}" }
 
-                // Create a temporary FileBuildStateManager for this source set
-                val buildStateManager = FileBuildStateManager(sourceSetContext, scanner)
+            // Create a temporary FileBuildStateManager for this source set
+            val buildStateManager = FileBuildStateManager(sourceSetContext, scanner)
+            val timedChanges = measureTimedValue { runBlocking { buildStateManager.checkChanges() } }
 
-                val timedChanges = measureTimedValue { runBlocking { buildStateManager.checkChanges() } }
+            state.addStep(
+                ActionStepResult(
+                    message =
+                        buildString {
+                            append("Анализ source set '${sourceSetContext.name}': ")
+                            append(
+                                if (timedChanges.value.isEmpty()) {
+                                    "нет изменений"
+                                } else {
+                                    "найдено ${timedChanges.value.size} измененных файлов"
+                                },
+                            )
+                        },
+                    success = true,
+                    duration = timedChanges.duration,
+                ),
+            )
 
-                state.addStep(
-                    ActionStepResult(
-                        message =
-                            buildString {
-                                append("Анализ source set '${sourceSetContext.name}': ")
-                                append(
-                                    if (timedChanges.value.isEmpty()) {
-                                        "нет изменений"
-                                    } else {
-                                        "найдено ${timedChanges.value.size} измененных файлов"
-                                    },
-                                )
-                            },
-                        success = true,
-                        duration = timedChanges.duration,
-                    ),
-                )
+            if (timedChanges.value.isNotEmpty()) {
+                // Combine changes from this source set
+                combinedChanges.putAll(timedChanges.value)
 
-                if (timedChanges.value.isNotEmpty()) {
-                    // Combine changes from this source set
-                    combinedChanges.putAll(timedChanges.value)
+                // Group changes by subproject for this source set
+                val sourceSetChanges =
+                    sourceSetAnalyzer
+                        .analyzeSourceSetChanges(sourceSetContext, timedChanges.value)
+                        .also {
+                            logger.info { "Изменения сгруппированы в ${it.size} подпроектов для source set '${sourceSetContext.name}'" }
+                        }
 
-                    // Group changes by subproject for this source set
-                    val sourceSetChanges =
-                        sourceSetAnalyzer
-                            .analyzeSourceSetChanges(timedChanges.value)
-                            .also {
-                                logger.info { "Изменения сгруппированы в ${it.size} подпроектов для source set '${sourceSetContext.name}'" }
-                            }
-
-                    allSourceSetChanges.putAll(sourceSetChanges)
-                }
+                allSourceSetChanges.putAll(sourceSetChanges)
             }
 
             state.updateChanges(combinedChanges)
@@ -114,6 +110,7 @@ class FileSystemChangeAnalysisAction(
     }
 
     override fun saveSourceSetState(
+        sourceSetContext: SourceSetContext,
         sourceSetChanges: SourceSetChanges,
         timeStamp: Long,
         success: Boolean,
@@ -121,16 +118,6 @@ class FileSystemChangeAnalysisAction(
         logger.debug { "Сохранение состояния подпроекта: ${sourceSetChanges.sourceSetName}" }
 
         return try {
-            // Get the appropriate source set context
-            val sourceSetContext =
-                sourceSetsService
-                    .getAllSourceSets()
-                    .find { it.name == sourceSetChanges.sourceSetName }
-                    ?: run {
-                        logger.warn { "Source set '${sourceSetChanges.sourceSetName}' не найден, используем основной source set" }
-                        sourceSetsService.getSourceSet()
-                    }
-
             val buildStateManager = FileBuildStateManager(sourceSetContext, scanner)
 
             if (sourceSetChanges.changedFiles.isNotEmpty()) {

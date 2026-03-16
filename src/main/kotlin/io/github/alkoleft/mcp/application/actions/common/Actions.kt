@@ -28,6 +28,7 @@ import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestExecutionRequ
 import io.github.alkoleft.mcp.application.core.ShellCommandResult
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
+import io.github.alkoleft.mcp.infrastructure.storage.SourceSetContext
 import java.nio.file.Path
 import kotlin.time.Duration
 
@@ -151,7 +152,7 @@ interface ChangeAnalysisAction {
      *
      * @return Результат анализа изменений
      */
-    fun run(): ChangeAnalysisResult
+    fun run(sourceSetContext: SourceSetContext): ChangeAnalysisResult
 
     /**
      * Сохраняет состояние source set для инкрементальной сборки
@@ -165,6 +166,7 @@ interface ChangeAnalysisAction {
      * @return true, если состояние успешно сохранено
      */
     fun saveSourceSetState(
+        sourceSetContext: SourceSetContext,
         sourceSetChanges: SourceSetChanges,
         timeStamp: Long,
         success: Boolean,

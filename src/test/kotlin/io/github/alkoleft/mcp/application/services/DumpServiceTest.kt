@@ -26,6 +26,7 @@ import io.github.alkoleft.mcp.application.actions.common.DumpMode
 import io.github.alkoleft.mcp.application.actions.common.DumpResult
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
+import io.github.alkoleft.mcp.infrastructure.storage.SourceSetContext
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -39,20 +40,20 @@ import kotlin.time.Duration
 class DumpServiceTest {
     private lateinit var dumpAction: DumpAction
     private lateinit var properties: ApplicationProperties
-    private lateinit var sourceSetFactory: SourceSetFactory
+    private lateinit var sourceSetsService: SourceSetsService
     private lateinit var dumpService: DumpService
-    private lateinit var mockSourceSet: SourceSet
+    private lateinit var mockSourceSet: SourceSetContext
 
     @BeforeEach
     fun setUp() {
         dumpAction = mockk()
         properties = mockk()
-        sourceSetFactory = mockk()
+        sourceSetsService = mockk()
         mockSourceSet = mockk()
 
-        every { sourceSetFactory.createDesignerSourceSet() } returns mockSourceSet
+        every { sourceSetsService.getDesignerSourceSet() } returns mockSourceSet
 
-        dumpService = DumpService(dumpAction, properties, sourceSetFactory)
+        dumpService = DumpService(dumpAction, properties, sourceSetsService)
     }
 
     @Test
@@ -68,7 +69,7 @@ class DumpServiceTest {
         every {
             dumpAction.run(
                 properties = properties,
-                sourceSet = mockSourceSet,
+                sourceSet = any(),
                 extension = null,
             )
         } returns expectedResult
@@ -84,7 +85,7 @@ class DumpServiceTest {
         verify(exactly = 1) {
             dumpAction.run(
                 properties = properties,
-                sourceSet = mockSourceSet,
+                sourceSet = any(),
                 extension = null,
             )
         }
@@ -103,7 +104,7 @@ class DumpServiceTest {
         every {
             dumpAction.runIncremental(
                 properties = properties,
-                sourceSet = mockSourceSet,
+                sourceSet = any(),
                 extension = null,
             )
         } returns expectedResult
@@ -119,7 +120,7 @@ class DumpServiceTest {
         verify(exactly = 1) {
             dumpAction.runIncremental(
                 properties = properties,
-                sourceSet = mockSourceSet,
+                sourceSet = any(),
                 extension = null,
             )
         }
@@ -140,7 +141,7 @@ class DumpServiceTest {
         every {
             dumpAction.runPartial(
                 properties = properties,
-                sourceSet = mockSourceSet,
+                sourceSet = any(),
                 objects = objects,
                 extension = null,
             )
@@ -158,7 +159,7 @@ class DumpServiceTest {
         verify(exactly = 1) {
             dumpAction.runPartial(
                 properties = properties,
-                sourceSet = mockSourceSet,
+                sourceSet = any(),
                 objects = objects,
                 extension = null,
             )
@@ -193,7 +194,7 @@ class DumpServiceTest {
         every {
             dumpAction.run(
                 properties = properties,
-                sourceSet = mockSourceSet,
+                sourceSet = any(),
                 extension = extensionName,
             )
         } returns expectedResult
@@ -208,7 +209,7 @@ class DumpServiceTest {
         verify(exactly = 1) {
             dumpAction.run(
                 properties = properties,
-                sourceSet = mockSourceSet,
+                sourceSet = any(),
                 extension = extensionName,
             )
         }
@@ -227,7 +228,7 @@ class DumpServiceTest {
         every {
             dumpAction.run(
                 properties = properties,
-                sourceSet = mockSourceSet,
+                sourceSet = any(),
                 extension = null,
             )
         } returns expectedResult
@@ -242,7 +243,7 @@ class DumpServiceTest {
         verify(exactly = 1) {
             dumpAction.run(
                 properties = properties,
-                sourceSet = mockSourceSet,
+                sourceSet = any(),
                 extension = null,
             )
         }

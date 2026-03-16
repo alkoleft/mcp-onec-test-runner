@@ -111,9 +111,9 @@ data class EdtCheckRequest(
 @Service
 class SyntaxCheckService(
     private val platformDsl: PlatformDsl,
-    private val properties: ApplicationProperties,
     private val validationLogParser: DesignerValidationLogParser,
     private val edtValidationLogParser: EdtValidationLogParser,
+    private val sourceSetsService: SourceSetsService,
 ) {
     /**
      * Выполняет синтаксис-проверку через Конфигуратор (CheckConfig)
@@ -195,7 +195,7 @@ class SyntaxCheckService(
             if (!request.projectName.isNullOrBlank()) {
                 listOf(request.projectName)
             } else {
-                properties.sourceSet
+                sourceSetsService.getDesignerSourceSet()!!.sourceSet
                     .byPurpose(SourceSetPurpose.MAIN)
                     .map { it.name }
             }

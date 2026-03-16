@@ -126,14 +126,4 @@ class SourceSetsService(
                 properties.sourceSet,
             )
         }
-
-    /**
-     * Gets the base path for the current source set (for backward compatibility)
-     */
-    fun getBasePath(): Path = getSourceSet().basePath
-
-    /**
-     * Gets the source set configuration for the current format
-     */
-    fun getCurrentSourceSet(): SourceSet = getSourceSet().sourceSet
 }

@@ -89,12 +89,6 @@
 - `ApplicationProperties` - для получения конфигурации проекта
 - `SourceSetFactory` - для создания source set
 
-### SourceSetFactory
-
-**Класс:** `io.github.alkoleft.mcp.application.services.SourceSetFactory`
-
-Фабрика для создания source set для различных форматов проектов. Инкапсулирует логику создания source set для форматов EDT и DESIGNER, обеспечивая правильное преобразование путей и структуры проектов.
-
 #### Основные методы
 
 ##### `createEdtSourceSet(): SourceSet`
