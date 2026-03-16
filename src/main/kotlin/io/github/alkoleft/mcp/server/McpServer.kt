@@ -173,13 +173,18 @@ class McpServer(
         name = "build_project",
         description = "Загружает исходники в ИБ и компилирует конфигурацию (файлы → ИБ). Выполняет инкрементальную загрузку только изменённых модулей. Примечание: run_all_tests и run_module_tests выполняют сборку автоматически.",
     )
-    fun buildProject(): McpBuildResponse {
+    fun buildProject(
+        @ToolParam(
+            description = "Выполнить полную загрузку всех исходников, игнорируя кэш изменений. По умолчанию используется инкрементальная загрузка.",
+            required = false,
+        ) fullRebuild: Boolean? = null,
+    ): McpBuildResponse {
         logManager.cleanLogIfEnabled(properties.cleanLogBeforeExecution)
-        logger.info { "Выполнение сборки проекта" }
+        logger.info { "Выполнение сборки проекта${if (fullRebuild == true) " (полная)" else ""}" }
 
         try {
             val start = TimeSource.Monotonic.markNow()
-            val buildResult = launcherService.build()
+            val buildResult = launcherService.build(fullRebuild = fullRebuild ?: false)
             val duration = start.elapsedNow()
 
             return if (buildResult.success) {

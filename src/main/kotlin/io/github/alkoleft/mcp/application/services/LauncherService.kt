@@ -79,7 +79,12 @@ class LauncherService(
 
     fun launch(request: LaunchRequest) = launchAction.run(request)
 
-    fun build(): BuildResult {
+    fun build(fullRebuild: Boolean = false): BuildResult {
+        if (fullRebuild) {
+            logger.debug { "Сброс состояния source set" }
+            sourceSetsService.getAllSourceSets().forEach { it.hashStorage.clear() }
+        }
+
         val steps = mutableListOf<ActionStepResult>()
 
         if (properties.format == ProjectFormat.EDT) {
@@ -184,11 +189,10 @@ class LauncherService(
     private fun updateIB(
         changedSourceSets: SourceSet,
         sourceSetChanges: Map<String, SourceSetChanges>,
-    ): BuildResult {
-        return buildAction.runPartial(
+    ): BuildResult =
+        buildAction.runPartial(
             properties,
             changedSourceSets,
             sourceSetChanges,
         )
-    }
 }

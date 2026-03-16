@@ -26,7 +26,6 @@ import io.github.alkoleft.mcp.application.actions.common.ActionStepResult
 import io.github.alkoleft.mcp.application.actions.common.ChangeAnalysisAction
 import io.github.alkoleft.mcp.application.actions.common.ChangeAnalysisResult
 import io.github.alkoleft.mcp.application.actions.exceptions.AnalyzeException
-import io.github.alkoleft.mcp.application.actions.test.yaxunit.ChangeType
 import io.github.alkoleft.mcp.application.services.SourceSetsService
 import io.github.alkoleft.mcp.infrastructure.changes.Scanner
 import io.github.alkoleft.mcp.infrastructure.storage.FileBuildStateManager
@@ -34,7 +33,6 @@ import io.github.alkoleft.mcp.infrastructure.storage.SourceSetContext
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
 import org.springframework.stereotype.Component
-import java.nio.file.Path
 import kotlin.time.measureTimedValue
 
 private val logger = KotlinLogging.logger { }
@@ -53,10 +51,6 @@ class FileSystemChangeAnalysisAction(
         val state = ChangeAnalysisActionState()
 
         try {
-            // Analyze changes for all source sets
-            val combinedChanges = mutableMapOf<Path, Pair<ChangeType, String>>()
-            val allSourceSetChanges = mutableMapOf<String, SourceSetChanges>()
-
             logger.debug { "Анализ изменений для source set: ${sourceSetContext.name}" }
 
             // Create a temporary FileBuildStateManager for this source set
@@ -81,28 +75,20 @@ class FileSystemChangeAnalysisAction(
                 ),
             )
 
-            if (timedChanges.value.isNotEmpty()) {
-                // Combine changes from this source set
-                combinedChanges.putAll(timedChanges.value)
+            state.updateChanges(timedChanges.value)
 
-                // Group changes by subproject for this source set
-                val sourceSetChanges =
-                    sourceSetAnalyzer
-                        .analyzeSourceSetChanges(sourceSetContext, timedChanges.value)
-                        .also {
-                            logger.info { "Изменения сгруппированы в ${it.size} подпроектов для source set '${sourceSetContext.name}'" }
-                        }
-
-                allSourceSetChanges.putAll(sourceSetChanges)
-            }
-
-            state.updateChanges(combinedChanges)
-
-            if (combinedChanges.isEmpty()) {
+            if (timedChanges.value.isEmpty()) {
                 return state.toResult()
             }
 
-            return state.toResult(allSourceSetChanges)
+            // Group changes by subproject for this source set
+            val sourceSetChanges =
+                sourceSetAnalyzer
+                    .analyzeSourceSetChanges(sourceSetContext, timedChanges.value)
+                    .also {
+                        logger.info { "Изменения сгруппированы в ${it.size} подпроектов для source set '${sourceSetContext.name}'" }
+                    }
+            return state.toResult(sourceSetChanges)
         } catch (e: Exception) {
             logger.error(e) { "Анализ изменений завершился с ошибкой" }
             throw AnalyzeException("Анализ изменений завершился с ошибкой: ${e.message}", e)

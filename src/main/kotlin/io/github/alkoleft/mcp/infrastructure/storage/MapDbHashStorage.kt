@@ -54,7 +54,7 @@ class MapDbHashStorageFactory(
         synchronized(storages) {
             storages.getOrPut(sourceSetName) {
                 val dbPath = dbDirectory.resolve("$sourceSetName.db")
-                logger.info { "Создание HashStorage для source set: $sourceSetName" }
+                logger.debug { "Создание HashStorage для source set: $sourceSetName" }
                 HashStorage(sourceSetName, dbPath)
             }
         }

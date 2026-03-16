@@ -105,5 +105,4 @@ class Scanner {
             return emptySequence()
         }
     }
-
 }

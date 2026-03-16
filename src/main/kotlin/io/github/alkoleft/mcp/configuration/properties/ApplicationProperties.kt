@@ -22,7 +22,6 @@
 package io.github.alkoleft.mcp.configuration.properties
 
 import io.github.alkoleft.mcp.infrastructure.storage.calculateStringHash
-import io.github.alkoleft.mcp.infrastructure.yaxunit.TEST_PATH
 import org.springframework.boot.context.properties.ConfigurationProperties
 import java.nio.file.Files
 import java.nio.file.Path

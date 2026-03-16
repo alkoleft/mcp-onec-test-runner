@@ -43,7 +43,10 @@ class SourceSetChangeAnalyzer(
     /**
      * Analyzes all changes and groups them by source set with detailed change type information
      */
-    fun analyzeSourceSetChanges(sourceSetContext: SourceSetContext, allChanges: ChangesSet): Map<String, SourceSetChanges> {
+    fun analyzeSourceSetChanges(
+        sourceSetContext: SourceSetContext,
+        allChanges: ChangesSet,
+    ): Map<String, SourceSetChanges> {
         logger.debug { "Анализ ${allChanges.size} изменений для группировки по source set" }
 
         if (allChanges.isEmpty()) {

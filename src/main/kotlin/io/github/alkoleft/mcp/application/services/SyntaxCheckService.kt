@@ -22,7 +22,6 @@
 package io.github.alkoleft.mcp.application.services
 
 import io.github.alkoleft.mcp.application.services.validation.Issue
-import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.SourceSetPurpose
 import io.github.alkoleft.mcp.infrastructure.designer.DesignerValidationLogParser
 import io.github.alkoleft.mcp.infrastructure.edt.EdtValidationLogParser
@@ -195,7 +194,9 @@ class SyntaxCheckService(
             if (!request.projectName.isNullOrBlank()) {
                 listOf(request.projectName)
             } else {
-                sourceSetsService.getDesignerSourceSet()!!.sourceSet
+                sourceSetsService
+                    .getDesignerSourceSet()!!
+                    .sourceSet
                     .byPurpose(SourceSetPurpose.MAIN)
                     .map { it.name }
             }

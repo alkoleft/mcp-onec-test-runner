@@ -47,7 +47,7 @@ class HashStorage(
     private val timestampMap: ConcurrentMap<String, Long>
 
     init {
-        logger.info { "Инициализация хранилища хешей для source set '$sourceSetName' по пути: $dbPath" }
+        logger.debug { "Инициализация хранилища хешей для source set '$sourceSetName' по пути: $dbPath" }
 
         try {
             // Ensure directory exists
@@ -78,7 +78,7 @@ class HashStorage(
                     .valueSerializer(Serializer.LONG)
                     .createOrOpen()
 
-            logger.info { "Хранилище хешей для source set '$sourceSetName' инициализировано с ${hashMap.size} хешами" }
+            logger.debug { "Хранилище хешей для source set '$sourceSetName' инициализировано с ${hashMap.size} хешами" }
         } catch (e: Exception) {
             logger.error(e) { "Не удалось инициализировать хранилище хешей для source set '$sourceSetName'" }
             throw RuntimeException("Не удалось инициализировать хранилище хешей для source set '$sourceSetName'", e)
@@ -86,6 +86,11 @@ class HashStorage(
     }
 
     fun isEmpty(): Boolean = hashMap.isEmpty() || timestampMap.isEmpty()
+
+    fun clear() {
+        hashMap.clear()
+        timestampMap.clear()
+    }
 
     /**
      * Gets the stored hash for a file
@@ -171,7 +176,7 @@ class HashStorage(
                 db.close()
             }
 
-            logger.info { "Хранилище хешей для source set '$sourceSetName' успешно закрыто" }
+            logger.debug { "Хранилище хешей для source set '$sourceSetName' успешно закрыто" }
         } catch (e: Exception) {
             logger.error(e) { "Ошибка при закрытии хранилища хешей для source set '$sourceSetName'" }
         }

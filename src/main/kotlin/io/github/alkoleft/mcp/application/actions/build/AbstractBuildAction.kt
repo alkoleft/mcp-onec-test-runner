@@ -76,7 +76,7 @@ abstract class AbstractBuildAction(
         return try {
             val result = block()
             val duration = startTime.elapsedNow()
-            logger.info { "Сборка проекта завершена за $duration" }
+            logger.debug { "Сборка проекта завершена за $duration" }
             result.copy(duration = duration)
         } catch (e: Exception) {
             val duration = startTime.elapsedNow()
