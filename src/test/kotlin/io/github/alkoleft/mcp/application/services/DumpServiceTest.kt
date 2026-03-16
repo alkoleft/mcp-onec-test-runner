@@ -48,7 +48,7 @@ class DumpServiceTest {
         dumpAction = mockk()
         properties = mockk()
         sourceSetsService = mockk()
-        mockSourceSet = mockk()
+        mockSourceSet = mockk(relaxed = true)
 
         every { sourceSetsService.getDesignerSourceSet() } returns mockSourceSet
 
