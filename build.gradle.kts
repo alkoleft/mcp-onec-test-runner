@@ -195,4 +195,7 @@ graalvmNative {
         }
     }
     toolchainDetection.set(false)
+    binaries.configureEach {
+        useFatJar.set(true)
+    }
 }
