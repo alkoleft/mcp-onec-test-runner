@@ -101,8 +101,15 @@ jobs:
         if: runner.os != 'Windows'
         run: chmod +x gradlew
 
-      - name: Build native image
+      - name: Build native image (Unix)
+        if: runner.os != 'Windows'
         run: ./gradlew nativeCompile --no-daemon
+
+      - name: Build native image (Windows)
+        if: runner.os == 'Windows'
+        run: ./gradlew nativeCompile --no-daemon
+        env:
+          GRADLE_OPTS: -Djava.io.tmpdir=D:/tmp
 
       - name: Extract tag version
         id: tag_version
