@@ -33,6 +33,7 @@ plugins {
     jacoco
     alias(libs.plugins.ktlint)
     alias(libs.plugins.dependencyCheck)
+    alias(libs.plugins.graalvm.native)
 }
 
 group = "io.github.alkoleft.mcp"
@@ -88,9 +89,6 @@ dependencies {
     // Logging
     implementation(libs.bundles.logging)
 
-    // MapDB for persistent storage
-    implementation("org.mapdb:mapdb:3.0.10")
-
     // Tests
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.bundles.junit)
@@ -115,7 +113,7 @@ tasks.test {
 }
 
 tasks.jar {
-    enabled = false
+    enabled = true
     archiveClassifier.set("plain")
 }
 
@@ -179,4 +177,22 @@ tasks.jacocoTestReport {
         html.required.set(true)
         csv.required.set(false)
     }
+}
+
+graalvmNative {
+    binaries {
+        named("main") {
+            imageName.set("mcp-yaxunit-runner")
+            mainClass.set("io.github.alkoleft.mcp.MainKt")
+            buildArgs.addAll(
+                "--no-fallback",
+                "--enable-preview",
+                "-H:+ReportExceptionStackTraces",
+                "--initialize-at-build-time=ch.qos.logback",
+                "--initialize-at-build-time=org.slf4j",
+                "--initialize-at-build-time=org.xml.sax.helpers",
+            )
+        }
+    }
+    toolchainDetection.set(false)
 }

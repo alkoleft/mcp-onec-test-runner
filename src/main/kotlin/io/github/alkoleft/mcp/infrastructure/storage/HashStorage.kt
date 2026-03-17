@@ -21,68 +21,55 @@
 
 package io.github.alkoleft.mcp.infrastructure.storage
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.mapdb.DB
-import org.mapdb.DBMaker
-import org.mapdb.Serializer
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.ConcurrentHashMap
 
 private val logger = KotlinLogging.logger { }
+
+internal data class StorageData(
+    val hashes: Map<String, String> = emptyMap(),
+    val timestamps: Map<String, Long> = emptyMap(),
+)
 
 /**
  * Hash storage for a single source set.
  * Provides thread-safe operations for storing and retrieving file hashes.
+ * Uses JSON file for persistence instead of MapDB.
  *
  * @param sourceSetName Name of the source set this storage belongs to
- * @param dbPath Path to the database file
+ * @param dbPath Path to the storage file (will use .json extension)
  */
 class HashStorage(
     private val sourceSetName: String,
     dbPath: Path,
 ) {
-    private val db: DB
-    private val hashMap: ConcurrentMap<String, String>
-    private val timestampMap: ConcurrentMap<String, Long>
+    private val storagePath: Path = dbPath.parent.resolve(dbPath.fileName.toString().removeSuffix(".db") + ".json")
+    private val mapper = ObjectMapper().apply { findAndRegisterModules() }
+    private val hashMap: ConcurrentHashMap<String, String>
+    private val timestampMap: ConcurrentHashMap<String, Long>
 
     init {
-        logger.debug { "Инициализация хранилища хешей для source set '$sourceSetName' по пути: $dbPath" }
+        logger.debug { "Инициализация хранилища хешей для source set '$sourceSetName' по пути: $storagePath" }
+        Files.createDirectories(storagePath.parent)
 
-        try {
-            // Ensure directory exists
-            Files.createDirectories(dbPath.parent)
-
-            // Initialize MapDB with optimized settings
-            db =
-                DBMaker
-                    .fileDB(dbPath.toFile())
-                    .transactionEnable()
-                    .closeOnJvmShutdown()
-                    .fileMmapEnable()
-                    .make()
-
-            // Create hash map for file content hashes
-            hashMap =
-                db
-                    .hashMap("file_hashes")
-                    .keySerializer(Serializer.STRING)
-                    .valueSerializer(Serializer.STRING)
-                    .createOrOpen()
-
-            // Create timestamp map for file modification times
-            timestampMap =
-                db
-                    .hashMap("subproject_timestamps")
-                    .keySerializer(Serializer.STRING)
-                    .valueSerializer(Serializer.LONG)
-                    .createOrOpen()
-
-            logger.debug { "Хранилище хешей для source set '$sourceSetName' инициализировано с ${hashMap.size} хешами" }
-        } catch (e: Exception) {
-            logger.error(e) { "Не удалось инициализировать хранилище хешей для source set '$sourceSetName'" }
-            throw RuntimeException("Не удалось инициализировать хранилище хешей для source set '$sourceSetName'", e)
+        val data = if (Files.exists(storagePath)) {
+            try {
+                mapper.readValue<StorageData>(storagePath.toFile())
+            } catch (e: Exception) {
+                logger.warn { "Не удалось прочитать хранилище хешей, начинаем заново: ${e.message}" }
+                StorageData()
+            }
+        } else {
+            StorageData()
         }
+
+        hashMap = ConcurrentHashMap(data.hashes)
+        timestampMap = ConcurrentHashMap(data.timestamps)
+        logger.debug { "Хранилище хешей для source set '$sourceSetName' инициализировано с ${hashMap.size} хешами" }
     }
 
     fun isEmpty(): Boolean = hashMap.isEmpty() || timestampMap.isEmpty()
@@ -90,95 +77,45 @@ class HashStorage(
     fun clear() {
         hashMap.clear()
         timestampMap.clear()
+        persist()
     }
 
-    /**
-     * Gets the stored hash for a file
-     */
-    fun getHash(file: Path): String? =
-        try {
-            val key = normalizeKey(file)
-            hashMap[key]
-        } catch (e: Exception) {
-            logger.debug(e) { "Не удалось получить хеш для файла: $file" }
-            null
-        }
+    fun getHash(file: Path): String? = hashMap[normalizeKey(file)]
 
-    /**
-     * Batch update hashes for multiple files
-     */
     fun batchUpdate(updates: Map<Path, String>) {
         if (updates.isEmpty()) return
         try {
-            for ((file, hash) in updates) {
-                val key = normalizeKey(file)
-                hashMap[key] = hash
-            }
-            db.commit()
+            updates.forEach { (file, hash) -> hashMap[normalizeKey(file)] = hash }
+            persist()
         } catch (e: Exception) {
             logger.warn { "Не удалось сохранить хеши файлов (${updates.size} шт.) - кэш будет перестроен при следующей сборке" }
-            logger.debug(e) { "Детали ошибки сохранения хешей" }
-            tryRollback()
         }
     }
 
-    /**
-     * Gets the stored timestamp for this source set
-     */
-    fun getSourceSetTimestamp(): Long? =
-        try {
-            timestampMap[sourceSetName]
-        } catch (e: Exception) {
-            logger.debug(e) { "Не удалось получить временную метку для source set: $sourceSetName" }
-            null
-        }
+    fun getSourceSetTimestamp(): Long? = timestampMap[sourceSetName]
 
-    /**
-     * Stores the timestamp for this source set
-     */
-    fun storeTimestamp(timestamp: Long) =
+    fun storeTimestamp(timestamp: Long) {
         try {
             timestampMap[sourceSetName] = timestamp
-            db.commit()
-
+            persist()
             logger.debug { "Временная метка сохранена для source set: $sourceSetName" }
         } catch (e: Exception) {
-            logger.warn { "Не удалось сохранить временную метку для '$sourceSetName' - кэш будет перестроен при следующей сборке" }
-            logger.debug(e) { "Детали ошибки сохранения временной метки" }
-            tryRollback()
-        }
-
-    /**
-     * Safe transaction rollback
-     */
-    private fun tryRollback() {
-        try {
-            db.rollback()
-        } catch (e: Exception) {
-            logger.debug { "Rollback не выполнен: ${e.message}" }
+            logger.warn { "Не удалось сохранить временную метку для '$sourceSetName'" }
         }
     }
 
-    /**
-     * Normalizes file path to a consistent string key
-     */
-    private fun normalizeKey(file: Path): String = file.toAbsolutePath().normalize().toString()
-
-    /**
-     * Closes the storage and releases resources
-     */
     fun close() {
+        // No-op: data is persisted on each write
+    }
+
+    private fun persist() {
         try {
-            logger.info { "Закрытие хранилища хешей для source set: $sourceSetName" }
-
-            if (!db.isClosed()) {
-                db.commit()
-                db.close()
-            }
-
-            logger.debug { "Хранилище хешей для source set '$sourceSetName' успешно закрыто" }
+            val data = StorageData(hashes = HashMap(hashMap), timestamps = HashMap(timestampMap))
+            mapper.writeValue(storagePath.toFile(), data)
         } catch (e: Exception) {
-            logger.error(e) { "Ошибка при закрытии хранилища хешей для source set '$sourceSetName'" }
+            logger.error(e) { "Ошибка при сохранении хранилища хешей для source set '$sourceSetName'" }
         }
     }
+
+    private fun normalizeKey(file: Path): String = file.toAbsolutePath().normalize().toString()
 }

@@ -26,15 +26,11 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.DesignerDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import io.github.alkoleft.mcp.infrastructure.utility.PartialLoadListGenerator
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.stereotype.Component
 import java.nio.file.Path
 
 /**
  * Реализация BuildAction для сборки через конфигуратор 1С
  */
-@Component
-@ConditionalOnProperty(name = ["app.tools.builder"], havingValue = "DESIGNER")
 class DesignerBuildAction(
     dsl: PlatformDsl,
     partialLoadListGenerator: PartialLoadListGenerator,

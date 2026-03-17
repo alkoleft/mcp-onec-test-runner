@@ -25,15 +25,11 @@ import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.stereotype.Component
 import java.nio.file.Path
 
 /**
  * Реализация DumpAction для выгрузки через ibcmd
  */
-@Component
-@ConditionalOnProperty(name = ["app.tools.builder"], havingValue = "IBCMD")
 class IbcmdDumpAction(
     dsl: PlatformDsl,
 ) : AbstractDumpAction(dsl) {

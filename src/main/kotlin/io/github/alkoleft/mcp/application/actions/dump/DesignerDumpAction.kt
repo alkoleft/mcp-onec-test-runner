@@ -25,16 +25,12 @@ import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.designer.DesignerDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.stereotype.Component
 import java.nio.file.Files
 import java.nio.file.Path
 
 /**
  * Реализация DumpAction для выгрузки через конфигуратор 1С
  */
-@Component
-@ConditionalOnProperty(name = ["app.tools.builder"], havingValue = "DESIGNER")
 class DesignerDumpAction(
     dsl: PlatformDsl,
 ) : AbstractDumpAction(dsl) {

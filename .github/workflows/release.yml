@@ -10,7 +10,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-and-publish:
+  build-jar:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -61,35 +61,145 @@ jobs:
         with:
           name: mcp-yaxunit-runner-jar
           path: ./build/libs/mcp-yaxunit-runner-${{ steps.tag_version.outputs.VERSION_NUMBER }}.jar
-          
+
+  build-native:
+    needs: build-jar
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux-x86_64
+            binary_suffix: ""
+          - os: macos-latest
+            platform: macos-aarch64
+            binary_suffix: ""
+          - os: windows-latest
+            platform: windows-x86_64
+            binary_suffix: ".exe"
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Set up GraalVM JDK 21
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm-community'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Grant execute permission for gradlew (Unix)
+        if: runner.os != 'Windows'
+        run: chmod +x gradlew
+
+      - name: Build native image
+        run: ./gradlew nativeCompile --no-daemon
+
+      - name: Extract tag version
+        id: tag_version
+        shell: bash
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "VERSION=${TAG}" >> $GITHUB_OUTPUT
+          echo "VERSION_NUMBER=${TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Upload native artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-yaxunit-runner-${{ matrix.platform }}
+          path: ./build/native/nativeCompile/mcp-yaxunit-runner${{ matrix.binary_suffix }}
+
+  release:
+    needs: [build-jar, build-native]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract tag version
+        id: tag_version
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "VERSION=${TAG}" >> $GITHUB_OUTPUT
+          echo "VERSION_NUMBER=${TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mcp-yaxunit-runner-jar
+          path: artifacts/
+
+      - name: Download Linux native artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mcp-yaxunit-runner-linux-x86_64
+          path: artifacts/linux/
+
+      - name: Download macOS native artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mcp-yaxunit-runner-macos-aarch64
+          path: artifacts/macos/
+
+      - name: Download Windows native artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mcp-yaxunit-runner-windows-x86_64
+          path: artifacts/windows/
+
+      - name: Rename native artifacts
+        run: |
+          mv artifacts/linux/mcp-yaxunit-runner artifacts/mcp-yaxunit-runner-linux-x86_64
+          mv artifacts/macos/mcp-yaxunit-runner artifacts/mcp-yaxunit-runner-macos-aarch64
+          mv artifacts/windows/mcp-yaxunit-runner.exe artifacts/mcp-yaxunit-runner-windows-x86_64.exe
+
       - name: Create GitHub Release
-        id: create_release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.tag_version.outputs.VERSION }}
           name: Release ${{ steps.tag_version.outputs.VERSION }}
           body: |
-            ## 🚀 MCP YaXUnit Runner ${{ steps.tag_version.outputs.VERSION }}
-            
-            ### 🔄 Changes
+            ## MCP YaXUnit Runner ${{ steps.tag_version.outputs.VERSION }}
+
+            ### Changes
             - Automatic release from tag ${{ steps.tag_version.outputs.VERSION }}
-            
+
+            ### Downloads
+            - `mcp-yaxunit-runner-*.jar` — универсальный JAR (требует JRE 17+)
+            - `mcp-yaxunit-runner-linux-x86_64` — native binary для Linux
+            - `mcp-yaxunit-runner-macos-aarch64` — native binary для macOS Apple Silicon
+            - `mcp-yaxunit-runner-windows-x86_64.exe` — native binary для Windows
           draft: true
           prerelease: false
           files: |
-            ./build/libs/mcp-yaxunit-runner-${{ steps.tag_version.outputs.VERSION_NUMBER }}.jar
+            artifacts/mcp-yaxunit-runner-${{ steps.tag_version.outputs.VERSION_NUMBER }}.jar
+            artifacts/mcp-yaxunit-runner-linux-x86_64
+            artifacts/mcp-yaxunit-runner-macos-aarch64
+            artifacts/mcp-yaxunit-runner-windows-x86_64.exe
 
   docker-build:
     runs-on: ubuntu-latest
-    needs: build-and-publish
+    needs: build-jar
     permissions:
       contents: read
       packages: write
-    
+
     strategy:
       matrix:
         dockerfile: ['Dockerfile.sse', 'Dockerfile.stdio']
-        
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -98,7 +208,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: mcp-yaxunit-runner-jar
-      
+
       - name: Extract tag version
         id: tag_version
         run: |
@@ -138,4 +248,4 @@ jobs:
           build-args: APP_VERSION=${{ steps.tag_version.outputs.VERSION_NUMBER }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max 
+          cache-to: type=gha,mode=max

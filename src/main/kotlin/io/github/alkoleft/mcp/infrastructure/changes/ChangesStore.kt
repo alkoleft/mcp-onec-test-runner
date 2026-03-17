@@ -21,45 +21,46 @@
 
 package io.github.alkoleft.mcp.infrastructure.changes
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.mapdb.DB
-import org.mapdb.Serializer
+import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 
 private val logger = KotlinLogging.logger { }
 
 class ChangesStore(
-    private val db: DB,
+    private val storagePath: Path,
 ) {
-    private val hashMap =
-        db
-            .hashMap("file_hashes")
-            .keySerializer(Serializer.STRING)
-            .valueSerializer(Serializer.STRING)
-            .createOrOpen()
+    private val mapper = ObjectMapper().apply { findAndRegisterModules() }
+    private val hashMap: ConcurrentHashMap<String, String>
+
+    init {
+        Files.createDirectories(storagePath.parent)
+        hashMap = if (Files.exists(storagePath)) {
+            try {
+                ConcurrentHashMap(mapper.readValue<Map<String, String>>(storagePath.toFile()))
+            } catch (e: Exception) {
+                logger.warn { "Не удалось прочитать ChangesStore, начинаем заново: ${e.message}" }
+                ConcurrentHashMap()
+            }
+        } else {
+            ConcurrentHashMap()
+        }
+    }
 
     fun isEmpty() = hashMap.isEmpty()
 
-    fun getHash(file: Path): String? =
-        try {
-            val key = normalizeKey(file)
-            hashMap[key]
-        } catch (e: Exception) {
-            logger.debug(e) { "Не удалось получить хеш для файла: $file" }
-            null
-        }
+    fun getHash(file: Path): String? = hashMap[normalizeKey(file)]
 
     fun batchUpdate(updates: Map<Path, String>) {
         if (updates.isEmpty()) return
         try {
-            for ((file, hash) in updates) {
-                val key = normalizeKey(file)
-                hashMap[key] = hash
-            }
-            db.commit()
+            updates.forEach { (file, hash) -> hashMap[normalizeKey(file)] = hash }
+            mapper.writeValue(storagePath.toFile(), HashMap(hashMap))
         } catch (e: Exception) {
             logger.error(e) { "Не удалось выполнить пакетное обновление хешей файлов" }
-            db.rollback()
             throw e
         }
     }

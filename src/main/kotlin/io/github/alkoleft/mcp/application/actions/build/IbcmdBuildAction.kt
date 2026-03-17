@@ -26,15 +26,11 @@ import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.ibcmd.IbcmdDsl
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessResult
 import io.github.alkoleft.mcp.infrastructure.utility.PartialLoadListGenerator
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.stereotype.Component
 import java.nio.file.Path
 
 /**
  * Реализация BuildAction для сборки через ibcmd
  */
-@Component
-@ConditionalOnProperty(name = ["app.tools.builder"], havingValue = "IBCMD")
 class IbcmdBuildAction(
     dsl: PlatformDsl,
     partialLoadListGenerator: PartialLoadListGenerator,
