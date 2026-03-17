@@ -192,6 +192,10 @@ graalvmNative {
                 "--initialize-at-build-time=org.slf4j",
                 "--initialize-at-build-time=org.xml.sax.helpers",
             )
+            javaLauncher.set(javaToolchains.launcherFor {
+                languageVersion.set(JavaLanguageVersion.of(25))
+                vendor.set(JvmVendorSpec.matching("Oracle"))
+            })
         }
     }
     toolchainDetection.set(false)

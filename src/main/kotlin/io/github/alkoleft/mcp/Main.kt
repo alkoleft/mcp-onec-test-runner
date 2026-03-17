@@ -21,6 +21,7 @@
 
 package io.github.alkoleft.mcp
 
+import io.github.alkoleft.mcp.configuration.ExternalConfigLoader
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.infrastructure.utility.PlatformDetector
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -40,5 +41,6 @@ fun main(args: Array<String>) {
 
     runApplication<McpYaxUnitRunnerApplication>(*args) {
         setAdditionalProfiles("mcp")
+        addInitializers(ExternalConfigLoader())
     }
 }

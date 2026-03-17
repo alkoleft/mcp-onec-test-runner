@@ -34,6 +34,7 @@ import io.github.alkoleft.mcp.infrastructure.storage.StorageData
 import org.springframework.aot.hint.MemberCategory
 import org.springframework.aot.hint.RuntimeHints
 import org.springframework.aot.hint.RuntimeHintsRegistrar
+import org.springframework.boot.env.YamlPropertySourceLoader
 import org.springframework.context.annotation.ImportRuntimeHints
 
 @ImportRuntimeHints(AppRuntimeHints::class)
@@ -54,13 +55,36 @@ class AppRuntimeHints : RuntimeHintsRegistrar {
             BuildProperties::class.java,
             StorageData::class.java,
             KotlinModule::class.java,
+            YamlPropertySourceLoader::class.java,
+            ExternalConfigLoader::class.java,
         ).forEach { clazz ->
             hints.reflection().registerType(clazz, *MemberCategory.entries.toTypedArray())
+        }
+
+        // SnakeYAML classes for parsing external YAML files at runtime
+        listOf(
+            "org.yaml.snakeyaml.Yaml",
+            "org.yaml.snakeyaml.constructor.SafeConstructor",
+            "org.yaml.snakeyaml.constructor.BaseConstructor",
+            "org.yaml.snakeyaml.constructor.Constructor",
+            "org.yaml.snakeyaml.representer.Representer",
+            "org.yaml.snakeyaml.representer.BaseRepresenter",
+            "org.yaml.snakeyaml.resolver.Resolver",
+            "org.yaml.snakeyaml.DumperOptions",
+            "org.yaml.snakeyaml.LoaderOptions",
+        ).forEach { className ->
+            try {
+                val clazz = Class.forName(className)
+                hints.reflection().registerType(clazz, *MemberCategory.entries.toTypedArray())
+            } catch (_: ClassNotFoundException) {
+                // skip if not on classpath
+            }
         }
 
         // Resource patterns
         hints.resources().registerPattern("application*.yml")
         hints.resources().registerPattern("logback*.xml")
         hints.resources().registerPattern("git.properties")
+        hints.resources().registerPattern("META-INF/spring/*")
     }
 }
