@@ -21,9 +21,16 @@
 
 package io.github.alkoleft.mcp
 
+import ch.qos.logback.classic.LoggerContext
+import ch.qos.logback.classic.joran.JoranConfigurator
+import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.PropertyAccessor
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.alkoleft.mcp.configuration.ExternalConfigLoader
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.infrastructure.utility.PlatformDetector
+import org.slf4j.LoggerFactory
+import org.springframework.ai.util.json.JsonParser
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
@@ -39,8 +46,47 @@ fun main(args: Array<String>) {
         System.setProperty("file.encoding", "UTF-8")
     }
 
+    reconfigureLogback()
+    configureJsonParser()
+
     runApplication<McpYaxUnitRunnerApplication>(*args) {
         setAdditionalProfiles("mcp")
         addInitializers(ExternalConfigLoader())
+    }
+}
+
+/**
+ * Настраивает ObjectMapper в Spring AI JsonParser для корректной
+ * сериализации Kotlin data-классов в native image.
+ */
+private fun configureJsonParser() {
+    val mapper = JsonParser.getObjectMapper()
+    mapper.registerModule(KotlinModule.Builder().build())
+    mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
+    mapper.setVisibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE)
+    mapper.setVisibility(PropertyAccessor.IS_GETTER, JsonAutoDetect.Visibility.NONE)
+}
+
+private fun reconfigureLogback() {
+    val configPath = System.getProperty("logging.config")
+        ?: System.getenv("LOGGING_CONFIG")
+
+    val resourceName = if (configPath != null) {
+        configPath.removePrefix("classpath:")
+    } else {
+        "logback-mcp.xml"
+    }
+
+    val url = Thread.currentThread().contextClassLoader?.getResource(resourceName)
+        ?: return
+
+    try {
+        val loggerContext = LoggerFactory.getILoggerFactory() as LoggerContext
+        loggerContext.reset()
+        val configurator = JoranConfigurator()
+        configurator.context = loggerContext
+        configurator.doConfigure(url)
+    } catch (e: Exception) {
+        System.err.println("Ошибка переконфигурации logback: ${e.message}")
     }
 }

@@ -21,27 +21,29 @@
 
 package io.github.alkoleft.mcp.configuration
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.annotation.PropertyAccessor
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.KotlinModule
+import org.springframework.ai.tool.execution.ToolCallResultConverter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Primary
+import java.lang.reflect.Type
 
+/**
+ * Конвертер результатов MCP tool, использующий настроенный ObjectMapper.
+ *
+ * В native image стандартный конвертер Spring AI не может сериализовать
+ * Kotlin data-классы, т.к. его внутренний ObjectMapper не имеет KotlinModule.
+ */
 @Configuration
-class JacksonConfig {
-    @Primary
+class ToolResultConverterConfig {
+
     @Bean
-    fun objectMapper(): ObjectMapper {
-        return ObjectMapper()
-            .registerModule(KotlinModule.Builder().build())
-            .registerModule(JavaTimeModule())
-            .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
-            .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
-            .setVisibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE)
-            .setVisibility(PropertyAccessor.IS_GETTER, JsonAutoDetect.Visibility.NONE)
+    fun toolCallResultConverter(objectMapper: ObjectMapper): ToolCallResultConverter {
+        return ToolCallResultConverter { result, _ ->
+            when {
+                result == null -> "null"
+                result is String -> result
+                else -> objectMapper.writeValueAsString(result)
+            }
+        }
     }
 }

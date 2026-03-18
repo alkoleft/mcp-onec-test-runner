@@ -31,6 +31,10 @@ import io.github.alkoleft.mcp.configuration.properties.SourceSet
 import io.github.alkoleft.mcp.configuration.properties.SourceSetItem
 import io.github.alkoleft.mcp.configuration.properties.ToolsProperties
 import io.github.alkoleft.mcp.infrastructure.storage.StorageData
+import io.github.alkoleft.mcp.infrastructure.yaxunit.LoggingConfig
+import io.github.alkoleft.mcp.infrastructure.yaxunit.TestFilter
+import io.github.alkoleft.mcp.infrastructure.yaxunit.ValidationResult
+import io.github.alkoleft.mcp.infrastructure.yaxunit.YaXUnitConfig
 import org.springframework.aot.hint.MemberCategory
 import org.springframework.aot.hint.RuntimeHints
 import org.springframework.aot.hint.RuntimeHintsRegistrar
@@ -43,7 +47,7 @@ class NativeHintsConfig
 
 class AppRuntimeHints : RuntimeHintsRegistrar {
     override fun registerHints(hints: RuntimeHints, classLoader: ClassLoader?) {
-        // Configuration properties
+        // Configuration properties and serializable classes
         listOf(
             ApplicationProperties::class.java,
             ConnectionProperties::class.java,
@@ -57,6 +61,11 @@ class AppRuntimeHints : RuntimeHintsRegistrar {
             KotlinModule::class.java,
             YamlPropertySourceLoader::class.java,
             ExternalConfigLoader::class.java,
+            // YaXUnit config classes for Jackson serialization
+            YaXUnitConfig::class.java,
+            LoggingConfig::class.java,
+            TestFilter::class.java,
+            ValidationResult::class.java,
         ).forEach { clazz ->
             hints.reflection().registerType(clazz, *MemberCategory.entries.toTypedArray())
         }
@@ -72,6 +81,10 @@ class AppRuntimeHints : RuntimeHintsRegistrar {
             "org.yaml.snakeyaml.resolver.Resolver",
             "org.yaml.snakeyaml.DumperOptions",
             "org.yaml.snakeyaml.LoaderOptions",
+            "ch.qos.logback.classic.joran.JoranConfigurator",
+            "ch.qos.logback.core.rolling.RollingFileAppender",
+            "ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy",
+            "ch.qos.logback.classic.encoder.PatternLayoutEncoder",
         ).forEach { className ->
             try {
                 val clazz = Class.forName(className)
