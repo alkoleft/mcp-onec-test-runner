@@ -79,10 +79,17 @@ class EdtCliExecutor(
                 exitCode = result.exitCode,
             )
         } else {
+            val hasErrors =
+                output.lines().any { line ->
+                    val trimmed = line.trim()
+                    trimmed.startsWith("ERROR", ignoreCase = true) ||
+                        trimmed.startsWith("CRITICAL", ignoreCase = true) ||
+                        trimmed.startsWith("FATAL", ignoreCase = true)
+                }
             return EdtCommandResult(
-                success = output.isBlank(),
+                success = !hasErrors,
                 output = output,
-                error = output,
+                error = if (hasErrors) output else null,
                 duration = result.duration,
                 exitCode = result.exitCode,
             )

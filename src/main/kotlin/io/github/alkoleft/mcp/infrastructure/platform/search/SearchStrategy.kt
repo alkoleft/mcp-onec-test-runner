@@ -165,10 +165,9 @@ object EdtWindowsSearchStrategy : SearchStrategy {
     fun systemLocations() =
         System.getenv("PROGRAMFILES")?.let {
             listOf(
-                // Components: 1c-edt-<ver>-<arch>/1cedt/
+                // Components: 1c-edt-<ver>-<arch>/1cedtcli.exe (Windows has executables in component root)
                 DirectoryEnumeratingLocation(
                     basePath = Paths.get(it, "1C", "1CE", "components").toString(),
-                    relativeExecutableSubPath = "1cedt",
                 ) { dir ->
                     dir.substringAfter("1c-edt-")
                 },
@@ -178,10 +177,9 @@ object EdtWindowsSearchStrategy : SearchStrategy {
     fun userLocation() =
         System.getenv("LOCALAPPDATA")?.let {
             listOf(
-                // 1C_EDT <ver>/1cedt/
+                // 1C_EDT <ver>/ — Windows has executables in installation root
                 DirectoryEnumeratingLocation(
                     basePath = Paths.get(it, "1C", "1cedtstart", "installations").toString(),
-                    relativeExecutableSubPath = "1cedt",
                 ) { dir ->
                     dir.substringAfter("1C_EDT ", "")
                 },
