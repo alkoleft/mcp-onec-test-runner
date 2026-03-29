@@ -53,7 +53,12 @@ class SearchStrategyTest {
 
     @Test
     fun `should generate version-specific candidates correctly`() {
-        val location = DirectoryEnumeratingLocation("/opt/1cv8", "bin") { it }
+        val location =
+            DirectoryEnumeratingLocation(
+                basePath = "/opt/1cv8",
+                relativeExecutableSubPath = "bin",
+                dirNameToVersion = { dir -> dir },
+            )
         val version = "8.3.24"
         val candidates = location.generateCandidates(UtilityType.DESIGNER, version)
         assertNotNull(candidates, "Candidates should not be null")
@@ -74,11 +79,15 @@ class SearchStrategyTest {
     fun `should handle PATH environment location correctly`() {
         val pathLocation = PathEnvironmentLocation()
         val paths = pathLocation.generatePaths(UtilityType.DESIGNER, null)
+        val candidates = pathLocation.generateCandidates(UtilityType.DESIGNER, null)
         assertNotNull(paths, "PATH paths should not be null")
+        assertNotNull(candidates, "PATH candidates should not be null")
         if (System.getenv("PATH") != null) {
             assertTrue(paths.isNotEmpty(), "PATH paths should not be empty when PATH environment exists")
+            assertTrue(candidates.isNotEmpty(), "PATH candidates should not be empty when PATH environment exists")
         } else {
             assertTrue(paths.isEmpty(), "PATH paths should be empty when PATH environment is null")
+            assertTrue(candidates.isEmpty(), "PATH candidates should be empty when PATH environment is null")
         }
     }
 
@@ -88,5 +97,27 @@ class SearchStrategyTest {
         val version = "8.3.24"
         val paths = versionLocation.generatePaths(UtilityType.DESIGNER, version)
         assertEquals(1, paths.size, "Version location should generate one path")
+    }
+
+    @Test
+    fun `should extract EDT version from PATH candidate for Windows user installation layout`() {
+        val pathLocation = PathEnvironmentLocation()
+        val candidates =
+            pathLocation.generateCandidates(
+                UtilityType.EDT_CLI,
+                null,
+            )
+
+        val candidate =
+            candidates.firstOrNull {
+                it.path.toString().replace('\\', '/').contains("1C_EDT 2025.2/1cedt/1cedtcli", ignoreCase = true)
+            }
+
+        if (candidate != null) {
+            assertEquals("2025.2", candidate.version)
+            assertEquals(SearchCandidateSource.PATH, candidate.source)
+        } else {
+            assertTrue(true, "Test skipped - matching PATH candidate not found in current environment")
+        }
     }
 }

@@ -79,7 +79,9 @@ object PlatformWindowsSearchStrategy : SearchStrategy {
                     DirectoryEnumeratingLocation(
                         basePath = base,
                         relativeExecutableSubPath = "bin",
-                    ) { dir -> dir },
+                        dirNameToVersion = { dir -> dir },
+                        source = SearchCandidateSource.SYSTEM_INSTALLATION,
+                    ),
                 )
             }
 
@@ -89,15 +91,21 @@ object PlatformWindowsSearchStrategy : SearchStrategy {
                 DirectoryEnumeratingLocation(
                     basePath = Paths.get(it, "Programs", "1cv8").toString(),
                     relativeExecutableSubPath = "bin",
-                ) { dir -> dir },
+                    dirNameToVersion = { dir -> dir },
+                    source = SearchCandidateSource.USER_INSTALLATION,
+                ),
                 DirectoryEnumeratingLocation(
                     basePath = Paths.get(it, "Programs", "1cv8_x86").toString(),
                     relativeExecutableSubPath = "bin",
-                ) { dir -> dir },
+                    dirNameToVersion = { dir -> dir },
+                    source = SearchCandidateSource.USER_INSTALLATION,
+                ),
                 DirectoryEnumeratingLocation(
                     basePath = Paths.get(it, "Programs", "1cv8_x64").toString(),
                     relativeExecutableSubPath = "bin",
-                ) { dir -> dir },
+                    dirNameToVersion = { dir -> dir },
+                    source = SearchCandidateSource.USER_INSTALLATION,
+                ),
             )
         } ?: emptyList()
 
@@ -112,19 +120,29 @@ object PlatformLinuxSearchStrategy : SearchStrategy {
         listOf(
             DirectoryEnumeratingLocation(
                 basePath = "/opt/1cv8/x86_64",
-            ) { it },
+                dirNameToVersion = { dir -> dir },
+                source = SearchCandidateSource.SYSTEM_INSTALLATION,
+            ),
             DirectoryEnumeratingLocation(
                 basePath = "/usr/local/1cv8",
-            ) { it },
+                dirNameToVersion = { dir -> dir },
+                source = SearchCandidateSource.SYSTEM_INSTALLATION,
+            ),
             DirectoryEnumeratingLocation(
                 basePath = "/opt/1cv8/arm64",
-            ) { it },
+                dirNameToVersion = { dir -> dir },
+                source = SearchCandidateSource.SYSTEM_INSTALLATION,
+            ),
             DirectoryEnumeratingLocation(
                 basePath = "/opt/1cv8/e2kv4",
-            ) { it },
+                dirNameToVersion = { dir -> dir },
+                source = SearchCandidateSource.SYSTEM_INSTALLATION,
+            ),
             DirectoryEnumeratingLocation(
                 basePath = "/opt/1cv8/i386",
-            ) { it },
+                dirNameToVersion = { dir -> dir },
+                source = SearchCandidateSource.SYSTEM_INSTALLATION,
+            ),
             PathEnvironmentLocation(),
         )
 }
@@ -134,7 +152,9 @@ object PlatformMacSearchStrategy : SearchStrategy {
         listOf(
             DirectoryEnumeratingLocation(
                 basePath = "/opt/1cv8",
-            ) { it },
+                dirNameToVersion = { dir -> dir },
+                source = SearchCandidateSource.SYSTEM_INSTALLATION,
+            ),
             PathEnvironmentLocation(),
         )
 }
@@ -145,16 +165,16 @@ object EdtLinuxSearchStrategy : SearchStrategy {
             // Components install dir: 1c-edt-<ver>-<arch>/1cedt/
             DirectoryEnumeratingLocation(
                 basePath = "/opt/1C/1CE/components",
-            ) { dirName ->
-                dirName.substringAfter("1c-edt-")
-            },
+                dirNameToVersion = { dirName -> dirName.substringAfter("1c-edt-") },
+                source = SearchCandidateSource.SYSTEM_INSTALLATION,
+            ),
             // User installations: 1C_EDT <ver>/1cedt/
             DirectoryEnumeratingLocation(
                 basePath = "~/.local/share/1C/1cedtstart/installations",
                 relativeExecutableSubPath = "1cedt",
-            ) { dirName ->
-                dirName.substringAfter("1C_EDT ", "")
-            },
+                dirNameToVersion = { dirName -> dirName.substringAfter("1C_EDT ", "") },
+                source = SearchCandidateSource.USER_INSTALLATION,
+            ),
             PathEnvironmentLocation(),
         )
 }
@@ -168,9 +188,9 @@ object EdtWindowsSearchStrategy : SearchStrategy {
                 // Components: 1c-edt-<ver>-<arch>/1cedtcli.exe (Windows has executables in component root)
                 DirectoryEnumeratingLocation(
                     basePath = Paths.get(it, "1C", "1CE", "components").toString(),
-                ) { dir ->
-                    dir.substringAfter("1c-edt-")
-                },
+                    dirNameToVersion = { dir -> dir.substringAfter("1c-edt-") },
+                    source = SearchCandidateSource.SYSTEM_INSTALLATION,
+                ),
             )
         } ?: emptyList()
 
@@ -180,9 +200,10 @@ object EdtWindowsSearchStrategy : SearchStrategy {
                 // 1C_EDT <ver>/ — Windows has executables in installation root
                 DirectoryEnumeratingLocation(
                     basePath = Paths.get(it, "1C", "1cedtstart", "installations").toString(),
-                ) { dir ->
-                    dir.substringAfter("1C_EDT ", "")
-                },
+                    relativeExecutableSubPath = "1cedt",
+                    dirNameToVersion = { dir -> dir.substringAfter("1C_EDT ", "") },
+                    source = SearchCandidateSource.USER_INSTALLATION,
+                ),
             )
         } ?: emptyList()
 
@@ -195,9 +216,9 @@ object EdtMacSearchStrategy : SearchStrategy {
             DirectoryEnumeratingLocation(
                 basePath = "/opt/1C/1CE/components",
                 relativeExecutableSubPath = "1cedt",
-            ) { dir ->
-                dir.substringAfter("1c-edt-")
-            },
+                dirNameToVersion = { dir -> dir.substringAfter("1c-edt-") },
+                source = SearchCandidateSource.SYSTEM_INSTALLATION,
+            ),
             PathEnvironmentLocation(),
         )
 }
@@ -228,7 +249,7 @@ fun SearchStrategy.search(
     }
 
     // Aggregate candidates from all locations
-    val allCandidates = mutableListOf<Pair<java.nio.file.Path, String?>>()
+    val allCandidates = mutableListOf<SearchCandidate>()
     for (location in locations) {
         try {
             val candidates = location.generateCandidates(utility, requirement)
@@ -240,9 +261,9 @@ fun SearchStrategy.search(
 
     // Validate existence/executable and pick best by version
     val existing =
-        allCandidates.filter { (path, _) ->
+        allCandidates.filter { candidate ->
             try {
-                path.exists() && path.isExecutable()
+                candidate.path.exists() && candidate.path.isExecutable()
             } catch (_: Exception) {
                 false
             }
@@ -258,7 +279,7 @@ fun SearchStrategy.search(
             ?: throw TestExecutionError.UtilNotFound("$utility не найден для требования версии: $requirement")
 
     return UtilityLocation(
-        executablePath = bestPath,
+        executablePath = bestPath.path,
         version = requirement,
         platformType = PlatformDetector.current,
     )
