@@ -28,6 +28,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlin.time.Duration
 
 private val logger = KotlinLogging.logger {}
+private const val IGNORED_LEXER_BASED_CONVERTER_ERROR =
+    "Only terminal rules are supported by lexer based converters but got ID which is an instance of ParserRule"
 
 /**
  * Исполнитель команд EDT CLI через интерактивный процесс
@@ -79,20 +81,29 @@ class EdtCliExecutor(
                 exitCode = result.exitCode,
             )
         } else {
-            val hasErrors =
-                output.lines().any { line ->
-                    val trimmed = line.trim()
-                    trimmed.startsWith("ERROR", ignoreCase = true) ||
-                        trimmed.startsWith("CRITICAL", ignoreCase = true) ||
-                        trimmed.startsWith("FATAL", ignoreCase = true)
-                }
+            val relevantErrors = findRelevantErrors(output)
+            val hasErrors = relevantErrors.isNotEmpty()
             return EdtCommandResult(
                 success = !hasErrors,
                 output = output,
-                error = if (hasErrors) output else null,
+                error = if (hasErrors) relevantErrors.joinToString(System.lineSeparator()) else null,
                 duration = result.duration,
                 exitCode = result.exitCode,
             )
         }
+    }
+
+    companion object {
+        internal fun findRelevantErrors(output: String): List<String> =
+            output.lines()
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .filter(::isErrorLine)
+                .filterNot { it.contains(IGNORED_LEXER_BASED_CONVERTER_ERROR) }
+
+        private fun isErrorLine(line: String): Boolean =
+            line.startsWith("ERROR", ignoreCase = true) ||
+                line.startsWith("CRITICAL", ignoreCase = true) ||
+                line.startsWith("FATAL", ignoreCase = true)
     }
 }
