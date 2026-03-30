@@ -39,6 +39,7 @@ private const val IGNORED_LEXER_BASED_CONVERTER_ERROR =
  */
 class EdtCliExecutor(
     private val interactiveExecutor: InteractiveProcessExecutor,
+    private val commandTimeoutMs: Long? = null,
 ) : CommandExecutor {
     /**
      * Результат выполнения команды с дополнительной обработкой
@@ -56,7 +57,7 @@ class EdtCliExecutor(
      */
     override fun execute(commandArgs: List<String>): EdtCommandResult {
         val command = commandArgs.joinToString(" ")
-        return processCommandResult(interactiveExecutor.executeCommand(command, 600000))
+        return processCommandResult(interactiveExecutor.executeCommand(command, commandTimeoutMs))
     }
 
     /**
@@ -94,6 +95,8 @@ class EdtCliExecutor(
     }
 
     companion object {
+        internal fun resolveCommandTimeout(commandTimeoutMs: Long?): Long? = commandTimeoutMs
+
         internal fun findRelevantErrors(output: String): List<String> =
             output.lines()
                 .map { it.trim() }

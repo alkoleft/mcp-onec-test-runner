@@ -6,6 +6,11 @@ import kotlin.test.assertTrue
 
 class EdtCliExecutorTest {
     @Test
+    fun `resolveCommandTimeout should return configured timeout`() {
+        assertEquals(5_400_000L, EdtCliExecutor.resolveCommandTimeout(5_400_000L))
+    }
+
+    @Test
     fun `findRelevantErrors should ignore known lexer based converter error`() {
         val output =
             """

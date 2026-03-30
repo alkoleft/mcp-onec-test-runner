@@ -108,7 +108,12 @@ class PlatformUtilities(
         if (utilityType == UtilityType.EDT_CLI && properties.tools.edtCli.autoStart) {
             val service = applicationContext.getBean(EdtCliStartService::class.java)
             val executor = service.interactiveExecutor()
-            return executor?.let { EdtCliExecutor(it) } ?: throw IllegalStateException("EDT cli не запущено, попробуйте позже")
+            return executor?.let {
+                EdtCliExecutor(
+                    interactiveExecutor = it,
+                    commandTimeoutMs = properties.tools.edtCli.commandTimeoutMs,
+                )
+            } ?: throw IllegalStateException("EDT cli не запущено, попробуйте позже")
         } else {
             return ProcessExecutor()
         }
