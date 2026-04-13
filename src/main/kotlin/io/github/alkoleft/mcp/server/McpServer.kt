@@ -23,6 +23,7 @@ package io.github.alkoleft.mcp.server
 
 import io.github.alkoleft.mcp.application.actions.common.DumpMode
 import io.github.alkoleft.mcp.application.actions.common.LaunchRequest
+import io.github.alkoleft.mcp.application.actions.common.BuildMode
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunAllTestsRequest
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunModuleTestsRequest
 import io.github.alkoleft.mcp.application.services.DesignerConfigCheckRequest
@@ -95,12 +96,24 @@ class McpServer(
             description = "Включить полную информацию о тестах (включая пройденные тесты и полный stack trace)",
             required = false,
         ) full: Boolean? = null,
+        @ToolParam(
+            description = "Не обновлять основную конфигурацию перед запуском тестов. Обновляются только расширения.",
+            required = false,
+        ) skipMainConfigurationUpdate: Boolean? = null,
     ): McpTestResponse {
         logManager.cleanLogIfEnabled(properties.cleanLogBeforeExecution)
         logger.info { "Запуск всех тестов YaXUnit" }
 
         try {
-            val request = RunAllTestsRequest()
+            val request =
+                RunAllTestsRequest(
+                    buildMode =
+                        if (skipMainConfigurationUpdate == true) {
+                            BuildMode.SKIP_MAIN_CONFIGURATION
+                        } else {
+                            BuildMode.FULL
+                        },
+                )
             val result = launcherService.runTests(request)
             return result.toResponse(full = full ?: false)
         } catch (e: Exception) {
@@ -137,12 +150,25 @@ class McpServer(
             description = "Включить полную информацию о тестах (включая пройденные тесты и полный stack trace)",
             required = false,
         ) full: Boolean? = null,
+        @ToolParam(
+            description = "Не обновлять основную конфигурацию перед запуском тестов. Обновляются только расширения.",
+            required = false,
+        ) skipMainConfigurationUpdate: Boolean? = null,
     ): McpTestResponse {
         logManager.cleanLogIfEnabled(properties.cleanLogBeforeExecution)
         logger.info { "Запуск тестов модуля: $moduleName" }
 
         try {
-            val request = RunModuleTestsRequest(moduleName)
+            val request =
+                RunModuleTestsRequest(
+                    moduleName = moduleName,
+                    buildMode =
+                        if (skipMainConfigurationUpdate == true) {
+                            BuildMode.SKIP_MAIN_CONFIGURATION
+                        } else {
+                            BuildMode.FULL
+                        },
+                )
             val result = launcherService.runTests(request)
             return result.toResponse(full = full ?: false)
         } catch (e: Exception) {

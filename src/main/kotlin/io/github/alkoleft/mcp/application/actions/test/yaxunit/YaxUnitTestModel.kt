@@ -22,6 +22,7 @@
 package io.github.alkoleft.mcp.application.actions.test.yaxunit
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import io.github.alkoleft.mcp.application.actions.common.BuildMode
 import java.time.Instant
 import kotlin.time.Duration
 
@@ -30,14 +31,18 @@ import kotlin.time.Duration
  */
 sealed interface TestExecutionRequest
 
-class RunAllTestsRequest : TestExecutionRequest
+class RunAllTestsRequest(
+    val buildMode: BuildMode = BuildMode.FULL,
+) : TestExecutionRequest
 
 class RunModuleTestsRequest(
     val moduleName: String,
+    val buildMode: BuildMode = BuildMode.FULL,
 ) : TestExecutionRequest
 
 data class RunListTestsRequest(
     val moduleNames: List<String>,
+    val buildMode: BuildMode = BuildMode.FULL,
 ) : TestExecutionRequest
 
 sealed class TestExecutionError(

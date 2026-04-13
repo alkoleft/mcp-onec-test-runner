@@ -26,6 +26,7 @@ import io.github.alkoleft.mcp.application.core.UtilityType
 import io.github.alkoleft.mcp.application.services.EdtCliStartService
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.edt.EdtCliExecutor
+import io.github.alkoleft.mcp.infrastructure.platform.dsl.edt.EdtProcessExecutor
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.CommandExecutor
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.process.ProcessExecutor
 import io.github.alkoleft.mcp.infrastructure.platform.locator.UtilityLocator
@@ -105,7 +106,11 @@ class PlatformUtilities(
      * @throws IllegalStateException если EDT CLI не запущено в интерактивном режиме
      */
     fun executor(utilityType: UtilityType): CommandExecutor {
-        if (utilityType == UtilityType.EDT_CLI && properties.tools.edtCli.autoStart) {
+        if (utilityType != UtilityType.EDT_CLI) {
+            return ProcessExecutor()
+        }
+
+        if (properties.tools.edtCli.autoStart) {
             val service = applicationContext.getBean(EdtCliStartService::class.java)
             val executor = service.interactiveExecutor()
             return executor?.let {
@@ -114,8 +119,14 @@ class PlatformUtilities(
                     commandTimeoutMs = properties.tools.edtCli.commandTimeoutMs,
                 )
             } ?: throw IllegalStateException("EDT cli не запущено, попробуйте позже")
-        } else {
-            return ProcessExecutor()
         }
+
+        val executablePath =
+            locateUtility(UtilityType.EDT_CLI).executablePath.toString()
+        return EdtProcessExecutor(
+            executablePath = executablePath,
+            workingDirectory = properties.tools.edtCli.workingDirectory,
+            commandTimeoutMs = properties.tools.edtCli.commandTimeoutMs,
+        )
     }
 }

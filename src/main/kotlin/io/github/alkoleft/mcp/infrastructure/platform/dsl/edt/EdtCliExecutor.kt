@@ -56,7 +56,7 @@ class EdtCliExecutor(
      * Выполняет произвольную команду
      */
     override fun execute(commandArgs: List<String>): EdtCommandResult {
-        val command = commandArgs.joinToString(" ")
+        val command = renderCommand(commandArgs)
         return processCommandResult(interactiveExecutor.executeCommand(command, commandTimeoutMs))
     }
 
@@ -96,6 +96,15 @@ class EdtCliExecutor(
 
     companion object {
         internal fun resolveCommandTimeout(commandTimeoutMs: Long?): Long? = commandTimeoutMs
+
+        internal fun renderCommand(commandArgs: List<String>): String =
+            commandArgs.joinToString(" ") { argument ->
+                if (argument.any { it.isWhitespace() } || argument.contains('"')) {
+                    "\"${argument.replace("\"", "\\\"")}\""
+                } else {
+                    argument
+                }
+            }
 
         internal fun findRelevantErrors(output: String): List<String> =
             output.lines()

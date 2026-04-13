@@ -11,6 +11,25 @@ class EdtCliExecutorTest {
     }
 
     @Test
+    fun `renderCommand should quote arguments with spaces for interactive edt`() {
+        val command =
+            EdtCliExecutor.renderCommand(
+                listOf(
+                    "export",
+                    "--project-name",
+                    "uhmrg",
+                    "--configuration-files",
+                    "C:\\Temp Dir\\uhmrg",
+                ),
+            )
+
+        assertEquals(
+            "export --project-name uhmrg --configuration-files \"C:\\Temp Dir\\uhmrg\"",
+            command,
+        )
+    }
+
+    @Test
     fun `findRelevantErrors should ignore known lexer based converter error`() {
         val output =
             """
