@@ -51,7 +51,7 @@ class EdtProcessExecutor(
                 ?.takeIf { it > 0 }
                 ?.let {
                     add("-timeout")
-                    add((it / 1000).coerceAtLeast(1).toString())
+                    add(((it + 999L) / 1000L).coerceAtLeast(1).toString())
                 }
             add("-command")
             addAll(commandArgs)

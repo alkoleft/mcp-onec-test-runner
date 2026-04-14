@@ -24,6 +24,10 @@ package io.github.alkoleft.mcp.infrastructure.platform.search
 import io.github.alkoleft.mcp.application.core.UtilityType
 import org.junit.jupiter.api.condition.EnabledOnOs
 import org.junit.jupiter.api.condition.OS
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
+import kotlin.io.path.createDirectories
+import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -100,8 +104,13 @@ class SearchStrategyTest {
     }
 
     @Test
-    fun `should extract EDT version from PATH candidate for Windows user installation layout`() {
-        val pathLocation = PathEnvironmentLocation()
+    fun `should extract EDT version from PATH candidate for Windows user installation layout`(
+        @TempDir tempDir: Path,
+    ) {
+        val edtDir = tempDir.resolve("1C_EDT 2025.2").resolve("1cedt")
+        edtDir.createDirectories()
+        edtDir.resolve("1cedtcli.exe").writeText("")
+        val pathLocation = PathEnvironmentLocation(edtDir.toString())
         val candidates =
             pathLocation.generateCandidates(
                 UtilityType.EDT_CLI,
@@ -109,15 +118,49 @@ class SearchStrategyTest {
             )
 
         val candidate =
-            candidates.firstOrNull {
+            candidates.first {
                 it.path.toString().replace('\\', '/').contains("1C_EDT 2025.2/1cedt/1cedtcli", ignoreCase = true)
             }
 
-        if (candidate != null) {
-            assertEquals("2025.2", candidate.version)
-            assertEquals(SearchCandidateSource.PATH, candidate.source)
-        } else {
-            assertTrue(true, "Test skipped - matching PATH candidate not found in current environment")
-        }
+        assertEquals("2025.2", candidate.version)
+        assertEquals(SearchCandidateSource.PATH, candidate.source)
+    }
+
+    @Test
+    fun `search should return resolved EDT version from selected candidate`() {
+        val javaBinary =
+            Path.of(
+                System.getProperty("java.home"),
+                "bin",
+                if (System.getProperty("os.name").lowercase().contains("windows")) "java.exe" else "java",
+            )
+        val strategy =
+            object : SearchStrategy {
+                override val locations: List<SearchLocation> =
+                    listOf(
+                        object : SearchLocation {
+                            override fun generatePaths(
+                                utility: UtilityType,
+                                version: String?,
+                            ): List<Path> = emptyList()
+
+                            override fun generateCandidates(
+                                utility: UtilityType,
+                                version: String?,
+                            ): List<SearchCandidate> =
+                                listOf(
+                                    SearchCandidate(
+                                        path = javaBinary,
+                                        version = "2025.2.1",
+                                        source = SearchCandidateSource.PATH,
+                                    ),
+                                )
+                        },
+                    )
+            }
+
+        val location = strategy.search(UtilityType.EDT_CLI, "latest")
+
+        assertEquals("2025.2.1", location.version)
     }
 }

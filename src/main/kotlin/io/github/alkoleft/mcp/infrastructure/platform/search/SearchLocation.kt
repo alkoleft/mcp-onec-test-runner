@@ -113,14 +113,15 @@ class VersionLocation(
 /**
  * PATH environment variable location
  */
-class PathEnvironmentLocation : BaseSearchLocation() {
+class PathEnvironmentLocation(
+    private val pathEnvironment: String? = System.getenv("PATH"),
+) : BaseSearchLocation() {
     override fun generatePaths(
         utility: UtilityType,
         version: String?,
     ): List<Path> {
         val executableName = getExecutableName(utility)
-        return System
-            .getenv("PATH")
+        return pathEnvironment
             ?.split(File.pathSeparator)
             ?.map { Paths.get(it, executableName) } ?: emptyList()
     }

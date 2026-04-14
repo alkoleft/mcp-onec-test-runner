@@ -165,7 +165,7 @@ object EdtLinuxSearchStrategy : SearchStrategy {
             // Components install dir: 1c-edt-<ver>-<arch>/1cedt/
             DirectoryEnumeratingLocation(
                 basePath = "/opt/1C/1CE/components",
-                dirNameToVersion = { dirName -> dirName.substringAfter("1c-edt-") },
+                dirNameToVersion = ::extractEdtSystemVersion,
                 source = SearchCandidateSource.SYSTEM_INSTALLATION,
             ),
             // User installations: 1C_EDT <ver>/1cedt/
@@ -188,7 +188,7 @@ object EdtWindowsSearchStrategy : SearchStrategy {
                 // Components: 1c-edt-<ver>-<arch>/1cedtcli.exe (Windows has executables in component root)
                 DirectoryEnumeratingLocation(
                     basePath = Paths.get(it, "1C", "1CE", "components").toString(),
-                    dirNameToVersion = { dir -> dir.substringAfter("1c-edt-") },
+                    dirNameToVersion = ::extractEdtSystemVersion,
                     source = SearchCandidateSource.SYSTEM_INSTALLATION,
                 ),
             )
@@ -216,12 +216,17 @@ object EdtMacSearchStrategy : SearchStrategy {
             DirectoryEnumeratingLocation(
                 basePath = "/opt/1C/1CE/components",
                 relativeExecutableSubPath = "1cedt",
-                dirNameToVersion = { dir -> dir.substringAfter("1c-edt-") },
+                dirNameToVersion = ::extractEdtSystemVersion,
                 source = SearchCandidateSource.SYSTEM_INSTALLATION,
             ),
             PathEnvironmentLocation(),
         )
 }
+
+private fun extractEdtSystemVersion(directoryName: String): String =
+    directoryName
+        .substringAfter("1c-edt-")
+        .substringBeforeLast("-")
 
 fun SearchStrategy.search(
     utility: UtilityType,
@@ -280,7 +285,7 @@ fun SearchStrategy.search(
 
     return UtilityLocation(
         executablePath = bestPath.path,
-        version = requirement,
+        version = bestPath.version ?: requirement,
         platformType = PlatformDetector.current,
     )
 }
