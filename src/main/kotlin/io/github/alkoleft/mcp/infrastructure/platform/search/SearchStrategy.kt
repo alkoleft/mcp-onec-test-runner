@@ -254,10 +254,10 @@ fun SearchStrategy.search(
     }
 
     // Aggregate candidates from all locations
-    val allCandidates = mutableListOf<SearchCandidate>()
+    val allCandidates: MutableList<SearchCandidate> = mutableListOf()
     for (location in locations) {
         try {
-            val candidates = location.generateCandidates(utility, requirement)
+            val candidates: List<SearchCandidate> = location.generateCandidates(utility, requirement)
             allCandidates.addAll(candidates)
         } catch (e: Exception) {
             logger.debug { "Ошибка при поиске в локации ${location.javaClass.simpleName}: ${e.message}" }
@@ -265,7 +265,7 @@ fun SearchStrategy.search(
     }
 
     // Validate existence/executable and pick best by version
-    val existing =
+    val existing: List<SearchCandidate> =
         allCandidates.filter { candidate ->
             try {
                 candidate.path.exists() && candidate.path.isExecutable()
@@ -278,8 +278,8 @@ fun SearchStrategy.search(
         throw TestExecutionError.UtilNotFound("$utility не найден ни в одной известной локации")
     }
 
-    val resolver = DefaultVersionResolver()
-    val bestPath =
+    val resolver: DefaultVersionResolver = DefaultVersionResolver()
+    val bestPath: SearchCandidate =
         resolver.selectBest(existing, requirement)
             ?: throw TestExecutionError.UtilNotFound("$utility не найден для требования версии: $requirement")
 

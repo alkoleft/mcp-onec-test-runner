@@ -12,11 +12,11 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class VersionResolverTest {
-    private val resolver = DefaultVersionResolver()
+    private val resolver: DefaultVersionResolver = DefaultVersionResolver()
 
     @Test
-    fun `latest should choose newest version across all sources`() {
-        val candidates =
+    fun `latest should choose newest version across all sources`(): Unit {
+        val inputCandidates: List<SearchCandidate> =
             listOf(
                 SearchCandidate(
                     path = Paths.get("C:/system/1cedtcli.exe"),
@@ -29,16 +29,17 @@ class VersionResolverTest {
                     source = SearchCandidateSource.PATH,
                 ),
             )
+        val expectedPath: Path = Paths.get("F:/path/1cedtcli.exe")
 
-        val selected = resolver.selectBest(candidates, "latest")
+        val actualSelected: SearchCandidate? = resolver.selectBest(inputCandidates, "latest")
 
-        assertNotNull(selected)
-        assertEquals(Paths.get("F:/path/1cedtcli.exe"), selected.path)
+        assertNotNull(actualSelected)
+        assertEquals(expectedPath, actualSelected.path)
     }
 
     @Test
-    fun `latest should prefer PATH when same version exists in multiple sources`() {
-        val candidates =
+    fun `latest should prefer PATH when same version exists in multiple sources`(): Unit {
+        val inputCandidates: List<SearchCandidate> =
             listOf(
                 SearchCandidate(
                     path = Paths.get("C:/system/1cedtcli.exe"),
@@ -51,16 +52,17 @@ class VersionResolverTest {
                     source = SearchCandidateSource.PATH,
                 ),
             )
+        val expectedSource: SearchCandidateSource = SearchCandidateSource.PATH
 
-        val selected = resolver.selectBest(candidates, "latest")
+        val actualSelected: SearchCandidate? = resolver.selectBest(inputCandidates, "latest")
 
-        assertNotNull(selected)
-        assertEquals(SearchCandidateSource.PATH, selected.source)
+        assertNotNull(actualSelected)
+        assertEquals(expectedSource, actualSelected.source)
     }
 
     @Test
-    fun `exact version should prefer PATH among matching candidates`() {
-        val candidates =
+    fun `exact version should prefer PATH among matching candidates`(): Unit {
+        val inputCandidates: List<SearchCandidate> =
             listOf(
                 SearchCandidate(
                     path = Paths.get("C:/system/1cedtcli.exe"),
@@ -78,16 +80,17 @@ class VersionResolverTest {
                     source = SearchCandidateSource.SYSTEM_INSTALLATION,
                 ),
             )
+        val expectedPath: Path = Paths.get("F:/path/1cedtcli.exe")
 
-        val selected = resolver.selectBest(candidates, "2025.2")
+        val actualSelected: SearchCandidate? = resolver.selectBest(inputCandidates, "2025.2")
 
-        assertNotNull(selected)
-        assertEquals(Paths.get("F:/path/1cedtcli.exe"), selected.path)
+        assertNotNull(actualSelected)
+        assertEquals(expectedPath, actualSelected.path)
     }
 
     @Test
-    fun `exact version should return null when only PATH candidate has unknown version`() {
-        val candidates =
+    fun `exact version should return null when only PATH candidate has unknown version`(): Unit {
+        val inputCandidates: List<SearchCandidate> =
             listOf(
                 SearchCandidate(
                     path = Paths.get("F:/path/1cedtcli.exe"),
@@ -96,19 +99,19 @@ class VersionResolverTest {
                 ),
             )
 
-        val selected = resolver.selectBest(candidates, "2025.2")
+        val actualSelected: SearchCandidate? = resolver.selectBest(inputCandidates, "2025.2")
 
-        assertEquals(null, selected)
+        assertEquals(null, actualSelected)
     }
 
     @Test
     fun `windows EDT user installation should include 1cedt subdirectory`(
         @TempDir tempDir: Path,
-    ) {
-        val installationDir = tempDir.resolve("1C_EDT 2025.2").resolve("1cedt")
-        installationDir.createDirectories()
-        installationDir.resolve("1cedtcli.exe").writeText("")
-        val location =
+    ): Unit {
+        val inputInstallationDir: Path = tempDir.resolve("1C_EDT 2025.2").resolve("1cedt")
+        inputInstallationDir.createDirectories()
+        inputInstallationDir.resolve("1cedtcli.exe").writeText("")
+        val mockLocation: DirectoryEnumeratingLocation =
             DirectoryEnumeratingLocation(
                 basePath = tempDir.toString(),
                 relativeExecutableSubPath = "1cedt",
@@ -116,18 +119,18 @@ class VersionResolverTest {
                 source = SearchCandidateSource.USER_INSTALLATION,
             )
 
-        val candidates = location.generateCandidates(UtilityType.EDT_CLI, "2025.2")
+        val inputCandidates: List<SearchCandidate> = mockLocation.generateCandidates(UtilityType.EDT_CLI, "2025.2")
 
-        assertTrue(candidates.isNotEmpty())
-        candidates.forEach {
-            val normalized = it.path.toString().replace('\\', '/')
-            assertEquals(true, normalized.contains("/1cedt/1cedtcli", ignoreCase = true))
+        assertTrue(inputCandidates.isNotEmpty())
+        inputCandidates.forEach {
+            val actualNormalized: String = it.path.toString().replace('\\', '/')
+            assertEquals(true, actualNormalized.contains("/1cedt/1cedtcli", ignoreCase = true))
         }
     }
 
     @Test
-    fun `exact version should match normalized EDT system candidate version`() {
-        val candidates =
+    fun `exact version should match normalized EDT system candidate version`(): Unit {
+        val inputCandidates: List<SearchCandidate> =
             listOf(
                 SearchCandidate(
                     path = Paths.get("C:/system/1cedtcli.exe"),
@@ -135,10 +138,11 @@ class VersionResolverTest {
                     source = SearchCandidateSource.SYSTEM_INSTALLATION,
                 ),
             )
+        val expectedVersion: String = "2025.2"
 
-        val selected = resolver.selectBest(candidates, "2025.2")
+        val actualSelected: SearchCandidate? = resolver.selectBest(inputCandidates, "2025.2")
 
-        assertNotNull(selected)
-        assertEquals("2025.2", selected.version)
+        assertNotNull(actualSelected)
+        assertEquals(expectedVersion, actualSelected.version)
     }
 }

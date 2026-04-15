@@ -10,6 +10,7 @@ import io.github.alkoleft.mcp.application.services.LauncherService
 import io.github.alkoleft.mcp.application.services.SyntaxCheckService
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.infrastructure.log.LogManager
+import io.github.alkoleft.mcp.server.dto.McpTestResponse
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -22,6 +23,10 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration
 
 class McpServerTest {
+    private companion object {
+        const val INPUT_MODULE_NAME: String = "TestModule"
+    }
+
     private lateinit var launcherService: LauncherService
     private lateinit var syntaxCheckService: SyntaxCheckService
     private lateinit var dumpService: DumpService
@@ -30,7 +35,7 @@ class McpServerTest {
     private lateinit var server: McpServer
 
     @BeforeEach
-    fun setUp() {
+    fun setUp(): Unit {
         launcherService = mockk()
         syntaxCheckService = mockk()
         dumpService = mockk()
@@ -45,10 +50,10 @@ class McpServerTest {
     }
 
     @Test
-    fun `run all tests should pass skip main configuration mode`() {
-        val result = server.runAllTests(skipMainConfigurationUpdate = true)
+    fun `run all tests should pass skip main configuration mode`(): Unit {
+        val actualResult: McpTestResponse = server.runAllTests(skipMainConfigurationUpdate = true)
 
-        assertTrue(result.success)
+        assertTrue(actualResult.success)
         verify(exactly = 1) {
             launcherService.runTests(
                 match<RunAllTestsRequest> {
@@ -59,27 +64,42 @@ class McpServerTest {
     }
 
     @Test
-    fun `run module tests should pass skip main configuration mode`() {
-        val result = server.runModuleTests(moduleName = "TestModule", skipMainConfigurationUpdate = true)
+    fun `run module tests should pass skip main configuration mode`(): Unit {
+        val inputModuleName: String = INPUT_MODULE_NAME
+        val actualResult: McpTestResponse =
+            server.runModuleTests(moduleName = inputModuleName, skipMainConfigurationUpdate = true)
 
-        assertTrue(result.success)
+        assertTrue(actualResult.success)
         verify(exactly = 1) {
             launcherService.runTests(
                 match<RunModuleTestsRequest> {
-                    it.moduleName == "TestModule" && it.buildMode == BuildMode.SKIP_MAIN_CONFIGURATION
+                    it.moduleName == inputModuleName && it.buildMode == BuildMode.SKIP_MAIN_CONFIGURATION
                 },
             )
         }
     }
 
     @Test
-    fun `run all tests should use full mode when skip flag is false`() {
+    fun `run all tests should use full mode when skip flag is false`(): Unit = verifyRunAllTestsFullMode(skipMainConfigurationUpdate = false)
+
+    @Test
+    fun `run all tests should use full mode when skip flag is null`(): Unit = verifyRunAllTestsFullMode(skipMainConfigurationUpdate = null)
+
+    @Test
+    fun `run module tests should use full mode when skip flag is false`(): Unit =
+        verifyRunModuleTestsFullMode(moduleName = INPUT_MODULE_NAME, skipMainConfigurationUpdate = false)
+
+    @Test
+    fun `run module tests should use full mode when skip flag is null`(): Unit =
+        verifyRunModuleTestsFullMode(moduleName = INPUT_MODULE_NAME, skipMainConfigurationUpdate = null)
+
+    private fun verifyRunAllTestsFullMode(skipMainConfigurationUpdate: Boolean?): Unit {
         clearMocks(launcherService, answers = false, recordedCalls = true)
         every { launcherService.runTests(any()) } returns successfulTestResult()
 
-        val result = server.runAllTests(skipMainConfigurationUpdate = false)
+        val actualResult: McpTestResponse = server.runAllTests(skipMainConfigurationUpdate = skipMainConfigurationUpdate)
 
-        assertTrue(result.success)
+        assertTrue(actualResult.success)
         verify(exactly = 1) {
             launcherService.runTests(
                 match<RunAllTestsRequest> {
@@ -89,52 +109,25 @@ class McpServerTest {
         }
     }
 
-    @Test
-    fun `run all tests should use full mode when skip flag is null`() {
+    private fun verifyRunModuleTestsFullMode(
+        moduleName: String,
+        skipMainConfigurationUpdate: Boolean?,
+    ): Unit {
         clearMocks(launcherService, answers = false, recordedCalls = true)
         every { launcherService.runTests(any()) } returns successfulTestResult()
 
-        val result = server.runAllTests(skipMainConfigurationUpdate = null)
-
-        assertTrue(result.success)
-        verify(exactly = 1) {
-            launcherService.runTests(
-                match<RunAllTestsRequest> {
-                    it.buildMode == BuildMode.FULL
-                },
+        val inputModuleName: String = moduleName
+        val actualResult: McpTestResponse =
+            server.runModuleTests(
+                moduleName = inputModuleName,
+                skipMainConfigurationUpdate = skipMainConfigurationUpdate,
             )
-        }
-    }
 
-    @Test
-    fun `run module tests should use full mode when skip flag is false`() {
-        clearMocks(launcherService, answers = false, recordedCalls = true)
-        every { launcherService.runTests(any()) } returns successfulTestResult()
-
-        val result = server.runModuleTests(moduleName = "TestModule", skipMainConfigurationUpdate = false)
-
-        assertTrue(result.success)
+        assertTrue(actualResult.success)
         verify(exactly = 1) {
             launcherService.runTests(
                 match<RunModuleTestsRequest> {
-                    it.moduleName == "TestModule" && it.buildMode == BuildMode.FULL
-                },
-            )
-        }
-    }
-
-    @Test
-    fun `run module tests should use full mode when skip flag is null`() {
-        clearMocks(launcherService, answers = false, recordedCalls = true)
-        every { launcherService.runTests(any()) } returns successfulTestResult()
-
-        val result = server.runModuleTests(moduleName = "TestModule", skipMainConfigurationUpdate = null)
-
-        assertTrue(result.success)
-        verify(exactly = 1) {
-            launcherService.runTests(
-                match<RunModuleTestsRequest> {
-                    it.moduleName == "TestModule" && it.buildMode == BuildMode.FULL
+                    it.moduleName == inputModuleName && it.buildMode == BuildMode.FULL
                 },
             )
         }
