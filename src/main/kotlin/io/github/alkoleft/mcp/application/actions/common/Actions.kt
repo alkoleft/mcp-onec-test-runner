@@ -50,6 +50,7 @@ interface BuildAction {
     fun run(
         properties: ApplicationProperties,
         sourceSet: SourceSet,
+        mode: BuildMode = BuildMode.FULL,
     ): BuildResult
 
     /**
@@ -68,7 +69,13 @@ interface BuildAction {
         properties: ApplicationProperties,
         sourceSet: SourceSet,
         sourceSetChanges: Map<String, SourceSetChanges>,
+        mode: BuildMode = BuildMode.FULL,
     ): BuildResult
+}
+
+enum class BuildMode {
+    FULL,
+    SKIP_MAIN_CONFIGURATION,
 }
 
 /**

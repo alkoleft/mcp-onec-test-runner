@@ -24,6 +24,10 @@ package io.github.alkoleft.mcp.infrastructure.platform.search
 import io.github.alkoleft.mcp.application.core.UtilityType
 import org.junit.jupiter.api.condition.EnabledOnOs
 import org.junit.jupiter.api.condition.OS
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
+import kotlin.io.path.createDirectories
+import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -53,7 +57,12 @@ class SearchStrategyTest {
 
     @Test
     fun `should generate version-specific candidates correctly`() {
-        val location = DirectoryEnumeratingLocation("/opt/1cv8", "bin") { it }
+        val location =
+            DirectoryEnumeratingLocation(
+                basePath = "/opt/1cv8",
+                relativeExecutableSubPath = "bin",
+                dirNameToVersion = { dir -> dir },
+            )
         val version = "8.3.24"
         val candidates = location.generateCandidates(UtilityType.DESIGNER, version)
         assertNotNull(candidates, "Candidates should not be null")
@@ -74,11 +83,15 @@ class SearchStrategyTest {
     fun `should handle PATH environment location correctly`() {
         val pathLocation = PathEnvironmentLocation()
         val paths = pathLocation.generatePaths(UtilityType.DESIGNER, null)
+        val candidates = pathLocation.generateCandidates(UtilityType.DESIGNER, null)
         assertNotNull(paths, "PATH paths should not be null")
+        assertNotNull(candidates, "PATH candidates should not be null")
         if (System.getenv("PATH") != null) {
             assertTrue(paths.isNotEmpty(), "PATH paths should not be empty when PATH environment exists")
+            assertTrue(candidates.isNotEmpty(), "PATH candidates should not be empty when PATH environment exists")
         } else {
             assertTrue(paths.isEmpty(), "PATH paths should be empty when PATH environment is null")
+            assertTrue(candidates.isEmpty(), "PATH candidates should be empty when PATH environment is null")
         }
     }
 
@@ -88,5 +101,66 @@ class SearchStrategyTest {
         val version = "8.3.24"
         val paths = versionLocation.generatePaths(UtilityType.DESIGNER, version)
         assertEquals(1, paths.size, "Version location should generate one path")
+    }
+
+    @Test
+    fun `should extract EDT version from PATH candidate for Windows user installation layout`(
+        @TempDir tempDir: Path,
+    ) {
+        val edtDir = tempDir.resolve("1C_EDT 2025.2").resolve("1cedt")
+        edtDir.createDirectories()
+        edtDir.resolve("1cedtcli.exe").writeText("")
+        val pathLocation = PathEnvironmentLocation(edtDir.toString())
+        val candidates =
+            pathLocation.generateCandidates(
+                UtilityType.EDT_CLI,
+                null,
+            )
+
+        val candidate =
+            candidates.first {
+                it.path.toString().replace('\\', '/').contains("1C_EDT 2025.2/1cedt/1cedtcli", ignoreCase = true)
+            }
+
+        assertEquals("2025.2", candidate.version)
+        assertEquals(SearchCandidateSource.PATH, candidate.source)
+    }
+
+    @Test
+    fun `search should return resolved EDT version from selected candidate`() {
+        val javaBinary =
+            Path.of(
+                System.getProperty("java.home"),
+                "bin",
+                if (System.getProperty("os.name").lowercase().contains("windows")) "java.exe" else "java",
+            )
+        val strategy =
+            object : SearchStrategy {
+                override val locations: List<SearchLocation> =
+                    listOf(
+                        object : SearchLocation {
+                            override fun generatePaths(
+                                utility: UtilityType,
+                                version: String?,
+                            ): List<Path> = emptyList()
+
+                            override fun generateCandidates(
+                                utility: UtilityType,
+                                version: String?,
+                            ): List<SearchCandidate> =
+                                listOf(
+                                    SearchCandidate(
+                                        path = javaBinary,
+                                        version = "2025.2.1",
+                                        source = SearchCandidateSource.PATH,
+                                    ),
+                                )
+                        },
+                    )
+            }
+
+        val location = strategy.search(UtilityType.EDT_CLI, "latest")
+
+        assertEquals("2025.2.1", location.version)
     }
 }

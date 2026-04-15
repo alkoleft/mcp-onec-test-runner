@@ -21,26 +21,22 @@
 
 package io.github.alkoleft.mcp.infrastructure.platform.search
 
-import java.nio.file.Path
-
 interface VersionResolver {
     fun selectBest(
-        candidates: List<Pair<Path, String?>>,
+        candidates: List<SearchCandidate>,
         requirement: String?,
-    ): Path?
+    ): SearchCandidate?
 }
 
 class DefaultVersionResolver : VersionResolver {
     override fun selectBest(
-        candidates: List<Pair<Path, String?>>,
+        candidates: List<SearchCandidate>,
         requirement: String?,
-    ): Path? {
+    ): SearchCandidate? {
         if (candidates.isEmpty()) return null
         val parsed =
-            candidates.map { pair ->
-                val path = pair.first
-                val ver = pair.second?.let { v -> Version.parse(v) }
-                path to ver
+            candidates.map { candidate ->
+                candidate to candidate.version?.let { Version.parse(it) }
             }
         if (requirement == null || requirement.equals("latest", ignoreCase = true)) {
             val withVersion =
@@ -48,9 +44,13 @@ class DefaultVersionResolver : VersionResolver {
                     .filter { it.second != null }
                     .map { it.first to it.second!! }
             if (withVersion.isNotEmpty()) {
-                return withVersion.maxByOrNull { it.second }!!.first
+                return withVersion.maxWithOrNull(compareBy<Pair<SearchCandidate, Version>> { it.second }.thenBy {
+                    candidatePriority(
+                        it.first.source,
+                    )
+                })!!.first
             }
-            return candidates.first().first
+            return candidates.maxByOrNull { candidatePriority(it.source) }
         }
         val reqVersion = Version.parse(requirement)
         if (reqVersion == null) {
@@ -69,9 +69,21 @@ class DefaultVersionResolver : VersionResolver {
                 withVersion.filter { it.second == reqVersion }
             }
         if (filtered.isNotEmpty()) {
-            return filtered.maxByOrNull { it.second }!!.first
+            return filtered.maxWithOrNull(compareBy<Pair<SearchCandidate, Version>> { it.second }.thenBy {
+                candidatePriority(
+                    it.first.source,
+                )
+            })!!.first
         }
         // No candidates satisfy the version requirement -> signal no match
         return null
     }
+
+    private fun candidatePriority(source: SearchCandidateSource): Int =
+        when (source) {
+            SearchCandidateSource.PATH -> 3
+            SearchCandidateSource.USER_INSTALLATION -> 2
+            SearchCandidateSource.SYSTEM_INSTALLATION -> 1
+            SearchCandidateSource.UNKNOWN -> 0
+        }
 }

@@ -46,7 +46,9 @@ class IbcmdBuildAction(
         path: Path,
     ): ProcessResult {
         lateinit var result: ProcessResult
-        actionDsl.config { result = import(path) }
+        actionDsl.config {
+            result = import(path)
+        }
         return result
     }
 
@@ -104,7 +106,12 @@ class IbcmdBuildAction(
 
     override fun updateDb(): ProcessResult {
         lateinit var result: ProcessResult
-        actionDsl.config { result = apply() }
+        actionDsl.config {
+            result =
+                apply {
+                    force = true
+                }
+        }
         return result
     }
 }

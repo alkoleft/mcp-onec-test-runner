@@ -84,6 +84,13 @@ class InteractiveProcessExecutor(
         private const val DEFAULT_READ_DELAY = 50L
         private const val DEFAULT_EXIT_DELAY = 1000L
         private const val PROMPT_LOG_OUTPUT_LENGTH = 1000
+        private const val ACCEPT_CHANGES_PROMPT = "Принять изменения и продолжить обновление [y/n]"
+
+        internal fun findAutoResponse(buffer: String): String? =
+            when {
+                buffer.contains(ACCEPT_CHANGES_PROMPT) -> "y"
+                else -> null
+            }
     }
 
     /**
@@ -155,6 +162,7 @@ class InteractiveProcessExecutor(
         val startTime = System.currentTimeMillis()
         val output = StringBuilder()
         val byteBuffer = ByteArray(1024)
+        var lastAutoResponseSignature: String? = null
 
         while (System.currentTimeMillis() - startTime < timeoutMs) {
             // Проверяем, не завершился ли процесс
@@ -167,6 +175,15 @@ class InteractiveProcessExecutor(
             if (available > 0) {
                 val readed = process!!.inputStream.read(byteBuffer)
                 output.append(String(byteBuffer, 0, readed, charset(consoleEncoding)))
+
+                findAutoResponse(output.toString())?.let { response ->
+                    val promptSignature = output.toString().takeLast(PROMPT_LOG_OUTPUT_LENGTH)
+                    if (promptSignature != lastAutoResponseSignature) {
+                        logger.info { "Обнаружен интерактивный запрос EDT, отправляется автоматический ответ: $response" }
+                        sendCommand(response)
+                        lastAutoResponseSignature = promptSignature
+                    }
+                }
 
                 // Проверяем prompt если нужно
                 if (output.contains(params.promptPattern)) {

@@ -159,11 +159,11 @@ class EdtDsl(
         logger.info { "Экспорт проекта $projectName в каталог $configurationFiles" }
         val args = mutableListOf("export")
         when {
-            projectPath != null -> args.addAll(listOf("--project", "\"$projectPath\""))
-            projectName != null -> args.addAll(listOf("--project-name", "\"$projectName\""))
+            projectPath != null -> args.addAll(listOf("--project", projectPath))
+            projectName != null -> args.addAll(listOf("--project-name", projectName))
             else -> throw IllegalArgumentException("Должен быть указан либо projectPath, либо projectName")
         }
-        args.addAll(listOf("--configuration-files", "\"$configurationFiles\""))
+        args.addAll(listOf("--configuration-files", configurationFiles.toString()))
         return executeEdt(args)
     }
 

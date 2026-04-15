@@ -28,6 +28,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlin.time.Duration
 
 private val logger = KotlinLogging.logger {}
+private const val IGNORED_LEXER_BASED_CONVERTER_ERROR =
+    "Only terminal rules are supported by lexer based converters but got ID which is an instance of ParserRule"
 
 /**
  * Исполнитель команд EDT CLI через интерактивный процесс
@@ -37,6 +39,7 @@ private val logger = KotlinLogging.logger {}
  */
 class EdtCliExecutor(
     private val interactiveExecutor: InteractiveProcessExecutor,
+    private val commandTimeoutMs: Long? = null,
 ) : CommandExecutor {
     /**
      * Результат выполнения команды с дополнительной обработкой
@@ -53,8 +56,8 @@ class EdtCliExecutor(
      * Выполняет произвольную команду
      */
     override fun execute(commandArgs: List<String>): EdtCommandResult {
-        val command = commandArgs.joinToString(" ")
-        return processCommandResult(interactiveExecutor.executeCommand(command, 600000))
+        val command = renderCommand(commandArgs)
+        return processCommandResult(interactiveExecutor.executeCommand(command, commandTimeoutMs))
     }
 
     /**
@@ -79,20 +82,40 @@ class EdtCliExecutor(
                 exitCode = result.exitCode,
             )
         } else {
-            val hasErrors =
-                output.lines().any { line ->
-                    val trimmed = line.trim()
-                    trimmed.startsWith("ERROR", ignoreCase = true) ||
-                        trimmed.startsWith("CRITICAL", ignoreCase = true) ||
-                        trimmed.startsWith("FATAL", ignoreCase = true)
-                }
+            val relevantErrors = findRelevantErrors(output)
+            val hasErrors = relevantErrors.isNotEmpty()
             return EdtCommandResult(
                 success = !hasErrors,
                 output = output,
-                error = if (hasErrors) output else null,
+                error = if (hasErrors) relevantErrors.joinToString(System.lineSeparator()) else null,
                 duration = result.duration,
                 exitCode = result.exitCode,
             )
         }
+    }
+
+    companion object {
+        internal fun resolveCommandTimeout(commandTimeoutMs: Long?): Long? = commandTimeoutMs
+
+        internal fun renderCommand(commandArgs: List<String>): String =
+            commandArgs.joinToString(" ") { argument ->
+                if (argument.any { it.isWhitespace() } || argument.contains('"')) {
+                    "\"${argument.replace("\"", "\\\"")}\""
+                } else {
+                    argument
+                }
+            }
+
+        internal fun findRelevantErrors(output: String): List<String> =
+            output.lines()
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .filter(::isErrorLine)
+                .filterNot { it.contains(IGNORED_LEXER_BASED_CONVERTER_ERROR) }
+
+        private fun isErrorLine(line: String): Boolean =
+            line.startsWith("ERROR", ignoreCase = true) ||
+                line.startsWith("CRITICAL", ignoreCase = true) ||
+                line.startsWith("FATAL", ignoreCase = true)
     }
 }

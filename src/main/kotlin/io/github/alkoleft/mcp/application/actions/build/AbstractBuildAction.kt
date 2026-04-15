@@ -23,6 +23,7 @@ package io.github.alkoleft.mcp.application.actions.build
 
 import io.github.alkoleft.mcp.application.actions.change.SourceSetChanges
 import io.github.alkoleft.mcp.application.actions.common.BuildAction
+import io.github.alkoleft.mcp.application.actions.common.BuildMode
 import io.github.alkoleft.mcp.application.actions.common.BuildResult
 import io.github.alkoleft.mcp.application.actions.exceptions.BuildException
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
@@ -50,7 +51,8 @@ abstract class AbstractBuildAction(
     override fun run(
         properties: ApplicationProperties,
         sourceSet: SourceSet,
-    ): BuildResult = measureExecutionTime { executeBuildDsl(properties, sourceSet) }
+        mode: BuildMode,
+    ): BuildResult = measureExecutionTime { executeBuildDsl(properties, sourceSet, mode) }
 
     /**
      * Выполняет сборку проекта с поддержкой частичной загрузки.
@@ -63,9 +65,10 @@ abstract class AbstractBuildAction(
         properties: ApplicationProperties,
         sourceSet: SourceSet,
         sourceSetChanges: Map<String, SourceSetChanges>,
+        mode: BuildMode,
     ): BuildResult =
         measureExecutionTime {
-            executeBuildDslPartial(properties, sourceSet, sourceSetChanges)
+            executeBuildDslPartial(properties, sourceSet, sourceSetChanges, mode)
         }
 
     /**
@@ -91,6 +94,7 @@ abstract class AbstractBuildAction(
     fun executeBuildDsl(
         properties: ApplicationProperties,
         sourceSet: SourceSet,
+        mode: BuildMode,
     ): BuildResult {
         logger.debug { "Сборка проекта (полная загрузка)" }
 
@@ -99,9 +103,14 @@ abstract class AbstractBuildAction(
 
         // Загружаем основную конфигурацию
         sourceSet.configuration?.also { configuration ->
-            logger.info { "Загружаю основную конфигурацию" }
-            val result = loadConfiguration(configuration.name, sourceSet.basePath.resolve(configuration.path))
-            state.addResult(configuration.name, result, "Загрузка конфигурации")
+            if (mode == BuildMode.SKIP_MAIN_CONFIGURATION) {
+                logger.info { "Загрузка основной конфигурации пропущена" }
+                state.registerSkippedConfiguration()
+            } else {
+                logger.info { "Загружаю основную конфигурацию" }
+                val result = loadConfiguration(configuration.name, sourceSet.basePath.resolve(configuration.path))
+                state.addResult(configuration.name, result, "Загрузка конфигурации")
+            }
         }
 
         if (!state.success) {
@@ -124,7 +133,9 @@ abstract class AbstractBuildAction(
             return state.toResult("При загрузке исходников возникли ошибки")
         }
 
-        updateDb()?.also(state::registerUpdateResult)
+        if (state.sourceSet.isNotEmpty()) {
+            updateDb()?.also(state::registerUpdateResult)
+        }
 
         return state.toResult("Сборка завершена").also { if (it.success) logger.info { it.message } }
     }
@@ -136,6 +147,7 @@ abstract class AbstractBuildAction(
         properties: ApplicationProperties,
         sourceSet: SourceSet,
         sourceSetChanges: Map<String, SourceSetChanges>,
+        mode: BuildMode,
     ): BuildResult {
         logger.debug { "Сборка проекта с поддержкой частичной загрузки" }
 
@@ -145,18 +157,23 @@ abstract class AbstractBuildAction(
 
         // Загружаем основную конфигурацию
         sourceSet.configuration?.also { configuration ->
-            val configPath = sourceSet.basePath.resolve(configuration.path)
-            val changes = sourceSetChanges[configuration.name]
+            if (mode == BuildMode.SKIP_MAIN_CONFIGURATION) {
+                logger.info { "Загрузка основной конфигурации пропущена" }
+                state.registerSkippedConfiguration()
+            } else {
+                val configPath = sourceSet.basePath.resolve(configuration.path)
+                val changes = sourceSetChanges[configuration.name]
 
-            val result =
-                if (changes != null && shouldUsePartialLoad(changes, threshold, configPath)) {
-                    logger.info { "Частичная загрузка конфигурации: ${changes.changedFiles.size} файлов" }
-                    loadConfigurationPartial(configuration.name, configPath, changes.changedFiles)
-                } else {
-                    logger.info { "Полная загрузка конфигурации" }
-                    loadConfiguration(configuration.name, configPath)
-                }
-            state.addResult(configuration.name, result, "Загрузка конфигурации")
+                val result =
+                    if (changes != null && shouldUsePartialLoad(changes, threshold, configPath)) {
+                        logger.info { "Частичная загрузка конфигурации: ${changes.changedFiles.size} файлов" }
+                        loadConfigurationPartial(configuration.name, configPath, changes.changedFiles)
+                    } else {
+                        logger.info { "Полная загрузка конфигурации" }
+                        loadConfiguration(configuration.name, configPath)
+                    }
+                state.addResult(configuration.name, result, "Загрузка конфигурации")
+            }
         }
 
         if (!state.success) {
@@ -189,7 +206,9 @@ abstract class AbstractBuildAction(
             return state.toResult("При загрузке исходников возникли ошибки")
         }
 
-        updateDb()?.also(state::registerUpdateResult)
+        if (state.sourceSet.isNotEmpty()) {
+            updateDb()?.also(state::registerUpdateResult)
+        }
 
         return state.toResult("Сборка завершена").also { if (it.success) logger.info { it.message } }
     }

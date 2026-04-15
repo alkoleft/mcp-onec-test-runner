@@ -29,6 +29,19 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
 
+enum class SearchCandidateSource {
+    PATH,
+    USER_INSTALLATION,
+    SYSTEM_INSTALLATION,
+    UNKNOWN,
+}
+
+data class SearchCandidate(
+    val path: Path,
+    val version: String? = null,
+    val source: SearchCandidateSource = SearchCandidateSource.UNKNOWN,
+)
+
 /**
  * Search location interface for generating paths
  */
@@ -45,7 +58,7 @@ interface SearchLocation {
     fun generateCandidates(
         utility: UtilityType,
         version: String?,
-    ): List<Pair<Path, String?>> = generatePaths(utility, version).map { it to null }
+    ): List<SearchCandidate> = generatePaths(utility, version).map { SearchCandidate(it) }
 }
 
 /**
@@ -100,16 +113,46 @@ class VersionLocation(
 /**
  * PATH environment variable location
  */
-class PathEnvironmentLocation : BaseSearchLocation() {
+class PathEnvironmentLocation(
+    private val pathEnvironment: String? = System.getenv("PATH"),
+) : BaseSearchLocation() {
     override fun generatePaths(
         utility: UtilityType,
         version: String?,
     ): List<Path> {
         val executableName = getExecutableName(utility)
-        return System
-            .getenv("PATH")
+        return pathEnvironment
             ?.split(File.pathSeparator)
             ?.map { Paths.get(it, executableName) } ?: emptyList()
+    }
+
+    override fun generateCandidates(
+        utility: UtilityType,
+        version: String?,
+    ): List<SearchCandidate> =
+        generatePaths(utility, version).map { path ->
+            SearchCandidate(
+                path = path,
+                version = extractVersionFromPath(path, utility),
+                source = SearchCandidateSource.PATH,
+            )
+        }
+
+    private fun extractVersionFromPath(
+        path: Path,
+        utility: UtilityType,
+    ): String? {
+        if (utility != UtilityType.EDT_CLI) return null
+
+        val normalized = path.toAbsolutePath().normalize().toString().replace('\\', '/')
+        val patterns =
+            listOf(
+                Regex(""".*/1C_EDT\s+(\d+(?:\.\d+)+)/1cedt/1cedtcli(?:\.exe)?$""", RegexOption.IGNORE_CASE),
+                Regex(""".*/1c-edt-(\d+(?:\.\d+)+(?:\+\d+)?)(?:-[^/]+)?/1cedtcli(?:\.exe)?$""", RegexOption.IGNORE_CASE),
+                Regex(""".*/1c-edt-(\d+(?:\.\d+)+(?:\+\d+)?)(?:-[^/]+)?/1cedt/1cedtcli(?:\.exe)?$""", RegexOption.IGNORE_CASE),
+            )
+
+        return patterns.firstNotNullOfOrNull { it.find(normalized)?.groupValues?.getOrNull(1) }
     }
 }
 
@@ -121,6 +164,7 @@ class DirectoryEnumeratingLocation(
     private val basePath: String,
     private val relativeExecutableSubPath: String? = null,
     private val dirNameToVersion: (String) -> String? = { it },
+    private val source: SearchCandidateSource = SearchCandidateSource.UNKNOWN,
 ) : BaseSearchLocation() {
     override fun generatePaths(
         utility: UtilityType,
@@ -128,18 +172,18 @@ class DirectoryEnumeratingLocation(
     ): List<Path> {
         // For compatibility with older code paths that only expect paths,
         // return executable paths for existing directories regardless of version input.
-        return generateCandidates(utility, version).map { it.first }
+        return generateCandidates(utility, version).map { it.path }
     }
 
     override fun generateCandidates(
         utility: UtilityType,
         version: String?,
-    ): List<Pair<Path, String?>> {
+    ): List<SearchCandidate> {
         val expandedBase = expandHome(basePath)
         val baseDir = Paths.get(expandedBase)
         if (!baseDir.exists()) return emptyList()
         val executableName = getExecutableName(utility)
-        val result = mutableListOf<Pair<Path, String?>>()
+        val result = mutableListOf<SearchCandidate>()
         try {
             Files.newDirectoryStream(baseDir).use { stream ->
                 stream.forEach { entry ->
@@ -151,7 +195,13 @@ class DirectoryEnumeratingLocation(
                                 entry.resolve(executableName)
                             }
                         val ver = dirNameToVersion(entry.fileName.toString())
-                        result.add(candidate to ver)
+                        result.add(
+                            SearchCandidate(
+                                path = candidate,
+                                version = ver,
+                                source = source,
+                            ),
+                        )
                     }
                 }
             }
