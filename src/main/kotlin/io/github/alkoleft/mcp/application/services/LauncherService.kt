@@ -24,6 +24,7 @@ package io.github.alkoleft.mcp.application.services
 import io.github.alkoleft.mcp.application.actions.change.SourceSetChanges
 import io.github.alkoleft.mcp.application.actions.common.ActionStepResult
 import io.github.alkoleft.mcp.application.actions.common.BuildAction
+import io.github.alkoleft.mcp.application.actions.common.BuildMode
 import io.github.alkoleft.mcp.application.actions.common.BuildResult
 import io.github.alkoleft.mcp.application.actions.common.ChangeAnalysisAction
 import io.github.alkoleft.mcp.application.actions.common.ChangeAnalysisResult
@@ -37,21 +38,28 @@ import io.github.alkoleft.mcp.application.actions.convert.EdtInteractiveConvertA
 import io.github.alkoleft.mcp.application.actions.exceptions.AnalysisError
 import io.github.alkoleft.mcp.application.actions.exceptions.TestExecutionError
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.TestExecutionRequest
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunAllTestsRequest
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunListTestsRequest
+import io.github.alkoleft.mcp.application.actions.test.yaxunit.RunModuleTestsRequest
 import io.github.alkoleft.mcp.application.actions.test.yaxunit.YaXUnitTestAction
 import io.github.alkoleft.mcp.application.core.ShellCommandResult
 import io.github.alkoleft.mcp.configuration.properties.ApplicationProperties
 import io.github.alkoleft.mcp.configuration.properties.ProjectFormat
 import io.github.alkoleft.mcp.configuration.properties.SourceSet
+import io.github.alkoleft.mcp.configuration.properties.SourceSetType
 import io.github.alkoleft.mcp.infrastructure.platform.dsl.PlatformDsl
 import io.github.alkoleft.mcp.infrastructure.storage.SourceSetContext
 import io.github.alkoleft.mcp.infrastructure.yaxunit.ReportParser
 import io.github.alkoleft.mcp.infrastructure.yaxunit.YaXUnitRunner
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
+import kotlin.collections.plus
 import kotlin.time.Duration
 import kotlin.time.TimeSource
 
 private val logger = KotlinLogging.logger { }
+private const val SKIP_MAIN_CONFIGURATION_CONVERSION_MESSAGE =
+    "Конвертация основной конфигурации EDT: пропущена по параметру skipMainConfigurationUpdate"
 
 @Service
 class LauncherService(
@@ -66,7 +74,7 @@ class LauncherService(
 ) {
     fun runTests(request: TestExecutionRequest): RunTestResult {
         val start = TimeSource.Monotonic.markNow()
-        val buildResult = build()
+        val buildResult = build(mode = request.buildMode())
         if (!buildResult.success) {
             val reason = if (buildResult.errors.isNotEmpty()) buildResult.errors.joinToString("; ") else "Сборка не удалась"
             throw TestExecutionError(reason)
@@ -79,7 +87,10 @@ class LauncherService(
 
     fun launch(request: LaunchRequest) = launchAction.run(request)
 
-    fun build(fullRebuild: Boolean = false): BuildResult {
+    fun build(
+        fullRebuild: Boolean = false,
+        mode: BuildMode = BuildMode.FULL,
+    ): BuildResult {
         if (fullRebuild) {
             logger.debug { "Сброс состояния source set" }
             sourceSetsService.getAllSourceSets().forEach { it.hashStorage.clear() }
@@ -88,7 +99,7 @@ class LauncherService(
         val steps = mutableListOf<ActionStepResult>()
 
         if (properties.format == ProjectFormat.EDT) {
-            val convertResult = convertSources()
+            val convertResult = convertSources(mode)
             if (!convertResult.success) {
                 return BuildResult(
                     message = "Ошибки конвертации исходников EDT: ${convertResult.errors.joinToString()}",
@@ -101,10 +112,10 @@ class LauncherService(
             }
             steps.addAll(convertResult.steps)
         }
-        return buildSourceSet(steps)
+        return buildSourceSet(steps, mode)
     }
 
-    private fun convertSources(): ConvertResult {
+    private fun convertSources(mode: BuildMode): ConvertResult {
         val sourceSetContext = sourceSetsService.getEdtSourceSet()!!
 
         val changes = changeAnalysisAction.run(sourceSetContext)
@@ -120,13 +131,38 @@ class LauncherService(
             ).also { logger.info { it.message } }
         }
         val changedSourceSets = sourceSetContext.sourceSet.subSourceSet { it.name in changes.sourceSetChanges.keys }
+        val sourceSetsForConversion = changedSourceSets.forConversion(mode)
 
         if (changedSourceSets.isEmpty()) {
             throw AnalysisError("Не удалось распределить изменения по подпроектам.")
         }
         logger.info { "Обнаружены изменения (EDT): ${changedSourceSets.joinToString { it.name }}" }
 
-        val result = convertSources(changedSourceSets)
+        if (mode == BuildMode.SKIP_MAIN_CONFIGURATION && changedSourceSets.configuration != null) {
+            logger.info { "Конвертация основной конфигурации EDT пропущена" }
+            steps.add(
+                ActionStepResult(
+                    message = SKIP_MAIN_CONFIGURATION_CONVERSION_MESSAGE,
+                    success = true,
+                    duration = Duration.ZERO,
+                ),
+            )
+        }
+
+        if (sourceSetsForConversion.isEmpty()) {
+            return ConvertResult(
+                message = "Конвертация исходников EDT -> Designer пропущена",
+                success = true,
+                errors = emptyList(),
+                duration = Duration.ZERO,
+                steps = steps,
+                sourceSet = emptyMap(),
+            ).also { logger.info { it.message } }
+        }
+
+        logger.info { "К EDT-конвертации выбраны: ${sourceSetsForConversion.joinToString { it.name }}" }
+
+        val result = convertSources(sourceSetsForConversion)
         saveSourceSetState(sourceSetContext, result.sourceSet, changes)
         return result.copy(steps = steps + result.steps)
     }
@@ -141,7 +177,10 @@ class LauncherService(
         }
     }
 
-    private fun buildSourceSet(steps: MutableList<ActionStepResult>): BuildResult {
+    private fun buildSourceSet(
+        steps: MutableList<ActionStepResult>,
+        mode: BuildMode,
+    ): BuildResult {
         val sourceSetContext = sourceSetsService.getDesignerSourceSet()!!
         val changes = changeAnalysisAction.run(sourceSetContext)
         steps.addAll(changes.steps)
@@ -163,7 +202,7 @@ class LauncherService(
         }
         logger.info { "Обнаружены изменения (DESIGNER): ${changedSourceSets.joinToString { it.name }}" }
 
-        val result = updateIB(changedSourceSets, changes.sourceSetChanges)
+        val result = updateIB(changedSourceSets, changes.sourceSetChanges, mode)
         saveSourceSetState(sourceSetContext, result.sourceSet, changes)
 
         return result.copy(steps = steps + result.steps)
@@ -189,10 +228,25 @@ class LauncherService(
     private fun updateIB(
         changedSourceSets: SourceSet,
         sourceSetChanges: Map<String, SourceSetChanges>,
+        mode: BuildMode,
     ): BuildResult =
         buildAction.runPartial(
             properties,
             changedSourceSets,
             sourceSetChanges,
+            mode,
         )
+
+    private fun TestExecutionRequest.buildMode(): BuildMode =
+        when (this) {
+            is RunAllTestsRequest -> buildMode
+            is RunModuleTestsRequest -> buildMode
+            is RunListTestsRequest -> buildMode
+        }
+
+    private fun SourceSet.forConversion(mode: BuildMode): SourceSet =
+        when (mode) {
+            BuildMode.FULL -> this
+            BuildMode.SKIP_MAIN_CONFIGURATION -> subSourceSet { it.type == SourceSetType.EXTENSION }
+        }
 }
